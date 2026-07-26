@@ -1,5 +1,6 @@
 <?php
 require '../config/config.php';
+checkAndSetAlpha($conn);
 include 'templates/header.php';
 
 $user_id = $_SESSION['user_id'];
@@ -21,16 +22,21 @@ $tipe_pesan = '';
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if (isset($_POST['absen_masuk'])) {
         if (!$dataAbsen) {
-            $status = ($now > $jamMasuk) ? 'terlambat' : 'tepat_waktu';
-            $insert = mysqli_query($conn, "INSERT INTO absensis (user_id, tanggal, waktu_masuk, status_kehadiran) VALUES ('$user_id', '$today', '$now', '$status')");
-            if ($insert) {
-                $pesan = "Berhasil absen masuk pada $now";
-                $tipe_pesan = "success";
-                // Refresh data
-                $cekAbsen = mysqli_query($conn, "SELECT * FROM absensis WHERE user_id = '$user_id' AND tanggal = '$today'");
-                $dataAbsen = mysqli_fetch_assoc($cekAbsen);
+            if ($now >= '06:00:00' && $now <= '07:00:00') {
+                $status = ($now > $jamMasuk) ? 'terlambat' : 'tepat_waktu';
+                $insert = mysqli_query($conn, "INSERT INTO absensis (user_id, tanggal, waktu_masuk, status_kehadiran) VALUES ('$user_id', '$today', '$now', '$status')");
+                if ($insert) {
+                    $pesan = "Berhasil absen masuk pada $now";
+                    $tipe_pesan = "success";
+                    // Refresh data
+                    $cekAbsen = mysqli_query($conn, "SELECT * FROM absensis WHERE user_id = '$user_id' AND tanggal = '$today'");
+                    $dataAbsen = mysqli_fetch_assoc($cekAbsen);
+                } else {
+                    $pesan = "Gagal melakukan absensi.";
+                    $tipe_pesan = "error";
+                }
             } else {
-                $pesan = "Gagal melakukan absensi.";
+                $pesan = "Batas waktu absen masuk adalah jam 06:00 - 07:00!";
                 $tipe_pesan = "error";
             }
         }

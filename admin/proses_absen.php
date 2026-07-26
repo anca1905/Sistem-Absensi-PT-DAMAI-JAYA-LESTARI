@@ -33,19 +33,26 @@ $jamMasuk = $setting['jam_masuk'];
 $cekAbsen = mysqli_query($conn, "SELECT * FROM absensis WHERE user_id = '$userId' AND tanggal = '$today'");
 $dataAbsen = mysqli_fetch_assoc($cekAbsen);
 
+// Jalankan pengecekan auto-alpha hari ini
+checkAndSetAlpha($conn);
+
 if (!$dataAbsen) {
     // -- ABSEN MASUK --
-    $status = ($now > $jamMasuk) ? 'terlambat' : 'tepat_waktu';
-    $insert = mysqli_query($conn, "INSERT INTO absensis (user_id, tanggal, waktu_masuk, status_kehadiran) VALUES ('$userId', '$today', '$now', '$status')");
+    if ($now >= '06:00:00' && $now <= '07:00:00') {
+        $status = ($now > $jamMasuk) ? 'terlambat' : 'tepat_waktu';
+        $insert = mysqli_query($conn, "INSERT INTO absensis (user_id, tanggal, waktu_masuk, status_kehadiran) VALUES ('$userId', '$today', '$now', '$status')");
 
-    if ($insert) {
-        echo json_encode([
-            'status' => 'success',
-            'type' => 'MASUK',
-            'nama' => $user['name'],
-            'waktu' => $now,
-            'ket' => ($status == 'terlambat') ? 'Terlambat' : 'Tepat Waktu'
-        ]);
+        if ($insert) {
+            echo json_encode([
+                'status' => 'success',
+                'type' => 'MASUK',
+                'nama' => $user['name'],
+                'waktu' => $now,
+                'ket' => ($status == 'terlambat') ? 'Terlambat' : 'Tepat Waktu'
+            ]);
+        }
+    } else {
+        echo json_encode(['status' => 'error', 'message' => 'Batas waktu absen masuk adalah jam 06:00 - 07:00!']);
     }
 } else {
     // -- ABSEN PULANG --

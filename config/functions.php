@@ -40,3 +40,29 @@ function redirect($url)
     header("Location: $url");
     exit;
 }
+
+// Fungsi auto alpha
+function checkAndSetAlpha($conn) {
+    $today = date('Y-m-d');
+    $time_now = date('H:i:s');
+    
+    // Jika sudah lewat jam 07:00 pagi
+    if ($time_now > '07:00:00') {
+        // Ambil semua karyawan dan mandor yang belum ada di tabel absensis hari ini
+        $query = "
+            SELECT id FROM users 
+            WHERE role IN ('karyawan', 'mandor') 
+            AND id NOT IN (
+                SELECT user_id FROM absensis WHERE tanggal = '$today'
+            )
+        ";
+        $result = mysqli_query($conn, $query);
+        if ($result && mysqli_num_rows($result) > 0) {
+            while ($row = mysqli_fetch_assoc($result)) {
+                $user_id = $row['id'];
+                // Insert status alpha
+                mysqli_query($conn, "INSERT INTO absensis (user_id, tanggal, waktu_masuk, status_kehadiran) VALUES ('$user_id', '$today', NULL, 'alpha')");
+            }
+        }
+    }
+}
