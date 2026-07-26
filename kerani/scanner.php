@@ -6,7 +6,7 @@ checkAndSetAlpha($conn);
 include 'templates/header.php';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['nik'])) {
-    $nik = mysqli_real_escape_string($conn, $_POST['nik']);
+    $nik = mysqli_real_escape_string($conn, trim($_POST['nik']));
     $tanggal = date('Y-m-d');
     $waktu = date('H:i:s');
     
@@ -16,7 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['nik'])) {
     $status_kehadiran = ($waktu <= $jamMasuk) ? 'tepat_waktu' : 'terlambat';
     
     // Cek apakah user valid
-    $cek_user = mysqli_query($conn, "SELECT id, name FROM users WHERE nik='$nik' AND role IN ('karyawan', 'mandor')");
+    $cek_user = mysqli_query($conn, "SELECT id, name FROM users WHERE nik='$nik'");
     if(mysqli_num_rows($cek_user) > 0) {
         $user_row = mysqli_fetch_assoc($cek_user);
         $scan_user_id = $user_row['id'];

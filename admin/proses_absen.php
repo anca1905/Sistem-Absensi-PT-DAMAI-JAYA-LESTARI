@@ -4,7 +4,7 @@ header('Content-Type: application/json');
 
 // Ambil data JSON dari fetch Javascript
 $input = json_decode(file_get_contents('php://input'), true);
-$nik = isset($input['nik']) ? mysqli_real_escape_string($conn, $input['nik']) : '';
+$nik = isset($input['nik']) ? mysqli_real_escape_string($conn, trim($input['nik'])) : '';
 
 if (empty($nik)) {
     echo json_encode(['status' => 'error', 'message' => 'QR Code tidak terbaca!']);
@@ -12,7 +12,7 @@ if (empty($nik)) {
 }
 
 // 1. Cari Karyawan
-$queryUser = mysqli_query($conn, "SELECT * FROM users WHERE nik = '$nik' AND role = 'karyawan'");
+$queryUser = mysqli_query($conn, "SELECT * FROM users WHERE nik = '$nik'");
 $user = mysqli_fetch_assoc($queryUser);
 
 if (!$user) {
