@@ -315,7 +315,7 @@ if (!file_exists($filePath)) {
     </div>
 
     <div class="btn-group">
-        <a href="karyawan.php" class="btn btn-gray">
+        <a href="personil.php" class="btn btn-gray">
             &larr; Kembali
         </a>
 
