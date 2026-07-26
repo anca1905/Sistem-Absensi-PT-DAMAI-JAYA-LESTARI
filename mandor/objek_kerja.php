@@ -1,0 +1,338 @@
+<?php
+require '../config/config.php';
+include 'templates/header.php';
+
+$tanggal = isset($_GET['tanggal']) ? $_GET['tanggal'] : date('Y-m-d');
+
+// Dummy Query
+$query_users = mysqli_query($conn, "SELECT id, nik, name FROM users WHERE role='karyawan' ORDER BY name ASC LIMIT 5");
+
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action'])) {
+    // Simulasi verifikasi
+    swalRedirect('Laporan ' . htmlspecialchars($_POST['name']) . ' telah ' . htmlspecialchars($_POST['action']) . '!', "objek_kerja.php?tanggal=$tanggal", 'success');
+}
+?>
+
+<style>
+    .card-container {
+        background: #ffffff;
+        border-radius: 16px;
+        padding: 20px 16px;
+        box-shadow: 0 4px 20px rgba(54, 72, 217, 0.05);
+        border: 1px solid #f1f5f9;
+        margin-bottom: 20px;
+    }
+
+    .form-input {
+        width: 100%;
+        padding: 12px 14px;
+        border-radius: 10px;
+        border: 1.5px solid #e2e8f0;
+        background-color: #f8fafc;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-dark);
+        font-family: inherit;
+        outline: none;
+        transition: all 0.2s;
+    }
+    
+    .form-input:focus {
+        border-color: var(--primary-start);
+        box-shadow: 0 0 0 4px rgba(66, 88, 255, 0.1);
+        background: white;
+    }
+
+    .table-responsive {
+        width: 100%;
+        overflow-x: auto;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+        -webkit-overflow-scrolling: touch;
+        background: white;
+    }
+
+    .table-objek {
+        border-collapse: collapse;
+        white-space: nowrap;
+        font-size: 12px;
+        min-width: 900px; /* Lebar lebih besar karena banyak kolom */
+    }
+
+    .table-objek th, .table-objek td {
+        padding: 12px 10px;
+        border: 1px solid #e2e8f0;
+        vertical-align: middle;
+        text-align: center;
+    }
+
+    .table-objek th {
+        background-color: var(--primary-light);
+        color: var(--primary-end);
+        font-weight: 800;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .table-objek td:nth-child(5) { text-align: left; font-weight: 700; color: var(--text-dark); }
+    .table-objek tbody tr:nth-child(even) { background: #f8fafc; }
+
+    .btn-file {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: #f1f5f9;
+        color: #3b82f6;
+        border: 1px solid #cbd5e1;
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-weight: 700;
+        font-size: 11px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .btn-file:hover { background: #e0f2fe; border-color: #7dd3fc; }
+
+    /* Verifikasi Buttons */
+    .btn-verif {
+        border: none;
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-weight: 700;
+        font-size: 11px;
+        cursor: pointer;
+        transition: transform 0.1s;
+    }
+    .btn-verif:active { transform: scale(0.9); }
+    
+    .btn-terima { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; margin-left: 5px; }
+    .btn-tolak { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+
+    /* MODAL CSS */
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(15, 23, 42, 0.6);
+        backdrop-filter: blur(4px);
+        z-index: 100;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    }
+
+    .modal-content {
+        background: white;
+        border-radius: 16px;
+        width: 100%;
+        max-width: 480px;
+        max-height: 90vh;
+        overflow-y: auto;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        animation: slideUp 0.3s ease;
+    }
+
+    .modal-header {
+        padding: 16px 20px;
+        border-bottom: 1px solid #f1f5f9;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .modal-title {
+        font-size: 16px;
+        font-weight: 800;
+        color: var(--text-dark);
+        margin: 0;
+    }
+
+    .btn-close {
+        background: #f1f5f9;
+        border: none;
+        width: 32px; height: 32px;
+        border-radius: 50%;
+        color: #64748b;
+        font-size: 18px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .modal-body {
+        padding: 20px;
+    }
+
+    .btn-back {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: var(--text-muted);
+        text-decoration: none;
+        font-weight: 700;
+        font-size: 13px;
+        margin-bottom: 16px;
+        background: white;
+        padding: 8px 14px;
+        border-radius: 20px;
+        border: 1.5px solid #e2e8f0;
+    }
+</style>
+
+<div class="animate-up">
+    <a href="index.php" class="btn-back">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+        Kembali
+    </a>
+
+    <h2 class="page-title" style="text-align: left; margin-bottom: 16px; font-size: 20px;">Objek Kerja Hari Ini</h2>
+
+    <div class="card-container">
+        
+        <form id="filterForm" method="GET" style="margin-bottom: 16px;">
+            <label style="font-size: 11px; font-weight: 700; color: #64748b; margin-bottom:4px; display:block;">Pilih tahun/bulan/tgl</label>
+            <input type="date" name="tanggal" class="form-input" value="<?= $tanggal ?>" onchange="document.getElementById('filterForm').submit()">
+        </form>
+
+        <p style="font-size: 11px; color: var(--text-muted); font-style: italic; margin-bottom: 8px;">* Geser tabel ke kanan untuk melihat verifikasi.</p>
+
+        <div class="table-responsive">
+            <table class="table-objek">
+                <thead>
+                    <tr>
+                        <th style="width:30px;">NO</th>
+                        <th>BLOK</th>
+                        <th>LUAS</th>
+                        <th>NIK</th>
+                        <th>NAMA</th>
+                        <th>OBJEK KERJA</th>
+                        <th>LAPORAN KINERJA<br>DARI KARYAWAN</th>
+                        <th>VERIFIKASI</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php 
+                    $no = 1;
+                    $dummy_bloks = ['H.39', 'I.39', 'J.40', 'K.39', 'L.40'];
+                    $dummy_luas = ['8.66', '29.96', '27.05', '30.98', '30.22'];
+                    $dummy_objeks = ['Langsir manual', 'Membabat gawangan', 'Kutip brondolan', 'Potong buah', 'Muat TBS ke truk'];
+
+                    if(mysqli_num_rows($query_users) > 0):
+                        while($user = mysqli_fetch_assoc($query_users)): 
+                            $idx = ($no - 1) % 5;
+                    ?>
+                        <tr>
+                            <td><?= $no++ ?></td>
+                            <td><?= $dummy_bloks[$idx] ?></td>
+                            <td><?= $dummy_luas[$idx] ?></td>
+                            <td><?= htmlspecialchars($user['nik']) ?></td>
+                            <td><?= htmlspecialchars($user['name']) ?></td>
+                            <td><?= $dummy_objeks[$idx] ?></td>
+                            <td>
+                                <button type="button" class="btn-file" onclick="openModal('<?= $user['name'] ?>', '<?= date('d M Y', strtotime($tanggal)) ?> - <?= $dummy_objeks[$idx] ?>')">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                                    File
+                                </button>
+                            </td>
+                            <td>
+                                <form method="POST" style="display:inline;">
+                                    <input type="hidden" name="name" value="<?= htmlspecialchars($user['name']) ?>">
+                                    <button type="submit" name="action" value="ditolak" class="btn-verif btn-tolak">Ditolak</button>
+                                    <button type="submit" name="action" value="diterima" class="btn-verif btn-terima">Diterima</button>
+                                </form>
+                            </td>
+                        </tr>
+                    <?php 
+                        endwhile;
+                    else: 
+                    ?>
+                        <tr>
+                            <td colspan="8" style="text-align:center; padding:30px; color:var(--text-muted);">Belum ada data.</td>
+                        </tr>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL POPUP -->
+<div class="modal-overlay" id="fileModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title" id="modalTitle">Laporan File</h3>
+            <button class="btn-close" onclick="closeModal()">×</button>
+        </div>
+        <div class="modal-body">
+            
+            <p style="font-size: 11px; color: var(--text-muted); font-style: italic; margin-bottom: 8px;">* Geser tabel ke kanan untuk melihat lengkap.</p>
+            
+            <div class="table-responsive">
+                <!-- Tabel di dalam File (Sesuai Sketsa 3.1) -->
+                <table class="table-objek" style="min-width: 600px;">
+                    <thead>
+                        <tr>
+                            <th rowspan="2">BLOK</th>
+                            <th rowspan="2">LUAS HA</th>
+                            <th rowspan="2">MANDOR</th>
+                            <th colspan="2">JUMLAH JANJANGAN</th>
+                            <th colspan="2">PRESTASI</th>
+                            <th rowspan="2">STATUS</th>
+                        </tr>
+                        <tr>
+                            <th>TON</th>
+                            <th>KG</th>
+                            <th>TON</th>
+                            <th>KG</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>H.39</td>
+                            <td>8.66</td>
+                            <td>Amir</td>
+                            <td>12</td>
+                            <td>350</td>
+                            <td>2</td>
+                            <td>500</td>
+                            <td><span style="color:#166534; font-weight:bold;">Selesai</span></td>
+                        </tr>
+                        <tr>
+                            <td>H.40</td>
+                            <td>0.41</td>
+                            <td>Amir</td>
+                            <td>3</td>
+                            <td>100</td>
+                            <td>0</td>
+                            <td>900</td>
+                            <td><span style="color:#854d0e; font-weight:bold;">Proses</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function openModal(name, titleInfo) {
+        document.getElementById('modalTitle').innerText = titleInfo;
+        document.getElementById('fileModal').style.display = 'flex';
+    }
+
+    function closeModal() {
+        document.getElementById('fileModal').style.display = 'none';
+    }
+
+    // Close when clicking outside
+    window.onclick = function(event) {
+        var modal = document.getElementById('fileModal');
+        if (event.target == modal) {
+            closeModal();
+        }
+    }
+</script>
+
+<?php include 'templates/footer.php'; ?>

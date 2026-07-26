@@ -1,0 +1,11 @@
+# Sesi & cache WA Bot (tidak perlu diunggah & bikin error izin)
+wa-bot/.wwebjs_auth/
+wa-bot/.wwebjs_cache/
+
+# File sementara & hasil unggahan
+uploads/
+*.log
+*.tmp
+
+# File uji coba
+test_*.php
