@@ -2,15 +2,22 @@
 require '../config/config.php';
 include 'templates/header.php';
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['user_id'])) {
-    $scan_user_id = (int)$_POST['user_id'];
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['nik'])) {
+    $nik = mysqli_real_escape_string($conn, $_POST['nik']);
     $tanggal = date('Y-m-d');
     $waktu = date('H:i:s');
-    $status_kehadiran = (date('H') < 8) ? 'tepat_waktu' : 'terlambat';
+    
+    // Ambil jam masuk dari settings
+    $setting = mysqli_fetch_assoc(mysqli_query($conn, "SELECT jam_masuk FROM settings LIMIT 1"));
+    $jamMasuk = $setting ? $setting['jam_masuk'] : '08:00:00';
+    $status_kehadiran = ($waktu <= $jamMasuk) ? 'tepat_waktu' : 'terlambat';
     
     // Cek apakah user valid
-    $cek_user = mysqli_query($conn, "SELECT name FROM users WHERE id=$scan_user_id");
+    $cek_user = mysqli_query($conn, "SELECT id, name FROM users WHERE nik='$nik' AND role IN ('karyawan', 'mandor')");
     if(mysqli_num_rows($cek_user) > 0) {
+        $user_row = mysqli_fetch_assoc($cek_user);
+        $scan_user_id = $user_row['id'];
+        
         // Cek apakah sudah absen masuk hari ini
         $cek_absen = mysqli_query($conn, "SELECT id, waktu_masuk, waktu_pulang FROM absensis WHERE user_id=$scan_user_id AND tanggal='$tanggal'");
         if(mysqli_num_rows($cek_absen) > 0) {
@@ -28,7 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['user_id'])) {
             swalRedirect('Absen MASUK berhasil dicatat!', 'scanner.php', 'success');
         }
     } else {
-        swalAlert('QR Code / User tidak valid!', 'error');
+        swalAlert('QR Code / NIK tidak valid!', 'error');
     }
 }
 ?>
@@ -73,48 +80,22 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['user_id'])) {
         border: 1px solid #e2e8f0;
     }
 
-    .camera-frame {
+    /* Scanner container */
+    #reader {
         width: 100%;
-        aspect-ratio: 1/1;
+        min-height: 300px;
         background: #0f172a;
         border-radius: 16px;
         margin-bottom: 30px;
-        position: relative;
         overflow: hidden;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
         border: 4px solid var(--accent);
     }
-
-    .camera-frame::before {
-        content: '';
-        position: absolute;
-        width: 60%;
-        height: 60%;
-        border: 2px dashed rgba(255,255,255,0.3);
-        border-radius: 8px;
-    }
-
-    /* Scanning line animation */
-    .camera-frame::after {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 2px;
-        background: #22c55e;
-        box-shadow: 0 0 10px #22c55e, 0 0 20px #22c55e;
-        animation: scan 2s linear infinite;
-    }
-
-    @keyframes scan {
-        0% { top: 10%; opacity: 0; }
-        10% { opacity: 1; }
-        90% { opacity: 1; }
-        100% { top: 90%; opacity: 0; }
+    
+    #reader video {
+        width: 100% !important;
+        height: 100% !important;
+        object-fit: cover !important;
+        border-radius: 12px;
     }
 
     .btn-back {
@@ -147,27 +128,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['user_id'])) {
             00:00:00
         </div>
 
-        <div class="camera-frame">
-            <div style="z-index: 10; text-align: center;">
-                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.5; margin-bottom: 10px;"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
-                <p style="font-size: 14px; font-weight: 600; color: #94a3b8;">Arahkan QR Code ke area ini</p>
-                
-                <!-- Simulasi Scanner -->
-                <form method="POST" style="margin-top: 15px;">
-                    <select name="user_id" required style="padding: 8px; border-radius: 6px; border: none; outline: none;">
-                        <option value="">-- Simulasi Scan NIK --</option>
-                        <?php 
-                        $q = mysqli_query($conn, "SELECT id, name, role FROM users WHERE role IN ('karyawan', 'mandor')");
-                        while($u = mysqli_fetch_assoc($q)) {
-                            echo "<option value='{$u['id']}'>{$u['name']} ({$u['role']})</option>";
-                        }
-                        ?>
-                    </select>
-                    <button type="submit" style="margin-top: 10px; padding: 8px 16px; background: var(--accent); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight:bold;">Simulasi Scan</button>
-                </form>
-
-            </div>
-        </div>
+        <div id="reader"></div>
+        
+        <form id="scanForm" method="POST" style="display: none;">
+            <input type="hidden" name="nik" id="scanned_nik">
+        </form>
 
         <a href="index.php" class="btn-back">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
@@ -176,6 +141,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['user_id'])) {
     </div>
 </div>
 
+<script src="../assets/js/html5-qrcode.min.js"></script>
 <script>
     // Realtime Clock
     function updateClock() {
@@ -185,6 +151,72 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['user_id'])) {
     }
     setInterval(updateClock, 1000);
     updateClock();
+
+    // Inisialisasi Scanner
+    const html5QrCode = new Html5Qrcode("reader");
+    let isProcessing = false;
+
+    function startCamera() {
+        const config = {
+            fps: 10,
+            qrbox: { width: 250, height: 250 },
+            aspectRatio: 1.0
+        };
+
+        html5QrCode.start(
+            { facingMode: "environment" },
+            config,
+            onScanSuccess,
+            onScanFailure
+        ).catch(err => {
+            console.warn("Gagal akses kamera belakang, mencoba mode user...", err);
+            html5QrCode.start(
+                { facingMode: "user" },
+                config,
+                onScanSuccess,
+                onScanFailure
+            ).catch(err2 => {
+                console.error("Kamera Error: " + err2);
+            });
+        });
+    }
+
+    startCamera();
+
+    function onScanSuccess(decodedText) {
+        if (isProcessing) return;
+        isProcessing = true;
+        
+        // Pause kamera agar tidak scan berulang
+        html5QrCode.pause();
+        
+        // Mainkan suara BEEP (opsional)
+        playSound();
+
+        // Submit form
+        document.getElementById('scanned_nik').value = decodedText;
+        document.getElementById('scanForm').submit();
+    }
+
+    function onScanFailure(error) {
+        // Abaikan error saat scan berlangsung
+    }
+
+    function playSound() {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(440, audioCtx.currentTime + 0.1);
+        gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.3);
+    }
 </script>
 
 <?php include 'templates/footer.php'; ?>
