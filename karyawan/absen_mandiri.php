@@ -40,20 +40,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $tipe_pesan = "error";
             }
         }
-    } elseif (isset($_POST['absen_pulang'])) {
-        if ($dataAbsen && $dataAbsen['waktu_pulang'] == null) {
-            $update = mysqli_query($conn, "UPDATE absensis SET waktu_pulang = '$now' WHERE id = '" . $dataAbsen['id'] . "'");
-            if ($update) {
-                $pesan = "Berhasil absen pulang pada $now";
-                $tipe_pesan = "success";
-                // Refresh data
-                $cekAbsen = mysqli_query($conn, "SELECT * FROM absensis WHERE user_id = '$user_id' AND tanggal = '$today'");
-                $dataAbsen = mysqli_fetch_assoc($cekAbsen);
-            } else {
-                $pesan = "Gagal melakukan absensi.";
-                $tipe_pesan = "error";
-            }
-        }
     }
 }
 ?>
@@ -259,21 +245,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 </button>
             </form>
 
-        <?php elseif($dataAbsen['waktu_pulang'] == null): ?>
-            <!-- Sudah Masuk, Belum Pulang -->
-            <div class="status-badge status-masuk">Sudah Absen Masuk</div>
-            
-            <form method="POST">
-                <button type="submit" name="absen_pulang" class="btn-absen btn-pulang">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
-                    Absen Pulang
-                </button>
-            </form>
-
         <?php else: ?>
             <!-- Selesai Absen -->
             <div class="status-badge status-selesai">Absensi Selesai</div>
-            <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 0;">Anda telah menyelesaikan absensi hari ini. Selamat beristirahat!</p>
+            <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 0;">Anda telah menyelesaikan absensi hari ini. Selamat beraktivitas!</p>
         <?php endif; ?>
 
         <div class="info-list">
@@ -292,12 +267,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         <?= ucwords(str_replace('_', ' ', $dataAbsen['status_kehadiran'])) ?>
                     </span>
                 </div>
-                <?php if($dataAbsen['waktu_pulang']): ?>
-                    <div class="info-item">
-                        <span class="info-label">Waktu Pulang Anda</span>
-                        <span class="info-value"><?= substr($dataAbsen['waktu_pulang'], 0, 5) ?></span>
-                    </div>
-                <?php endif; ?>
             <?php endif; ?>
         </div>
     </div>

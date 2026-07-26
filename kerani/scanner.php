@@ -22,16 +22,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['nik'])) {
         $scan_user_id = $user_row['id'];
         
         // Cek apakah sudah absen masuk hari ini
-        $cek_absen = mysqli_query($conn, "SELECT id, waktu_masuk, waktu_pulang FROM absensis WHERE user_id=$scan_user_id AND tanggal='$tanggal'");
+        $cek_absen = mysqli_query($conn, "SELECT id, waktu_masuk FROM absensis WHERE user_id=$scan_user_id AND tanggal='$tanggal'");
         if(mysqli_num_rows($cek_absen) > 0) {
-            $absen = mysqli_fetch_assoc($cek_absen);
-            if(empty($absen['waktu_pulang'])) {
-                // Update absen pulang
-                mysqli_query($conn, "UPDATE absensis SET waktu_pulang='$waktu' WHERE id={$absen['id']}");
-                swalRedirect('Absen PULANG berhasil dicatat!', 'scanner.php', 'success');
-            } else {
-                swalRedirect('Anda sudah melakukan absen masuk dan pulang hari ini.', 'scanner.php', 'info', 'Info');
-            }
+            swalRedirect('Anda sudah melakukan absensi hari ini.', 'scanner.php', 'info', 'Info');
         } else {
             // Cek apakah waktu saat ini antara 06:00 dan 07:00 untuk absen MASUK
             if ($waktu >= '06:00:00' && $waktu <= '07:00:00') {

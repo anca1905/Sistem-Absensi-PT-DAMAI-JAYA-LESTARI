@@ -55,19 +55,6 @@ if (!$dataAbsen) {
         echo json_encode(['status' => 'error', 'message' => 'Batas waktu absen masuk adalah jam 06:00 - 07:00!']);
     }
 } else {
-    // -- ABSEN PULANG --
-    if ($dataAbsen['waktu_pulang'] == null) {
-        $update = mysqli_query($conn, "UPDATE absensis SET waktu_pulang = '$now' WHERE id = '" . $dataAbsen['id'] . "'");
-        if ($update) {
-            echo json_encode([
-                'status' => 'success',
-                'type' => 'PULANG',
-                'nama' => $user['name'],
-                'waktu' => $now,
-                'ket' => 'Hati-hati di jalan'
-            ]);
-        }
-    } else {
-        echo json_encode(['status' => 'error', 'message' => 'Sudah absen pulang hari ini.']);
-    }
+    // Jika sudah absen
+    echo json_encode(['status' => 'error', 'message' => 'Sudah absen hari ini.']);
 }
