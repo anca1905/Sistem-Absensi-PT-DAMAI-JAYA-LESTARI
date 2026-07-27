@@ -14,12 +14,13 @@ $logFile = $dir . DIRECTORY_SEPARATOR . 'server.log';
 // Menggunakan WScript.Shell agar berjalan di background tanpa mengganggu PHP, dan log error disimpan ke server.log
 try {
     $WshShell = new COM("WScript.Shell");
-    $cmd = "cmd /c cd /d \"$dir\" && node server.js > \"$logFile\" 2>&1";
+    $WshShell->CurrentDirectory = $dir;
+    $cmd = "cmd /c node server.js > \"$logFile\" 2>&1";
     $WshShell->Run($cmd, 0, false);
     echo json_encode(['status' => 'success', 'message' => 'Node.js Server sedang dihidupkan di latar belakang...']);
 } catch (Throwable $e) {
     // Fallback if COM is disabled
-    $cmd = "start /B cmd /c cd /d \"$dir\" && node server.js > \"$logFile\" 2>&1";
+    $cmd = "start /B cmd /c \"cd /d \"$dir\" && node server.js > \"$logFile\" 2>&1\"";
     pclose(popen($cmd, "r"));
     echo json_encode(['status' => 'success', 'message' => 'Node.js Server sedang dihidupkan di latar belakang (fallback)...']);
 }
