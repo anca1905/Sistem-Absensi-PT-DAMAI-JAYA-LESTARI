@@ -223,19 +223,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && isset($_P
                     $tgl_safe = mysqli_real_escape_string($conn, $tanggal);
                     if (!empty($afdeling_mandor)) {
                         $query_logbook = mysqli_query($conn, "
-                            SELECT lk.id, lk.blok, lk.luas_ha, lk.objek_kerja, lk.status, lk.hasil_ton, lk.hasil_kg, lk.prestasi_ton, lk.prestasi_kg,
-                                   u.nik, u.name
+                            SELECT lk.*, u.nik, u.name as karyawan_name, m.name as mandor_name
                             FROM logbook_kinerja lk
                             JOIN users u ON lk.user_id = u.id
+                            LEFT JOIN users m ON lk.mandor_id = m.id
                             WHERE lk.tanggal = '$tgl_safe' AND u.afdeling = '$afdeling_mandor'
                             ORDER BY u.name ASC
                         ");
                     } else {
                         $query_logbook = mysqli_query($conn, "
-                            SELECT lk.id, lk.blok, lk.luas_ha, lk.objek_kerja, lk.status, lk.hasil_ton, lk.hasil_kg, lk.prestasi_ton, lk.prestasi_kg,
-                                   u.nik, u.name
+                            SELECT lk.*, u.nik, u.name as karyawan_name, m.name as mandor_name
                             FROM logbook_kinerja lk
                             JOIN users u ON lk.user_id = u.id
+                            LEFT JOIN users m ON lk.mandor_id = m.id
                             WHERE lk.tanggal = '$tgl_safe'
                             ORDER BY u.name ASC
                         ");
@@ -252,10 +252,24 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && isset($_P
                             <td><?= htmlspecialchars($row['blok'] ?? '-') ?></td>
                             <td><?= htmlspecialchars($row['luas_ha'] ?? '-') ?></td>
                             <td><?= htmlspecialchars($row['nik']) ?></td>
-                            <td><?= htmlspecialchars($row['name']) ?></td>
+                            <td><?= htmlspecialchars($row['karyawan_name']) ?></td>
                             <td><?= htmlspecialchars($row['objek_kerja'] ?? '-') ?></td>
                             <td>
-                                <button type="button" class="btn-file" onclick="openModal('<?= htmlspecialchars($row['name']) ?>', '<?= date('d M Y', strtotime($tanggal)) ?> - <?= htmlspecialchars($row['objek_kerja'] ?? '') ?>', <?= $row['id'] ?>)">
+                                <?php 
+                                    // Siapkan data JSON untuk JS
+                                    $dataJSON = htmlspecialchars(json_encode([
+                                        'blok' => $row['blok'] ?? '-',
+                                        'luas' => $row['luas_ha'] ?? '-',
+                                        'mandor' => $row['mandor_name'] ?? '-',
+                                        'h_ton' => $row['hasil_ton'] ?? '0',
+                                        'h_kg' => $row['hasil_kg'] ?? '0',
+                                        'p_ton' => $row['prestasi_ton'] ?? '0',
+                                        'p_kg' => $row['prestasi_kg'] ?? '0',
+                                        'status' => ucfirst($row['status']),
+                                        'status_color' => $status_color
+                                    ]), ENT_QUOTES, 'UTF-8');
+                                ?>
+                                <button type="button" class="btn-file" onclick="openModal('<?= date('d M Y', strtotime($tanggal)) ?> - <?= htmlspecialchars($row['objek_kerja'] ?? '') ?>', <?= $dataJSON ?>)">
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
                                     Detail
                                 </button>
@@ -316,27 +330,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && isset($_P
                             <th>KG</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <tr>
-                            <td>H.39</td>
-                            <td>8.66</td>
-                            <td>Amir</td>
-                            <td>12</td>
-                            <td>350</td>
-                            <td>2</td>
-                            <td>500</td>
-                            <td><span style="color:#166534; font-weight:bold;">Selesai</span></td>
-                        </tr>
-                        <tr>
-                            <td>H.40</td>
-                            <td>0.41</td>
-                            <td>Amir</td>
-                            <td>3</td>
-                            <td>100</td>
-                            <td>0</td>
-                            <td>900</td>
-                            <td><span style="color:#854d0e; font-weight:bold;">Proses</span></td>
-                        </tr>
+                    <tbody id="modalTbody">
+                        <!-- Akan diisi otomatis oleh Javascript -->
                     </tbody>
                 </table>
             </div>
@@ -345,8 +340,22 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && isset($_P
 </div>
 
 <script>
-    function openModal(name, titleInfo) {
+    function openModal(titleInfo, data) {
         document.getElementById('modalTitle').innerText = titleInfo;
+        
+        let html = `
+            <tr>
+                <td>${data.blok}</td>
+                <td>${data.luas}</td>
+                <td>${data.mandor}</td>
+                <td>${data.h_ton}</td>
+                <td>${data.h_kg}</td>
+                <td>${data.p_ton}</td>
+                <td>${data.p_kg}</td>
+                <td><span style="color:${data.status_color}; font-weight:bold;">${data.status}</span></td>
+            </tr>
+        `;
+        document.getElementById('modalTbody').innerHTML = html;
         document.getElementById('fileModal').style.display = 'flex';
     }
 
