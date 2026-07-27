@@ -23,7 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if (isset($_POST['absen_masuk'])) {
         if (!$dataAbsen) {
             if ($now >= '06:00:00' && $now <= '15:00:00') {
-                $status = ($now > $jamMasuk) ? 'terlambat' : 'tepat_waktu';
+                $status = 'hadir';
                 $insert = mysqli_query($conn, "INSERT INTO absensis (user_id, tanggal, waktu_masuk, status_kehadiran) VALUES ('$user_id', '$today', '$now', '$status')");
                 if ($insert) {
                     $pesan = "Berhasil absen masuk pada $now";
@@ -246,9 +246,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             </form>
 
         <?php else: ?>
-            <!-- Selesai Absen -->
-            <div class="status-badge status-selesai">Absensi Selesai</div>
-            <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 0;">Anda telah menyelesaikan absensi hari ini. Selamat beraktivitas!</p>
+            <?php if ($dataAbsen['status_kehadiran'] == 'alpha'): ?>
+                <!-- Alpha -->
+                <div class="status-badge" style="background:#fee2e2; color:#b91c1c;">Alpha</div>
+                <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 0;">Anda tercatat Alpha karena melewati batas waktu absensi hari ini.</p>
+            <?php else: ?>
+                <!-- Selesai Absen -->
+                <div class="status-badge status-selesai">Absensi Selesai</div>
+                <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 0;">Anda telah menyelesaikan absensi hari ini. Selamat beraktivitas!</p>
+            <?php endif; ?>
         <?php endif; ?>
 
         <div class="info-list">
@@ -257,13 +263,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 <span class="info-value"><?= substr($jamMasuk, 0, 5) ?></span>
             </div>
             <?php if($dataAbsen): ?>
+                <?php if ($dataAbsen['status_kehadiran'] != 'alpha'): ?>
                 <div class="info-item">
                     <span class="info-label">Waktu Masuk Anda</span>
                     <span class="info-value"><?= substr($dataAbsen['waktu_masuk'], 0, 5) ?></span>
                 </div>
+                <?php endif; ?>
                 <div class="info-item">
                     <span class="info-label">Status Kehadiran</span>
-                    <span class="info-value" style="color: <?= $dataAbsen['status_kehadiran'] == 'terlambat' ? '#e11d48' : '#10b981' ?>">
+                    <span class="info-value" style="color: <?= $dataAbsen['status_kehadiran'] == 'alpha' ? '#e11d48' : '#10b981' ?>">
                         <?= ucwords(str_replace('_', ' ', $dataAbsen['status_kehadiran'])) ?>
                     </span>
                 </div>

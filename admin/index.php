@@ -345,7 +345,7 @@ include 'templates/header.php';
                             <td style="font-weight: 500; color: #1e293b;"><?= $a['name'] ?></td>
                             <td><?= date('d/m/Y', strtotime($a['tanggal'])) ?></td>
                             <td>
-                                <span style="background: <?= $a['status_kehadiran']=='tepat waktu' ? '#ecfdf5' : '#fef2f2' ?>; color: <?= $a['status_kehadiran']=='tepat waktu' ? '#10b981' : '#ef4444' ?>; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; text-transform: uppercase;">
+                                <span style="background: <?= $a['status_kehadiran']=='hadir' ? '#ecfdf5' : '#fef2f2' ?>; color: <?= $a['status_kehadiran']=='hadir' ? '#10b981' : '#ef4444' ?>; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; text-transform: uppercase;">
                                     <?= $a['status_kehadiran'] ?>
                                 </span>
                             </td>
@@ -400,9 +400,6 @@ include 'templates/header.php';
                         <div style="flex: 1;">
                             <div style="font-weight: 600; font-size: 13px; color: #334155;">
                                 <?= $act['name'] ?>
-                                <?php if ($act['status_kehadiran'] == 'terlambat'): ?>
-                                    <span style="color: #ef4444; font-size: 10px; background: #fef2f2; padding: 2px 6px; border-radius: 4px; margin-left: 5px;">Terlambat</span>
-                                <?php endif; ?>
                             </div>
                             <div style="font-size: 11px; color: #64748b;"><?= $act['jabatan'] ?></div>
                         </div>

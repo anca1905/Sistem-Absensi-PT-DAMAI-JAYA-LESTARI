@@ -157,7 +157,7 @@ $query = mysqli_query($conn, $q_str);
                     $pulang = $row['waktu_pulang'] ? date('H:i', strtotime($row['waktu_pulang'])) : '-';
 
                     // Warna status untuk Excel (Opsional, kadang Excel mengabaikan style warna)
-                    $status_color = ($row['status_kehadiran'] == 'terlambat') ? 'color: red;' : 'color: green;';
+                    $status_color = in_array(strtolower($row['status_kehadiran']), ['alpha', 'alpa', 'alfa', 'terlambat']) ? 'color: red;' : 'color: green;';
             ?>
                     <tr>
                         <td class="text-center"><?= $no++ ?></td>

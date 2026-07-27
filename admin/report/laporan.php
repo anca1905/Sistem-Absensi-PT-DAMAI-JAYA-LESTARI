@@ -358,19 +358,15 @@ while ($row = mysqli_fetch_assoc($query_absen)) {
                             $kode = '-';
                             $class = '';
 
-                            if($status_absen == 'tepat_waktu') {
+                            if(in_array($status_absen, ['hadir', 'tepat_waktu', 'terlambat'])) {
                                 $kode = 'H'; // Hadir
                                 $class = 'status-h';
                                 $total_hadir++;
-                            } elseif ($status_absen == 'terlambat') {
-                                $kode = 'T'; // Terlambat
-                                $class = 'status-t';
-                                $total_hadir++; // Hitung hadir juga meski terlambat
+                            } elseif ($status_absen == 'alpha') {
+                                $kode = 'A'; // Alpha
+                                $class = 'status-a';
                             } else {
-                                // Default kosong / alpa
-                                // $kode = 'A'; 
-                                // $class = 'status-a';
-                                // Biarkan kosong/strip agar tabel terlihat lebih bersih jika tidak ada data
+                                // Default kosong (belum diabsen)
                             }
                         ?>
                             <td>

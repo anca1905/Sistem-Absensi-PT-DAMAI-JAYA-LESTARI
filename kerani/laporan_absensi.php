@@ -207,8 +207,13 @@ $nama_bulan = array(
                         $cek_absen = mysqli_query($conn, "SELECT status_kehadiran FROM absensis WHERE user_id={$user['id']} AND tanggal='$tgl_str'");
                         
                         if(mysqli_num_rows($cek_absen) > 0) {
-                            $total_hadir++;
-                            echo '<td><span class="status-badge status-h">H</span></td>';
+                            $row_abs = mysqli_fetch_assoc($cek_absen);
+                            if ($row_abs['status_kehadiran'] == 'alpha') {
+                                echo '<td><span class="status-badge" style="background-color: #fee2e2; color: #991b1b;">A</span></td>';
+                            } else {
+                                $total_hadir++;
+                                echo '<td><span class="status-badge status-h">H</span></td>';
+                            }
                         } else {
                             echo '<td><span style="color: #cbd5e1;">-</span></td>';
                         }

@@ -222,7 +222,7 @@ include 'templates/header.php';
                         <li class="activity-item">
                             <div class="act-icon">👤</div>
                             <div class="act-info">
-                                <span class="act-name"><?= $act['name'] ?> <?= ($act['status_kehadiran'] == 'terlambat') ? '<span class="badge-late">Terlambat</span>' : '' ?></span>
+                                <span class="act-name"><?= $act['name'] ?></span>
                                 <span style="font-size: 11px; color: #64748b;"><?= $act['jabatan'] ?></span>
                             </div>
                             <div class="act-time"><?= date('H:i', strtotime($act['waktu_masuk'])) ?></div>

@@ -208,7 +208,7 @@ while ($row = mysqli_fetch_assoc($query_absen)) {
                             } elseif ($status == 'terlambat') {
                                 $total_hadir++;
                                 echo '<td><span class="status-badge status-t">T</span></td>';
-                            } elseif ($status == 'alfa' || $status == 'alpa') {
+                            } elseif (in_array($status, ['alfa', 'alpa', 'alpha'])) {
                                 echo '<td><span class="status-badge" style="background:#fee2e2;color:#991b1b;">A</span></td>';
                             } else {
                                 echo '<td><span style="color: #cbd5e1;">-</span></td>';

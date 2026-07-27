@@ -39,7 +39,7 @@ checkAndSetAlpha($conn);
 if (!$dataAbsen) {
     // -- ABSEN MASUK --
     if ($now >= '06:00:00' && $now <= '15:00:00') {
-        $status = ($now > $jamMasuk) ? 'terlambat' : 'tepat_waktu';
+        $status = 'hadir';
         $insert = mysqli_query($conn, "INSERT INTO absensis (user_id, tanggal, waktu_masuk, status_kehadiran) VALUES ('$userId', '$today', '$now', '$status')");
 
         if ($insert) {
@@ -48,7 +48,7 @@ if (!$dataAbsen) {
                 'type' => 'MASUK',
                 'nama' => $user['name'],
                 'waktu' => $now,
-                'ket' => ($status == 'terlambat') ? 'Terlambat' : 'Tepat Waktu'
+                'ket' => 'Hadir'
             ]);
         }
     } else {

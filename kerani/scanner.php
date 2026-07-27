@@ -13,7 +13,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['nik'])) {
     // Ambil jam masuk dari settings
     $setting = mysqli_fetch_assoc(mysqli_query($conn, "SELECT jam_masuk FROM settings LIMIT 1"));
     $jamMasuk = $setting ? $setting['jam_masuk'] : '08:00:00';
-    $status_kehadiran = ($waktu <= $jamMasuk) ? 'tepat_waktu' : 'terlambat';
+    $status_kehadiran = 'hadir';
     
     // Cek apakah user valid
     $cek_user = mysqli_query($conn, "SELECT id, name FROM users WHERE nik='$nik'");
