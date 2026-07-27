@@ -256,8 +256,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && isset($_P
                             <td><?= htmlspecialchars($row['objek_kerja'] ?? '-') ?></td>
                             <td>
                                 <?php 
-                                    // Siapkan data JSON untuk JS
                                     $dataJSON = htmlspecialchars(json_encode([
+                                        'kategori' => $row['kategori_task'] ?? 'perawatan',
+                                        'objek' => $row['objek_kerja'] ?? '-',
                                         'blok' => $row['blok'] ?? '-',
                                         'luas' => $row['luas_ha'] ?? '-',
                                         'mandor' => $row['mandor_name'] ?? '-',
@@ -265,7 +266,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && isset($_P
                                         'h_kg' => $row['hasil_kg'] ?? '0',
                                         'p_ton' => $row['prestasi_ton'] ?? '0',
                                         'p_kg' => $row['prestasi_kg'] ?? '0',
-                                        'status' => ucfirst($row['status']),
+                                        'tbs' => $row['tbs'] ?? '0',
+                                        'kosong' => $row['tandan_kosong'] ?? '0',
+                                        'brondol' => $row['tandan_brondol'] ?? '0',
+                                        'total' => $row['total_tandan'] ?? '0',
+                                        'langsir_kg' => $row['hasil_langsir_kg'] ?? '0',
+                                        'jam' => $row['jumlah_jam_kerja'] ?? '0',
+                                        'aksi' => ucfirst($row['aksi'] ?? 'Belum'),
+                                        'status' => $status_label,
                                         'status_color' => $status_color
                                     ]), ENT_QUOTES, 'UTF-8');
                                 ?>
@@ -282,7 +290,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && isset($_P
                                     <button type="submit" name="action" value="diterima" class="btn-verif btn-terima">Terima</button>
                                 </form>
                                 <?php else: ?>
-                                <span style="font-weight:700; color:<?= $status_color ?>;"><?= $status_text ?></span>
+                                <span style="font-weight:700; color:<?= $status_color ?>;"><?= $status_label ?></span>
                                 <?php endif; ?>
                             </td>
                         </tr>
@@ -313,22 +321,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && isset($_P
             
             <div class="table-responsive">
                 <!-- Tabel di dalam File (Sesuai Sketsa 3.1) -->
-                <table class="table-objek" style="min-width: 600px;">
-                    <thead>
-                        <tr>
-                            <th rowspan="2">BLOK</th>
-                            <th rowspan="2">LUAS HA</th>
-                            <th rowspan="2">MANDOR</th>
-                            <th colspan="2">JUMLAH JANJANGAN</th>
-                            <th colspan="2">PRESTASI</th>
-                            <th rowspan="2">STATUS</th>
-                        </tr>
-                        <tr>
-                            <th>TON</th>
-                            <th>KG</th>
-                            <th>TON</th>
-                            <th>KG</th>
-                        </tr>
+                <table class="table-objek" style="min-width:600px;">
+                    <thead id="modalThead">
+                        <!-- Otomatis JS -->
                     </thead>
                     <tbody id="modalTbody">
                         <!-- Akan diisi otomatis oleh Javascript -->
@@ -343,19 +338,30 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && isset($_P
     function openModal(titleInfo, data) {
         document.getElementById('modalTitle').innerText = titleInfo;
         
-        let html = `
-            <tr>
-                <td>${data.blok}</td>
-                <td>${data.luas}</td>
-                <td>${data.mandor}</td>
-                <td>${data.h_ton}</td>
-                <td>${data.h_kg}</td>
-                <td>${data.p_ton}</td>
-                <td>${data.p_kg}</td>
-                <td><span style="color:${data.status_color}; font-weight:bold;">${data.status}</span></td>
-            </tr>
-        `;
-        document.getElementById('modalTbody').innerHTML = html;
+        let thead = '';
+        let tbody = '';
+        let cat = data.kategori;
+        let obj = data.objek.toLowerCase();
+
+        if (cat === 'langsir' || obj.includes('membabat')) {
+            thead = `<tr><th rowspan="2">Blok</th><th rowspan="2">Luas Ha</th><th rowspan="2">Mandor</th><th colspan="2">Hasil</th><th colspan="2">Prestasi</th><th rowspan="2">Aksi</th><th rowspan="2">Status</th></tr><tr><th>Ton</th><th>Kg</th><th>Ton</th><th>Kg</th></tr>`;
+            tbody = `<tr><td>${data.blok}</td><td>${data.luas}</td><td>${data.mandor}</td><td>${data.h_ton}</td><td>${data.h_kg}</td><td>${data.p_ton}</td><td>${data.p_kg}</td><td>${data.aksi}</td><td><span style="color:${data.status_color}; font-weight:bold;">${data.status}</span></td></tr>`;
+        } else if (cat === 'potong_buah') {
+            thead = `<tr><th rowspan="2">Blok</th><th rowspan="2">Luas Ha</th><th rowspan="2">Mandor</th><th colspan="4">Jumlah Janjangan</th><th rowspan="2">Aksi</th><th rowspan="2">Status</th></tr><tr><th>TBS</th><th>Kosong</th><th>Brondol</th><th>Total</th></tr>`;
+            tbody = `<tr><td>${data.blok}</td><td>${data.luas}</td><td>${data.mandor}</td><td>${data.tbs}</td><td>${data.kosong}</td><td>${data.brondol}</td><td>${data.total}</td><td>${data.aksi}</td><td><span style="color:${data.status_color}; font-weight:bold;">${data.status}</span></td></tr>`;
+        } else if (cat === 'muat_tbs') {
+            thead = `<tr><th>Blok</th><th>Luas Ha</th><th>Mandor</th><th>Hasil Langsir (Kg)</th><th>Jam Kerja</th><th>Aksi</th><th>Status</th></tr>`;
+            tbody = `<tr><td>${data.blok}</td><td>${data.luas}</td><td>${data.mandor}</td><td>${data.langsir_kg}</td><td>${data.jam}</td><td>${data.aksi}</td><td><span style="color:${data.status_color}; font-weight:bold;">${data.status}</span></td></tr>`;
+        } else if (cat === 'jaga') {
+            thead = `<tr><th>Blok</th><th>Luas Ha / Mandor</th><th>Jam Kerja</th><th>Aksi</th><th>Status</th></tr>`;
+            tbody = `<tr><td>${data.blok}</td><td>${data.luas} / ${data.mandor}</td><td>${data.jam}</td><td>${data.aksi}</td><td><span style="color:${data.status_color}; font-weight:bold;">${data.status}</span></td></tr>`;
+        } else {
+            thead = `<tr><th>Blok</th><th>Luas Ha</th><th>Mandor</th><th>Aksi</th><th>Status</th></tr>`;
+            tbody = `<tr><td>${data.blok}</td><td>${data.luas}</td><td>${data.mandor}</td><td>${data.aksi}</td><td><span style="color:${data.status_color}; font-weight:bold;">${data.status}</span></td></tr>`;
+        }
+
+        document.getElementById('modalThead').innerHTML = thead;
+        document.getElementById('modalTbody').innerHTML = tbody;
         document.getElementById('fileModal').style.display = 'flex';
     }
 

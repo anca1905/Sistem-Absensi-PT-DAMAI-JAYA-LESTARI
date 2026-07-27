@@ -45,16 +45,23 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['rows'])) {
         $mandor = (int)($row_data['mandor'] ?? 0);
         $mandor_val = $mandor > 0 ? $mandor : 'NULL';
         $jam = (float)($row_data['jam'] ?? 0);
+        
+        $kategori_task = 'perawatan';
+        $ok_lower = strtolower($objek);
+        if (strpos($ok_lower, 'langsir') !== false) $kategori_task = 'langsir';
+        elseif (strpos($ok_lower, 'potong buah') !== false || strpos($ok_lower, 'panen') !== false) $kategori_task = 'potong_buah';
+        elseif (strpos($ok_lower, 'muat') !== false) $kategori_task = 'muat_tbs';
+        elseif (strpos($ok_lower, 'jaga') !== false) $kategori_task = 'jaga';
 
         if ($user_id_row && !empty($objek)) {
             // Cek duplikat per hari
             $cek = mysqli_query($conn, "SELECT id FROM logbook_kinerja WHERE user_id=$user_id_row AND tanggal='$tgl_safe'");
             if (mysqli_num_rows($cek) == 0) {
-                mysqli_query($conn, "INSERT INTO logbook_kinerja (user_id, mandor_id, tanggal, blok, luas_ha, objek_kerja, jumlah_jam_kerja, status) 
-                                     VALUES ($user_id_row, $mandor_val, '$tgl_safe', '$blok', '$luas', '$objek', $jam, 'ditinjau')");
+                mysqli_query($conn, "INSERT INTO logbook_kinerja (user_id, mandor_id, tanggal, blok, luas_ha, objek_kerja, kategori_task, jumlah_jam_kerja, status) 
+                                     VALUES ($user_id_row, $mandor_val, '$tgl_safe', '$blok', '$luas', '$objek', '$kategori_task', $jam, 'ditinjau')");
                 $saved++;
             } else {
-                mysqli_query($conn, "UPDATE logbook_kinerja SET mandor_id=$mandor_val, blok='$blok', luas_ha='$luas', objek_kerja='$objek', jumlah_jam_kerja=$jam WHERE user_id=$user_id_row AND tanggal='$tgl_safe'");
+                mysqli_query($conn, "UPDATE logbook_kinerja SET mandor_id=$mandor_val, blok='$blok', luas_ha='$luas', objek_kerja='$objek', kategori_task='$kategori_task', jumlah_jam_kerja=$jam WHERE user_id=$user_id_row AND tanggal='$tgl_safe'");
                 $saved++;
             }
         }

@@ -332,6 +332,8 @@ $query_users = mysqli_query($conn, "
                         if (strtolower($status) == 'diterima' || strtolower($status) == 'selesai') $status_badge = 'badge-success';
                         
                         $dataJSON = htmlspecialchars(json_encode([
+                            'kategori' => $user['kategori_task'] ?? 'perawatan',
+                            'objek' => $user['objek_kerja'] ?? '-',
                             'blok' => $user['blok'] ?? '-',
                             'luas' => $user['luas_ha'] ?? '-',
                             'mandor' => $user['mandor_name'] ?? '-',
@@ -339,9 +341,15 @@ $query_users = mysqli_query($conn, "
                             'h_kg' => $user['hasil_kg'] ?? '0',
                             'p_ton' => $user['prestasi_ton'] ?? '0',
                             'p_kg' => $user['prestasi_kg'] ?? '0',
+                            'tbs' => $user['tbs'] ?? '0',
+                            'kosong' => $user['tandan_kosong'] ?? '0',
+                            'brondol' => $user['tandan_brondol'] ?? '0',
+                            'total' => $user['total_tandan'] ?? '0',
+                            'langsir_kg' => $user['hasil_langsir_kg'] ?? '0',
+                            'jam' => $user['jumlah_jam_kerja'] ?? '0',
+                            'aksi' => ucfirst($user['aksi'] ?? 'Belum'),
                             'status' => $status,
-                            'status_badge' => $status_badge,
-                            'objek' => $user['objek_kerja'] ?? '-'
+                            'status_badge' => $status_badge
                         ]), ENT_QUOTES, 'UTF-8');
                 ?>
                     <tr>
@@ -406,19 +414,9 @@ $query_users = mysqli_query($conn, "
 
         <div class="table-responsive" style="margin-bottom: 12px;">
             <table class="table-absen">
-                <thead>
-                    <tr>
-                        <th>BLOK</th>
-                        <th>LUASAN</th>
-                        <th>MANDOR</th>
-                        <th>JUMLAH JANJANG<br><span style="font-weight:normal; font-size:11px;">(Ton/Kg)</span></th>
-                        <th>PRESTASI<br><span style="font-weight:normal; font-size:11px;">(Ton/Kg)</span></th>
-                        <th>STATUS</th>
-                        <th>KETERANGAN</th>
-                    </tr>
+                <thead id="modalThead">
                 </thead>
                 <tbody id="modalTableBody">
-                    <!-- Dinamis menggunakan Javascript -->
                 </tbody>
             </table>
         </div>
@@ -438,23 +436,30 @@ $query_users = mysqli_query($conn, "
         document.getElementById('modalTanggal').innerText = currentDate + ' - ' + name;
         document.getElementById('modalInfoSub').innerText = 'Objek Kerja: ' + data.objek;
         
-        let html = `
-            <tr>
-                <td>${data.blok}</td>
-                <td>${data.luas}</td>
-                <td>${data.mandor}</td>
-                <td>${data.h_ton} Ton / ${data.h_kg} Kg</td>
-                <td>${data.p_ton} Ton / ${data.p_kg} Kg</td>
-                <td><span class="badge ${data.status_badge}">${data.status}</span></td>
-                <td style="color:#cbd5e1; position: relative;">
-                    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="1" style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%);">
-                        <line x1="4" y1="4" x2="20" y2="20"></line>
-                        <line x1="20" y1="4" x2="4" y2="20"></line>
-                    </svg>
-                </td>
-            </tr>
-        `;
-        document.getElementById('modalTableBody').innerHTML = html;
+        let thead = '';
+        let tbody = '';
+        let cat = data.kategori;
+        let obj = data.objek.toLowerCase();
+
+        if (cat === 'langsir' || obj.includes('membabat')) {
+            thead = `<tr><th rowspan="2">Blok</th><th rowspan="2">Luas Ha</th><th rowspan="2">Mandor</th><th colspan="2">Hasil</th><th colspan="2">Prestasi</th><th rowspan="2">Aksi</th><th rowspan="2">Status</th></tr><tr><th>Ton</th><th>Kg</th><th>Ton</th><th>Kg</th></tr>`;
+            tbody = `<tr><td>${data.blok}</td><td>${data.luas}</td><td>${data.mandor}</td><td>${data.h_ton}</td><td>${data.h_kg}</td><td>${data.p_ton}</td><td>${data.p_kg}</td><td>${data.aksi}</td><td><span class="badge ${data.status_badge}">${data.status}</span></td></tr>`;
+        } else if (cat === 'potong_buah') {
+            thead = `<tr><th rowspan="2">Blok</th><th rowspan="2">Luas Ha</th><th rowspan="2">Mandor</th><th colspan="4">Jumlah Janjangan</th><th rowspan="2">Aksi</th><th rowspan="2">Status</th></tr><tr><th>TBS</th><th>Kosong</th><th>Brondol</th><th>Total</th></tr>`;
+            tbody = `<tr><td>${data.blok}</td><td>${data.luas}</td><td>${data.mandor}</td><td>${data.tbs}</td><td>${data.kosong}</td><td>${data.brondol}</td><td>${data.total}</td><td>${data.aksi}</td><td><span class="badge ${data.status_badge}">${data.status}</span></td></tr>`;
+        } else if (cat === 'muat_tbs') {
+            thead = `<tr><th>Blok</th><th>Luas Ha</th><th>Mandor</th><th>Hasil Langsir (Kg)</th><th>Jam Kerja</th><th>Aksi</th><th>Status</th></tr>`;
+            tbody = `<tr><td>${data.blok}</td><td>${data.luas}</td><td>${data.mandor}</td><td>${data.langsir_kg}</td><td>${data.jam}</td><td>${data.aksi}</td><td><span class="badge ${data.status_badge}">${data.status}</span></td></tr>`;
+        } else if (cat === 'jaga') {
+            thead = `<tr><th>Blok</th><th>Luas Ha / Mandor</th><th>Jam Kerja</th><th>Aksi</th><th>Status</th></tr>`;
+            tbody = `<tr><td>${data.blok}</td><td>${data.luas} / ${data.mandor}</td><td>${data.jam}</td><td>${data.aksi}</td><td><span class="badge ${data.status_badge}">${data.status}</span></td></tr>`;
+        } else {
+            thead = `<tr><th>Blok</th><th>Luas Ha</th><th>Mandor</th><th>Aksi</th><th>Status</th></tr>`;
+            tbody = `<tr><td>${data.blok}</td><td>${data.luas}</td><td>${data.mandor}</td><td>${data.aksi}</td><td><span class="badge ${data.status_badge}">${data.status}</span></td></tr>`;
+        }
+
+        document.getElementById('modalThead').innerHTML = thead;
+        document.getElementById('modalTableBody').innerHTML = tbody;
         document.getElementById('fileModal').classList.add('active');
     }
 

@@ -7,7 +7,7 @@ $user_id = $_SESSION['user_id'];
 
 // Ambil tugas/logbook yang sudah diassign pengawas ke karyawan ini
 $tgl_safe = mysqli_real_escape_string($conn, $tanggal);
-$query_tasks = mysqli_query($conn, "SELECT * FROM logbook_kinerja WHERE user_id=$user_id AND tanggal='$tgl_safe' ORDER BY id ASC");
+$query_tasks = mysqli_query($conn, "SELECT lk.*, m.name as mandor_name FROM logbook_kinerja lk LEFT JOIN users m ON lk.mandor_id = m.id WHERE lk.user_id=$user_id AND lk.tanggal='$tgl_safe' ORDER BY lk.id ASC");
 $all_tasks = [];
 while($t = mysqli_fetch_assoc($query_tasks)) {
     $all_tasks[] = $t;
@@ -17,30 +17,52 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $tgl_input = $tgl_safe;
     
     foreach($all_tasks as $t) {
-        $log_id = $t['id'];
-        $id = $log_id; // use DB id as key
+        $id = $t['id'];
         
         $tbs = isset($_POST["tbs_$id"]) ? (int)$_POST["tbs_$id"] : 0;
         $kosong = isset($_POST["kosong_$id"]) ? (int)$_POST["kosong_$id"] : 0;
         $brondol = isset($_POST["brondol_$id"]) ? (int)$_POST["brondol_$id"] : 0;
         $total = isset($_POST["total_$id"]) ? (int)$_POST["total_$id"] : 0;
-        $hasil_kg = isset($_POST["hasil_kg_$id"]) ? (float)$_POST["hasil_kg_$id"] : 0;
+        $hasil_langsir_kg = isset($_POST["hasil_langsir_$id"]) ? (float)$_POST["hasil_langsir_$id"] : 0;
         $jam = isset($_POST["jam_$id"]) ? (float)$_POST["jam_$id"] : 0;
-        $hasil_ton_l = isset($_POST["hasil_ton_$id"]) ? (float)$_POST["hasil_ton_$id"] : 0;
-        $hasil_kg_l = isset($_POST["hasil_kg_langsir_$id"]) ? (float)$_POST["hasil_kg_langsir_$id"] : 0;
+        $hasil_ton = isset($_POST["hasil_ton_$id"]) ? (float)$_POST["hasil_ton_$id"] : 0;
+        $hasil_kg = isset($_POST["hasil_kg_$id"]) ? (float)$_POST["hasil_kg_$id"] : 0;
         $pres_ton = isset($_POST["prestasi_ton_$id"]) ? (float)$_POST["prestasi_ton_$id"] : 0;
         $pres_kg = isset($_POST["prestasi_kg_$id"]) ? (float)$_POST["prestasi_kg_$id"] : 0;
-        $jam_jaga = isset($_POST["jam_jaga_$id"]) ? (float)$_POST["jam_jaga_$id"] : 0;
-
-        $jam_kerja = $jam > 0 ? $jam : $jam_jaga;
+        $aksi = isset($_POST["aksi_$id"]) ? mysqli_real_escape_string($conn, $_POST["aksi_$id"]) : 'belum';
 
         mysqli_query($conn, "UPDATE logbook_kinerja SET 
             tbs=$tbs, tandan_kosong=$kosong, tandan_brondol=$brondol, total_tandan=$total,
-            hasil_langsir_kg=$hasil_kg, jumlah_jam_kerja=$jam_kerja,
-            hasil_ton=$hasil_ton_l, hasil_kg=$hasil_kg_l, prestasi_ton=$pres_ton, prestasi_kg=$pres_kg, status='ditinjau'
-            WHERE id=$log_id AND user_id=$user_id");
+            hasil_langsir_kg=$hasil_langsir_kg, jumlah_jam_kerja=$jam,
+            hasil_ton=$hasil_ton, hasil_kg=$hasil_kg, prestasi_ton=$pres_ton, prestasi_kg=$pres_kg,
+            aksi='$aksi', status='ditinjau'
+            WHERE id=$id AND user_id=$user_id");
     }
     swalRedirect('Semua data logbook berhasil disimpan!', "logbook.php?tanggal=$tgl_input", 'success');
+}
+
+// Grouping logic for rendering different tables
+$format1 = []; // Langsir, Membabat gawangan
+$format2 = []; // Perawatan lain (Kutip, semprot, rawat jalan, korek)
+$format3 = []; // Potong buah
+$format4 = []; // Muat TBS
+$format5 = []; // Jaga
+
+foreach($all_tasks as $t) {
+    $ok = strtolower($t['objek_kerja']);
+    if ($t['kategori_task'] == 'langsir' || strpos($ok, 'membabat') !== false) {
+        $format1[] = $t;
+    } elseif ($t['kategori_task'] == 'perawatan') {
+        $format2[] = $t;
+    } elseif ($t['kategori_task'] == 'potong_buah') {
+        $format3[] = $t;
+    } elseif ($t['kategori_task'] == 'muat_tbs') {
+        $format4[] = $t;
+    } elseif ($t['kategori_task'] == 'jaga') {
+        $format5[] = $t;
+    } else {
+        $format2[] = $t; // fallback
+    }
 }
 ?>
 
@@ -232,52 +254,233 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <form method="POST">
         
         <?php if(count($all_tasks) > 0): ?>
-        <!-- TABEL LOGBOOK DARI DATABASE -->
         <div class="card-container">
-            <h3 class="table-title">
-                <span style="display:inline-block; width:12px; height:12px; background:var(--primary-start); border-radius:3px;"></span>
-                Daftar Tugas Hari Ini - <?= date('d M Y', strtotime($tanggal)) ?>
-            </h3>
+            
+            <?php 
+            // ----------------------------------------------------
+            // FORMAT 1: Langsir manual / Membabat gawangan
+            // ----------------------------------------------------
+            if (count($format1) > 0): ?>
+            <h3 class="table-title"><span style="color:var(--primary-start)">■</span> Objek Kerja: Langsir Manual / Membabat Gawangan</h3>
             <div class="table-responsive">
-                <table class="table-logbook" style="min-width: 750px;">
+                <table class="table-logbook" style="min-width: 900px;">
                     <thead>
                         <tr>
-                            <th>NO</th>
-                            <th>BLOK</th>
-                            <th>LUAS HA</th>
-                            <th>OBJEK KERJA</th>
-                            <th>JAM KERJA</th>
-                            <th>STATUS</th>
+                            <th rowspan="2">Tanggal</th>
+                            <th rowspan="2">Blok</th>
+                            <th rowspan="2">Luas Ha</th>
+                            <th rowspan="2">Mandor</th>
+                            <th rowspan="2">Objek Kerja</th>
+                            <th colspan="2">Hasil</th>
+                            <th colspan="2">Prestasi</th>
+                            <th rowspan="2">Aksi</th>
+                            <th rowspan="2">Status</th>
+                        </tr>
+                        <tr>
+                            <th>Ton</th><th>Kg</th><th>Ton</th><th>Kg</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <?php $no = 1; foreach($all_tasks as $t): 
-                            $st = $t['status'] ?? 'ditinjau';
-                            $st_color = '#94a3b8'; $st_bg = '#f1f5f9';
-                            if($st == 'diterima') { $st_color = '#166534'; $st_bg = '#dcfce7'; }
-                            if($st == 'ditolak') { $st_color = '#991b1b'; $st_bg = '#fee2e2'; }
+                        <?php foreach($format1 as $t): 
+                            $id = $t['id'];
                         ?>
                         <tr>
-                            <td><?= $no++ ?></td>
-                            <td style="color:#64748b; font-weight:600;"><?= htmlspecialchars($t['blok'] ?? '-') ?></td>
-                            <td style="color:#64748b; font-weight:600;"><?= htmlspecialchars($t['luas_ha'] ?? '-') ?></td>
-                            <td style="text-align:left; font-weight:700;"><?= htmlspecialchars($t['objek_kerja'] ?? '-') ?></td>
+                            <td class="info-readonly"><?= date('d M Y', strtotime($t['tanggal'])) ?></td>
+                            <td class="info-readonly"><?= htmlspecialchars($t['blok'] ?? '-') ?></td>
+                            <td class="info-readonly"><?= htmlspecialchars($t['luas_ha'] ?? '-') ?></td>
+                            <td class="info-readonly"><?= htmlspecialchars($t['mandor_name'] ?? '-') ?></td>
+                            <td class="info-readonly"><?= htmlspecialchars($t['objek_kerja'] ?? '-') ?></td>
+                            <td><input type="number" step="0.01" name="hasil_ton_<?= $id ?>" class="input-mini" value="<?= $t['hasil_ton'] ?>"></td>
+                            <td><input type="number" step="0.01" name="hasil_kg_<?= $id ?>" class="input-mini" value="<?= $t['hasil_kg'] ?>"></td>
+                            <td><input type="number" step="0.01" name="prestasi_ton_<?= $id ?>" class="input-mini" value="<?= $t['prestasi_ton'] ?>"></td>
+                            <td><input type="number" step="0.01" name="prestasi_kg_<?= $id ?>" class="input-mini" value="<?= $t['prestasi_kg'] ?>"></td>
                             <td>
-                                <?php if($st == 'ditinjau'): ?>
-                                <input type="number" step="0.5" min="0" max="24" name="jam_<?= $t['id'] ?>" class="input-mini" placeholder="0" value="<?= $t['jumlah_jam_kerja'] ?>">
-                                <?php else: ?>
-                                <?= $t['jumlah_jam_kerja'] ?> jam
-                                <?php endif; ?>
+                                <select name="aksi_<?= $id ?>" class="select-aksi">
+                                    <option value="belum" <?= $t['aksi'] == 'belum' ? 'selected' : '' ?>>Belum</option>
+                                    <option value="selesai" <?= $t['aksi'] == 'selesai' ? 'selected' : '' ?>>Selesai</option>
+                                </select>
                             </td>
-                            <td><span style="background:<?= $st_bg ?>; color:<?= $st_color ?>; padding:4px 8px; border-radius:4px; font-size:10px; font-weight:800;"><?= strtoupper($st) ?></span></td>
+                            <td><?= renderStatusBadge($t['status']) ?></td>
                         </tr>
                         <?php endforeach; ?>
                     </tbody>
                 </table>
             </div>
+            <?php endif; ?>
+
+            <?php 
+            // ----------------------------------------------------
+            // FORMAT 2: Perawatan Umum (Kutip, Semprot, dsb)
+            // ----------------------------------------------------
+            if (count($format2) > 0): ?>
+            <h3 class="table-title"><span style="color:var(--primary-start)">■</span> Objek Kerja: Perawatan Umum</h3>
+            <div class="table-responsive">
+                <table class="table-logbook" style="min-width: 700px;">
+                    <thead>
+                        <tr>
+                            <th>Tanggal</th>
+                            <th>Blok</th>
+                            <th>Luas Ha</th>
+                            <th>Mandor</th>
+                            <th>Objek Kerja</th>
+                            <th>Aksi</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach($format2 as $t): $id = $t['id']; ?>
+                        <tr>
+                            <td class="info-readonly"><?= date('d M Y', strtotime($t['tanggal'])) ?></td>
+                            <td class="info-readonly"><?= htmlspecialchars($t['blok'] ?? '-') ?></td>
+                            <td class="info-readonly"><?= htmlspecialchars($t['luas_ha'] ?? '-') ?></td>
+                            <td class="info-readonly"><?= htmlspecialchars($t['mandor_name'] ?? '-') ?></td>
+                            <td class="info-readonly"><?= htmlspecialchars($t['objek_kerja'] ?? '-') ?></td>
+                            <td>
+                                <select name="aksi_<?= $id ?>" class="select-aksi">
+                                    <option value="belum" <?= $t['aksi'] == 'belum' ? 'selected' : '' ?>>Belum</option>
+                                    <option value="selesai" <?= $t['aksi'] == 'selesai' ? 'selected' : '' ?>>Selesai</option>
+                                </select>
+                            </td>
+                            <td><?= renderStatusBadge($t['status']) ?></td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+            <?php endif; ?>
+
+            <?php 
+            // ----------------------------------------------------
+            // FORMAT 3: Potong Buah / Panen
+            // ----------------------------------------------------
+            if (count($format3) > 0): ?>
+            <h3 class="table-title"><span style="color:var(--primary-start)">■</span> Objek Kerja: Potong Buah / Panen</h3>
+            <div class="table-responsive">
+                <table class="table-logbook" style="min-width: 900px;">
+                    <thead>
+                        <tr>
+                            <th rowspan="2">Tanggal</th>
+                            <th rowspan="2">Blok</th>
+                            <th rowspan="2">Luas Ha</th>
+                            <th rowspan="2">Mandor</th>
+                            <th colspan="4">Jumlah Janjangan</th>
+                            <th rowspan="2">Aksi</th>
+                            <th rowspan="2">Status</th>
+                        </tr>
+                        <tr>
+                            <th>TBS</th><th>Kosong</th><th>Brondol</th><th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach($format3 as $t): $id = $t['id']; ?>
+                        <tr>
+                            <td class="info-readonly"><?= date('d M Y', strtotime($t['tanggal'])) ?></td>
+                            <td class="info-readonly"><?= htmlspecialchars($t['blok'] ?? '-') ?></td>
+                            <td class="info-readonly"><?= htmlspecialchars($t['luas_ha'] ?? '-') ?></td>
+                            <td class="info-readonly"><?= htmlspecialchars($t['mandor_name'] ?? '-') ?></td>
+                            <td><input type="number" name="tbs_<?= $id ?>" class="input-mini" value="<?= $t['tbs'] ?>"></td>
+                            <td><input type="number" name="kosong_<?= $id ?>" class="input-mini" value="<?= $t['tandan_kosong'] ?>"></td>
+                            <td><input type="number" name="brondol_<?= $id ?>" class="input-mini" value="<?= $t['tandan_brondol'] ?>"></td>
+                            <td><input type="number" name="total_<?= $id ?>" class="input-mini" value="<?= $t['total_tandan'] ?>"></td>
+                            <td>
+                                <select name="aksi_<?= $id ?>" class="select-aksi">
+                                    <option value="belum" <?= $t['aksi'] == 'belum' ? 'selected' : '' ?>>Belum</option>
+                                    <option value="selesai" <?= $t['aksi'] == 'selesai' ? 'selected' : '' ?>>Selesai</option>
+                                </select>
+                            </td>
+                            <td><?= renderStatusBadge($t['status']) ?></td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+            <?php endif; ?>
+
+            <?php 
+            // ----------------------------------------------------
+            // FORMAT 4: Muat TBS
+            // ----------------------------------------------------
+            if (count($format4) > 0): ?>
+            <h3 class="table-title"><span style="color:var(--primary-start)">■</span> Objek Kerja: Muat TBS (ke Truk/Jonder)</h3>
+            <div class="table-responsive">
+                <table class="table-logbook" style="min-width: 800px;">
+                    <thead>
+                        <tr>
+                            <th>Tanggal</th>
+                            <th>Blok</th>
+                            <th>Luas Ha</th>
+                            <th>Mandor</th>
+                            <th>Hasil Langsir (Kg)</th>
+                            <th>Jumlah Jam Kerja</th>
+                            <th>Aksi</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach($format4 as $t): $id = $t['id']; ?>
+                        <tr>
+                            <td class="info-readonly"><?= date('d M Y', strtotime($t['tanggal'])) ?></td>
+                            <td class="info-readonly"><?= htmlspecialchars($t['blok'] ?? '-') ?></td>
+                            <td class="info-readonly"><?= htmlspecialchars($t['luas_ha'] ?? '-') ?></td>
+                            <td class="info-readonly"><?= htmlspecialchars($t['mandor_name'] ?? '-') ?></td>
+                            <td><input type="number" step="0.01" name="hasil_langsir_<?= $id ?>" class="input-mini" value="<?= $t['hasil_langsir_kg'] ?>"></td>
+                            <td><input type="number" step="0.5" name="jam_<?= $id ?>" class="input-mini" value="<?= $t['jumlah_jam_kerja'] ?>"></td>
+                            <td>
+                                <select name="aksi_<?= $id ?>" class="select-aksi">
+                                    <option value="belum" <?= $t['aksi'] == 'belum' ? 'selected' : '' ?>>Belum</option>
+                                    <option value="selesai" <?= $t['aksi'] == 'selesai' ? 'selected' : '' ?>>Selesai</option>
+                                </select>
+                            </td>
+                            <td><?= renderStatusBadge($t['status']) ?></td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+            <?php endif; ?>
+
+            <?php 
+            // ----------------------------------------------------
+            // FORMAT 5: Jaga
+            // ----------------------------------------------------
+            if (count($format5) > 0): ?>
+            <h3 class="table-title"><span style="color:var(--primary-start)">■</span> Objek Kerja: Jaga (Genset/Alat/Buah)</h3>
+            <div class="table-responsive">
+                <table class="table-logbook" style="min-width: 700px;">
+                    <thead>
+                        <tr>
+                            <th>Tanggal</th>
+                            <th>Blok</th>
+                            <th>Luas Ha / Mandor</th>
+                            <th>Aksi Jumlah Jam</th>
+                            <th>Aksi</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach($format5 as $t): $id = $t['id']; ?>
+                        <tr>
+                            <td class="info-readonly"><?= date('d M Y', strtotime($t['tanggal'])) ?></td>
+                            <td class="info-readonly"><?= htmlspecialchars($t['blok'] ?? '-') ?></td>
+                            <td class="info-readonly"><?= htmlspecialchars($t['luas_ha'] ?? '-') ?> / <?= htmlspecialchars($t['mandor_name'] ?? '-') ?></td>
+                            <td><input type="number" step="0.5" name="jam_<?= $id ?>" class="input-mini" value="<?= $t['jumlah_jam_kerja'] ?>"></td>
+                            <td>
+                                <select name="aksi_<?= $id ?>" class="select-aksi">
+                                    <option value="belum" <?= $t['aksi'] == 'belum' ? 'selected' : '' ?>>Belum</option>
+                                    <option value="selesai" <?= $t['aksi'] == 'selesai' ? 'selected' : '' ?>>Selesai</option>
+                                </select>
+                            </td>
+                            <td><?= renderStatusBadge($t['status']) ?></td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+            <?php endif; ?>
+
         </div>
         
-        <button type="submit" class="btn-submit">Simpan Logbook Hari Ini</button>
+        <button type="submit" class="btn-submit">Simpan Seluruh Logbook</button>
         
         <?php else: ?>
         <div class="card-container" style="text-align:center; padding:40px;">
@@ -290,4 +493,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     </form>
 </div>
 
-<?php include 'templates/footer.php'; ?>
+<?php 
+function renderStatusBadge($st) {
+    if (!$st) $st = 'ditinjau';
+    $st_color = '#94a3b8'; $st_bg = '#f1f5f9';
+    if($st == 'diterima' || $st == 'selesai') { $st_color = '#166534'; $st_bg = '#dcfce7'; }
+    if($st == 'ditolak') { $st_color = '#991b1b'; $st_bg = '#fee2e2'; }
+    return '<span style="background:'.$st_bg.'; color:'.$st_color.'; padding:4px 8px; border-radius:4px; font-size:10px; font-weight:800;">'.strtoupper($st).'</span>';
+}
+include 'templates/footer.php'; 
+?>

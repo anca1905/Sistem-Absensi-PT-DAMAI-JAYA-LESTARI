@@ -212,7 +212,20 @@ $nama_bulan = array(
                                     echo '<td><span class="status-badge status-h">H</span></td>';
                                 }
                             } else {
-                                echo '<td><span style="color: #cbd5e1;">-</span></td>';
+                                // Fallback: Cek tabel perizinan jika absen kosong
+                                $cek_izin = mysqli_query($conn, "SELECT jenis FROM perizinan WHERE user_id=$user_id AND tanggal_izin='$tgl_str' AND status='disetujui'");
+                                if (mysqli_num_rows($cek_izin) > 0) {
+                                    $row_izin = mysqli_fetch_assoc($cek_izin);
+                                    if ($row_izin['jenis'] == 'izin') {
+                                        echo '<td><span class="status-badge status-i">I</span></td>';
+                                    } elseif ($row_izin['jenis'] == 'sakit') {
+                                        echo '<td><span class="status-badge status-s">S</span></td>';
+                                    } elseif ($row_izin['jenis'] == 'cuti') {
+                                        echo '<td><span class="status-badge status-c">C</span></td>';
+                                    }
+                                } else {
+                                    echo '<td><span style="color: #cbd5e1;">-</span></td>';
+                                }
                             }
                         ?>
                         <?php endfor; ?>
