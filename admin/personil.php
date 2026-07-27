@@ -10,7 +10,7 @@ if (isset($_POST['simpan_data'])) {
     $nama = mysqli_real_escape_string($conn, $_POST['nama']);
     $email = mysqli_real_escape_string($conn, $_POST['email']);
     $no_hp = isset($_POST['no_hp']) ? mysqli_real_escape_string($conn, $_POST['no_hp']) : '';
-    $jabatan = mysqli_real_escape_string($conn, $_POST['jabatan']);
+    $jabatan = isset($_POST['jabatan']) ? mysqli_real_escape_string($conn, $_POST['jabatan']) : '';
     $afdeling = mysqli_real_escape_string($conn, $_POST['afdeling']);
     $role = mysqli_real_escape_string($conn, $_POST['role']);
 
@@ -371,7 +371,7 @@ include 'templates/header.php';
                 <?php endwhile; ?>
             </select>
             <select name="role_filter" class="form-input" style="width: auto; padding: 8px 12px;">
-                <option value="">Semua Peran</option>
+                <option value="">Semua Jabatan</option>
                 <option value="mandor" <?= (isset($_GET['role_filter']) && $_GET['role_filter'] == 'mandor') ? 'selected' : '' ?>>Mandor</option>
                 <option value="karyawan" <?= (isset($_GET['role_filter']) && $_GET['role_filter'] == 'karyawan') ? 'selected' : '' ?>>Karyawan</option>
                 <option value="pengawas" <?= (isset($_GET['role_filter']) && $_GET['role_filter'] == 'pengawas') ? 'selected' : '' ?>>Pengawas</option>
@@ -396,7 +396,7 @@ include 'templates/header.php';
                     <th width="5%">No</th>
                     <th width="30%">Nama Pegawai</th>
                     <th width="20%">NIK</th>
-                    <th width="20%">Afdeling & Peran</th>
+                    <th width="20%">Afdeling & Jabatan</th>
                     <th width="25%" style="text-align: right;" class="aksi-column">Aksi</th>
                 </tr>
             </thead>
@@ -462,7 +462,7 @@ include 'templates/header.php';
                         <input type="text" name="nik" id="nik" class="form-input" required placeholder="Cth: 2024001">
                     </div>
                     <div class="form-group" style="flex: 1;">
-                        <label class="form-label">Peran</label>
+                        <label class="form-label">Jabatan</label>
                         <select name="role" id="role" class="form-input" required>
                             <option value="karyawan">Karyawan</option>
                             <option value="mandor">Mandor</option>
@@ -472,8 +472,7 @@ include 'templates/header.php';
                     </div>
                 </div>
 
-                <div class="row" style="display: flex; gap: 15px;">
-                    <div class="form-group" style="flex: 1;">
+                <div class="form-group">
                         <label class="form-label">Afdeling</label>
                         <select name="afdeling" id="afdeling" class="form-input" required>
                             <option value="">Pilih Afdeling</option>
@@ -484,11 +483,6 @@ include 'templates/header.php';
                                 <option value="<?= htmlspecialchars($afd['nama_afdeling']) ?>"><?= htmlspecialchars($afd['nama_afdeling']) ?></option>
                             <?php endwhile; ?>
                         </select>
-                    </div>
-                    <div class="form-group" style="flex: 1;">
-                        <label class="form-label">Jabatan (Opsional)</label>
-                        <input type="text" name="jabatan" id="jabatan" class="form-input" placeholder="Cth: Pemanen">
-                    </div>
                 </div>
 
                 <div class="row" style="display: flex; gap: 15px;">
@@ -504,7 +498,17 @@ include 'templates/header.php';
 
                 <div class="form-group">
                     <label class="form-label">Password</label>
-                    <input type="password" name="password" class="form-input" placeholder="Isi hanya jika ingin mengubah password">
+                    <div style="position:relative;">
+                        <input type="password" id="password" name="password" class="form-input" placeholder="Isi hanya jika ingin mengubah password">
+                        <button type="button" onclick="togglePassword()" 
+                                style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#94a3b8;padding:4px;display:flex;align-items:center;"
+                                title="Tampilkan/Sembunyikan Password">
+                            <svg id="eye-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                        </button>
+                    </div>
                     <small style="color: #94a3b8; font-size: 11px;">Default untuk user baru disarankan: 123456</small>
                 </div>
             </div>
@@ -526,7 +530,6 @@ include 'templates/header.php';
         document.getElementById('nik').value = data.nik;
         document.getElementById('email').value = data.email;
         document.getElementById('no_hp').value = data.no_hp || '';
-        document.getElementById('jabatan').value = data.jabatan;
 
         if (data.role) document.getElementById('role').value = data.role;
         if (data.afdeling) document.getElementById('afdeling').value = data.afdeling;
@@ -542,7 +545,6 @@ include 'templates/header.php';
             document.getElementById('nik').value = '';
             document.getElementById('email').value = '';
             document.getElementById('no_hp').value = '';
-            document.getElementById('jabatan').value = '';
             document.getElementById('role').value = 'karyawan';
             document.getElementById('afdeling').value = '';
         }
@@ -551,6 +553,18 @@ include 'templates/header.php';
 
     function closeModal() {
         document.getElementById('modalForm').classList.remove('show');
+    }
+
+    function togglePassword() {
+        const pwd = document.getElementById('password');
+        const eyeIcon = document.getElementById('eye-icon');
+        if (pwd.type === 'password') {
+            pwd.type = 'text';
+            eyeIcon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line>';
+        } else {
+            pwd.type = 'password';
+            eyeIcon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle>';
+        }
     }
 
     function konfirmasiHapus(id) {

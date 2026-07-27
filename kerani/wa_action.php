@@ -28,7 +28,7 @@ if (mysqli_num_rows($q_cek) === 0) {
 $row = mysqli_fetch_assoc($q_cek);
 
 // Cegah validasi ulang jika sudah divalidasi
-if ($row['status'] !== 'menunggu') {
+if ($row['status'] !== 'pending') {
     die("Pengajuan ini sudah divalidasi dengan status: <b>" . strtoupper($row['status']) . "</b>.");
 }
 

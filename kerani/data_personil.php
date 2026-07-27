@@ -254,21 +254,28 @@ $role_filter = isset($_GET['role']) ? $_GET['role'] : 'karyawan';
                     <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: #475569;">Email (Opsional)</label>
                     <input type="email" name="email" id="email" class="filter-select" style="width: 100%; box-sizing: border-box; font-weight: normal;">
                 </div>
-                <div>
-                    <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: #475569;">Jabatan (Opsional)</label>
-                    <input type="text" name="jabatan" id="jabatan" class="filter-select" style="width: 100%; box-sizing: border-box; font-weight: normal;">
-                </div>
+
                 <div>
                     <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: #475569;">No HP / WhatsApp (Opsional)</label>
                     <input type="text" name="no_hp" id="no_hp" class="filter-select" style="width: 100%; box-sizing: border-box; font-weight: normal;" placeholder="08xxxxxxxx">
                 </div>
                 <div>
                     <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: #475569;">Password (Opsional)</label>
-                    <input type="password" name="password" id="password" class="filter-select" style="width: 100%; box-sizing: border-box; font-weight: normal;" placeholder="Kosongkan jika tidak mengubah">
+                    <div style="position:relative;">
+                        <input type="password" name="password" id="password" class="filter-select" style="width: 100%; box-sizing: border-box; font-weight: normal;" placeholder="Kosongkan jika tidak mengubah">
+                        <button type="button" onclick="togglePassword()" 
+                                style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#94a3b8;padding:4px;display:flex;align-items:center;"
+                                title="Tampilkan/Sembunyikan Password">
+                            <svg id="eye-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                        </button>
+                    </div>
                 </div>
                 <div style="display: flex; gap: 15px;">
                     <div style="flex: 1;">
-                        <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: #475569;">Peran</label>
+                        <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: #475569;">Jabatan</label>
                         <select name="role" id="role" class="filter-select" style="width: 100%; box-sizing: border-box; font-weight: normal;">
                             <option value="karyawan">Karyawan</option>
                             <option value="mandor">Mandor</option>
@@ -309,7 +316,7 @@ $role_filter = isset($_GET['role']) ? $_GET['role'] : 'karyawan';
         document.getElementById('nik').value = data.nik;
         document.getElementById('email').value = data.email || '';
         document.getElementById('no_hp').value = data.no_hp || '';
-        document.getElementById('jabatan').value = data.jabatan || '';
+
         document.getElementById('role').value = data.role || 'karyawan';
         document.getElementById('afdeling').value = data.afdeling || '';
         
@@ -324,7 +331,7 @@ $role_filter = isset($_GET['role']) ? $_GET['role'] : 'karyawan';
             document.getElementById('nik').value = '';
             document.getElementById('email').value = '';
             document.getElementById('no_hp').value = '';
-            document.getElementById('jabatan').value = '';
+
             document.getElementById('role').value = '<?= $role_filter ?>';
             document.getElementById('afdeling').value = '<?= isset($_SESSION["afdeling"]) ? $_SESSION["afdeling"] : "" ?>';
         }
@@ -333,6 +340,18 @@ $role_filter = isset($_GET['role']) ? $_GET['role'] : 'karyawan';
 
     function closePersonilModal() {
         modalPersonil.style.display = 'none';
+    }
+
+    function togglePassword() {
+        const pwd = document.getElementById('password');
+        const eyeIcon = document.getElementById('eye-icon');
+        if (pwd.type === 'password') {
+            pwd.type = 'text';
+            eyeIcon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line>';
+        } else {
+            pwd.type = 'password';
+            eyeIcon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle>';
+        }
     }
 </script>
 

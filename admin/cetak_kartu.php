@@ -270,7 +270,7 @@ if (!file_exists($filePath)) {
 
 <body>
 
-    <h2>Preview Kartu Karyawan</h2>
+    <h2>Preview Kartu <?= ucfirst($karyawan['role']) ?></h2>
     <p>Pastikan desain sudah benar sebelum di-download.</p>
 
     <div class="cards-wrapper">
@@ -282,7 +282,7 @@ if (!file_exists($filePath)) {
                 <div class="company-title">PT DAMAI JAYA LESTARI</div>
 
                 <div class="emp-name"><?= $karyawan['name'] ?></div>
-                <div class="emp-role"><?= $karyawan['jabatan'] ?></div>
+                <div class="emp-role"><?= strtoupper($karyawan['role']) ?></div>
 
                 <div class="emp-nik-label">Nomor Induk Pegawai</div>
                 <div class="emp-nik"><?= $karyawan['nik'] ?></div>
@@ -315,9 +315,9 @@ if (!file_exists($filePath)) {
     </div>
 
     <div class="btn-group">
-        <a href="personil.php" class="btn btn-gray">
-            &larr; Kembali
-        </a>
+        <button onclick="window.close()" class="btn btn-gray">
+            &times; Tutup Tab
+        </button>
 
         <button onclick="downloadCards()" class="btn btn-blue">
             ⬇️ Download Gambar (PNG)

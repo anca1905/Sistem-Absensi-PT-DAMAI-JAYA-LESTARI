@@ -10,11 +10,16 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'admin') {
 }
 
 $dir = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'wa-bot';
-$cmd = "start /B cmd /c cd \"$dir\" && node server.js > NUL 2>&1";
-
+$logFile = $dir . DIRECTORY_SEPARATOR . 'server.log';
+// Menggunakan WScript.Shell agar berjalan di background tanpa mengganggu PHP, dan log error disimpan ke server.log
 try {
-    pclose(popen($cmd, "r"));
+    $WshShell = new COM("WScript.Shell");
+    $cmd = "cmd /c cd /d \"$dir\" && node server.js > \"$logFile\" 2>&1";
+    $WshShell->Run($cmd, 0, false);
     echo json_encode(['status' => 'success', 'message' => 'Node.js Server sedang dihidupkan di latar belakang...']);
 } catch (Throwable $e) {
-    echo json_encode(['status' => 'error', 'message' => 'Gagal menjalankan server: ' . $e->getMessage()]);
+    // Fallback if COM is disabled
+    $cmd = "start /B cmd /c cd /d \"$dir\" && node server.js > \"$logFile\" 2>&1";
+    pclose(popen($cmd, "r"));
+    echo json_encode(['status' => 'success', 'message' => 'Node.js Server sedang dihidupkan di latar belakang (fallback)...']);
 }
