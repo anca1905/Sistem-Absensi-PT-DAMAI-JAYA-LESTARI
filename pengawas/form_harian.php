@@ -157,6 +157,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['rows'])) {
     }
     .status-h { background-color: #dcfce7; color: #166534; }
     .status-a { background-color: #fee2e2; color: #991b1b; }
+    .status-i { background-color: #e0f2fe; color: #075985; }
+    .status-s { background-color: #ede9fe; color: #5b21b6; }
+    .status-c { background-color: #ffedd5; color: #9a3412; }
 
     .btn-submit {
         width: 100%;
@@ -265,11 +268,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['rows'])) {
                                 <td><?= htmlspecialchars($user['nik']) ?></td>
                                 <td style="font-weight:700; color:var(--text-dark);"><?= htmlspecialchars($user['name']) ?></td>
                                 <td style="text-align:center;">
-                                    <?php if($hadir): ?>
-                                        <span class="status-badge status-h"><?= ucfirst($status_absen) ?></span>
-                                    <?php else: ?>
-                                        <span class="status-badge status-a">Belum</span>
-                                    <?php endif; ?>
+                                    <?php 
+                                    if($hadir) {
+                                        $sa = strtolower($status_absen);
+                                        $badge_class = 'status-h';
+                                        if (in_array($sa, ['alpha', 'alpa'])) $badge_class = 'status-a';
+                                        elseif ($sa == 'izin') $badge_class = 'status-i';
+                                        elseif ($sa == 'sakit') $badge_class = 'status-s';
+                                        elseif ($sa == 'cuti') $badge_class = 'status-c';
+                                        
+                                        echo "<span class=\"status-badge {$badge_class}\">" . ucfirst($sa) . "</span>";
+                                    } else {
+                                        echo '<span class="status-badge status-a">Alpha</span>';
+                                    }
+                                    ?>
                                 </td>
                                 <?php if ($peran != 'mandor'): ?>
                                 <input type="hidden" name="rows[<?= $no-1 ?>][user_id]" value="<?= $user['id'] ?>">
