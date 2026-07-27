@@ -37,7 +37,7 @@ $json_data   = json_encode($data_grafik);
 $query_activity = mysqli_query($conn, "
     SELECT u.name, u.jabatan, a.waktu_masuk, a.status_kehadiran 
     FROM absensis a JOIN users u ON a.user_id = u.id 
-    WHERE a.tanggal = CURDATE() ORDER BY a.waktu_masuk DESC LIMIT 5
+    WHERE a.tanggal = CURDATE() ORDER BY a.id DESC LIMIT 5
 ");
 
 include 'templates/header.php';
@@ -225,7 +225,19 @@ include 'templates/header.php';
                                 <span class="act-name"><?= $act['name'] ?></span>
                                 <span style="font-size: 11px; color: #64748b;"><?= $act['jabatan'] ?></span>
                             </div>
-                            <div class="act-time"><?= date('H:i', strtotime($act['waktu_masuk'])) ?></div>
+                            <div style="display:flex; flex-direction:column; align-items:flex-end;">
+                                <div class="act-time"><?= ($act['waktu_masuk'] && $act['waktu_masuk'] != '00:00:00') ? date('H:i', strtotime($act['waktu_masuk'])) : '-' ?></div>
+                                <?php
+                                    $s = strtolower($act['status_kehadiran']);
+                                    if ($s == 'hadir') { $co = '#10b981'; }
+                                    elseif (in_array($s, ['alpha', 'alpa'])) { $co = '#ef4444'; }
+                                    elseif ($s == 'izin') { $co = '#0284c7'; }
+                                    elseif ($s == 'sakit') { $co = '#9333ea'; }
+                                    elseif ($s == 'cuti') { $co = '#ea580c'; }
+                                    else { $co = '#64748b'; }
+                                ?>
+                                <span style="font-size: 10px; font-weight: 700; color: <?= $co ?>; text-transform: uppercase;"><?= ucfirst($s) ?></span>
+                            </div>
                         </li>
                     <?php endwhile; ?>
                 </ul>

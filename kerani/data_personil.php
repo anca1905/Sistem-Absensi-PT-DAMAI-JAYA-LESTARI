@@ -8,7 +8,6 @@ if (isset($_POST['simpan_data'])) {
     $nama = mysqli_real_escape_string($conn, $_POST['nama']);
     
     $email = isset($_POST['email']) ? mysqli_real_escape_string($conn, $_POST['email']) : '';
-    $jabatan = isset($_POST['jabatan']) ? mysqli_real_escape_string($conn, $_POST['jabatan']) : '';
     $no_hp = isset($_POST['no_hp']) ? mysqli_real_escape_string($conn, $_POST['no_hp']) : '';
     $afdeling = isset($_POST['afdeling']) ? mysqli_real_escape_string($conn, $_POST['afdeling']) : '';
     $role = isset($_POST['role']) ? mysqli_real_escape_string($conn, $_POST['role']) : (isset($_GET['role']) ? $_GET['role'] : 'karyawan');
@@ -26,11 +25,11 @@ if (isset($_POST['simpan_data'])) {
             exit;
         }
         $pw_hash = !empty($_POST['password']) ? password_hash($_POST['password'], PASSWORD_DEFAULT) : password_hash('123456', PASSWORD_DEFAULT);
-        $query = "INSERT INTO users (nik, name, email, no_hp, password, role, jabatan, afdeling) 
-                  VALUES ('$nik', '$nama', '$email', '$no_hp', '$pw_hash', '$role', '$jabatan', '$afdeling')";
+        $query = "INSERT INTO users (nik, name, email, no_hp, password, role, afdeling) 
+                  VALUES ('$nik', '$nama', '$email', '$no_hp', '$pw_hash', '$role', '$afdeling')";
     } else {
         $query = "UPDATE users SET 
-                  nik='$nik', name='$nama', email='$email', no_hp='$no_hp', jabatan='$jabatan', afdeling='$afdeling', role='$role' $password_sql 
+                  nik='$nik', name='$nama', email='$email', no_hp='$no_hp', afdeling='$afdeling', role='$role' $password_sql 
                   WHERE id='$id'";
     }
 
@@ -316,6 +315,7 @@ $role_filter = isset($_GET['role']) ? $_GET['role'] : 'karyawan';
         document.getElementById('nik').value = data.nik;
         document.getElementById('email').value = data.email || '';
         document.getElementById('no_hp').value = data.no_hp || '';
+        document.getElementById('password').value = '';
 
         document.getElementById('role').value = data.role || 'karyawan';
         document.getElementById('afdeling').value = data.afdeling || '';

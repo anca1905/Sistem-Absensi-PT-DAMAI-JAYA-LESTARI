@@ -39,7 +39,7 @@ $query_activity = mysqli_query($conn, "
     FROM absensis a 
     JOIN users u ON a.user_id = u.id 
     WHERE a.tanggal = CURDATE() 
-    ORDER BY a.waktu_masuk DESC 
+    ORDER BY a.id DESC 
     LIMIT 5
 ");
 
@@ -345,8 +345,17 @@ include 'templates/header.php';
                             <td style="font-weight: 500; color: #1e293b;"><?= $a['name'] ?></td>
                             <td><?= date('d/m/Y', strtotime($a['tanggal'])) ?></td>
                             <td>
-                                <span style="background: <?= $a['status_kehadiran']=='hadir' ? '#ecfdf5' : '#fef2f2' ?>; color: <?= $a['status_kehadiran']=='hadir' ? '#10b981' : '#ef4444' ?>; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; text-transform: uppercase;">
-                                    <?= $a['status_kehadiran'] ?>
+                                <?php
+                                $s = strtolower($a['status_kehadiran']);
+                                if ($s == 'hadir') { $bg = '#ecfdf5'; $co = '#10b981'; }
+                                elseif (in_array($s, ['alpha', 'alpa'])) { $bg = '#fef2f2'; $co = '#ef4444'; }
+                                elseif ($s == 'izin') { $bg = '#e0f2fe'; $co = '#0284c7'; }
+                                elseif ($s == 'sakit') { $bg = '#f3e8ff'; $co = '#9333ea'; }
+                                elseif ($s == 'cuti') { $bg = '#ffedd5'; $co = '#ea580c'; }
+                                else { $bg = '#f8fafc'; $co = '#64748b'; }
+                                ?>
+                                <span style="background: <?= $bg ?>; color: <?= $co ?>; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; text-transform: uppercase;">
+                                    <?= ucfirst($s) ?>
                                 </span>
                             </td>
                         </tr>
@@ -403,8 +412,22 @@ include 'templates/header.php';
                             </div>
                             <div style="font-size: 11px; color: #64748b;"><?= $act['jabatan'] ?></div>
                         </div>
-                        <div style="font-size: 12px; font-weight: 700; color: #1e293b; font-family: monospace;">
-                            <?= date('H:i', strtotime($act['waktu_masuk'])) ?>
+                        <div style="display:flex; flex-direction:column; align-items:flex-end; gap:2px;">
+                            <div style="font-size: 12px; font-weight: 700; color: #1e293b; font-family: monospace;">
+                                <?= ($act['waktu_masuk'] && $act['waktu_masuk'] != '00:00:00') ? date('H:i', strtotime($act['waktu_masuk'])) : '-' ?>
+                            </div>
+                            <?php
+                                $s = strtolower($act['status_kehadiran']);
+                                if ($s == 'hadir') { $co = '#10b981'; }
+                                elseif (in_array($s, ['alpha', 'alpa'])) { $co = '#ef4444'; }
+                                elseif ($s == 'izin') { $co = '#0284c7'; }
+                                elseif ($s == 'sakit') { $co = '#9333ea'; }
+                                elseif ($s == 'cuti') { $co = '#ea580c'; }
+                                else { $co = '#64748b'; }
+                            ?>
+                            <div style="font-size: 10px; font-weight: 700; color: <?= $co ?>; text-transform: uppercase;">
+                                <?= ucfirst($s) ?>
+                            </div>
                         </div>
                     </div>
                 <?php endwhile; ?>

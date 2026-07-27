@@ -10,7 +10,6 @@ if (isset($_POST['simpan_data'])) {
     $nama = mysqli_real_escape_string($conn, $_POST['nama']);
     $email = mysqli_real_escape_string($conn, $_POST['email']);
     $no_hp = isset($_POST['no_hp']) ? mysqli_real_escape_string($conn, $_POST['no_hp']) : '';
-    $jabatan = isset($_POST['jabatan']) ? mysqli_real_escape_string($conn, $_POST['jabatan']) : '';
     $afdeling = mysqli_real_escape_string($conn, $_POST['afdeling']);
     $role = mysqli_real_escape_string($conn, $_POST['role']);
 
@@ -27,15 +26,14 @@ if (isset($_POST['simpan_data'])) {
 
     if (empty($id)) {
         // --- LOGIKA CREATE (INSERT) ---
-        // Cek NIK duplikat
         $cek = mysqli_query($conn, "SELECT id FROM users WHERE nik='$nik'");
         if (mysqli_num_rows($cek) > 0) {
             swalRedirect('NIK sudah terdaftar!', 'personil.php', 'error', 'NIK Duplikat!');
             exit;
         }
 
-        $query = "INSERT INTO users (nik, name, email, no_hp, password, role, jabatan, afdeling) 
-                  VALUES ('$nik', '$nama', '$email', '$no_hp', '" . $_POST['password'] . "', '$role', '$jabatan', '$afdeling')";
+        $query = "INSERT INTO users (nik, name, email, no_hp, password, role, afdeling) 
+                  VALUES ('$nik', '$nama', '$email', '$no_hp', '" . $_POST['password'] . "', '$role', '$afdeling')";
     } else {
         // --- LOGIKA UPDATE ---
         $query = "UPDATE users SET 
@@ -43,7 +41,6 @@ if (isset($_POST['simpan_data'])) {
                   name='$nama', 
                   email='$email', 
                   no_hp='$no_hp',
-                  jabatan='$jabatan',
                   afdeling='$afdeling',
                   role='$role'
                   $password_sql
@@ -419,7 +416,7 @@ include 'templates/header.php';
                                 ID Card
                             </a>
 
-                            <button onclick='editData(<?= json_encode($row) ?>)' class="btn btn-warning" style="padding: 6px 10px; font-size: 11px;">
+                            <button onclick='editData(<?= htmlspecialchars(json_encode($row), ENT_QUOTES, "UTF-8") ?>)' class="btn btn-warning" style="padding: 6px 10px; font-size: 11px;">
                                 Edit
                             </button>
 
@@ -528,8 +525,9 @@ include 'templates/header.php';
         document.getElementById('id_karyawan').value = data.id;
         document.getElementById('nama').value = data.name;
         document.getElementById('nik').value = data.nik;
-        document.getElementById('email').value = data.email;
+        document.getElementById('email').value = data.email || '';
         document.getElementById('no_hp').value = data.no_hp || '';
+        document.getElementById('password').value = ''; // Selalu kosongkan password
 
         if (data.role) document.getElementById('role').value = data.role;
         if (data.afdeling) document.getElementById('afdeling').value = data.afdeling;
