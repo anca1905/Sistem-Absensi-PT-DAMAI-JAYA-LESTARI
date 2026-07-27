@@ -26,13 +26,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['nik'])) {
         if(mysqli_num_rows($cek_absen) > 0) {
             swalRedirect('Anda sudah melakukan absensi hari ini.', 'scanner.php', 'info', 'Info');
         } else {
-            // Cek apakah waktu saat ini antara 06:00 dan 07:00 untuk absen MASUK
-            if ($waktu >= '06:00:00' && $waktu <= '07:00:00') {
+            // Cek apakah waktu saat ini antara 06:00 dan 15:00 untuk absen MASUK
+            if ($waktu >= '06:00:00' && $waktu <= '15:00:00') {
                 // Insert absen masuk
                 mysqli_query($conn, "INSERT INTO absensis (user_id, tanggal, waktu_masuk, status_kehadiran) VALUES ($scan_user_id, '$tanggal', '$waktu', '$status_kehadiran')");
                 swalRedirect('Absen MASUK berhasil dicatat!', 'scanner.php', 'success');
             } else {
-                swalAlert('Batas waktu absen masuk adalah jam 06:00 - 07:00!', 'error');
+                swalAlert('Batas waktu absen masuk adalah jam 06:00 - 15:00!', 'error');
             }
         }
     } else {

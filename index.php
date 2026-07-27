@@ -19,6 +19,7 @@ if (isset($_POST['login'])) {
             $_SESSION['user_id'] = $data['id'];
             $_SESSION['nama']    = $data['name'];
             $_SESSION['role']    = $data['role'];
+            $_SESSION['afdeling']= $data['afdeling'];
 
             if ($data['role'] == 'admin' || $data['role'] == 'pimpinan') {
                 header("Location: admin/index.php");

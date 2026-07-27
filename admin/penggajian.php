@@ -169,9 +169,12 @@ $afdeling = isset($_GET['afdeling']) ? $_GET['afdeling'] : '';
         <div class="filter-group-left">
             <select name="afdeling" class="form-select" onchange="window.location.href='penggajian.php?afdeling='+this.value">
                 <option value="">Pilih Afdeling</option>
-                <option value="Afd 1" <?= $afdeling == 'Afd 1' ? 'selected' : '' ?>>Afdeling 1</option>
-                <option value="Afd 2" <?= $afdeling == 'Afd 2' ? 'selected' : '' ?>>Afdeling 2</option>
-                <option value="Afd 3" <?= $afdeling == 'Afd 3' ? 'selected' : '' ?>>Afdeling 3</option>
+                <?php 
+                $afd_query = mysqli_query($conn, "SELECT nama_afdeling FROM afdelings ORDER BY nama_afdeling ASC");
+                while ($afd = mysqli_fetch_assoc($afd_query)): 
+                ?>
+                    <option value="<?= htmlspecialchars($afd['nama_afdeling']) ?>" <?= $afdeling == $afd['nama_afdeling'] ? 'selected' : '' ?>><?= htmlspecialchars($afd['nama_afdeling']) ?></option>
+                <?php endwhile; ?>
             </select>
         </div>
 

@@ -22,7 +22,7 @@ $tipe_pesan = '';
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if (isset($_POST['absen_masuk'])) {
         if (!$dataAbsen) {
-            if ($now >= '06:00:00' && $now <= '07:00:00') {
+            if ($now >= '06:00:00' && $now <= '15:00:00') {
                 $status = ($now > $jamMasuk) ? 'terlambat' : 'tepat_waktu';
                 $insert = mysqli_query($conn, "INSERT INTO absensis (user_id, tanggal, waktu_masuk, status_kehadiran) VALUES ('$user_id', '$today', '$now', '$status')");
                 if ($insert) {
@@ -36,7 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     $tipe_pesan = "error";
                 }
             } else {
-                $pesan = "Batas waktu absen masuk adalah jam 06:00 - 07:00!";
+                $pesan = "Batas waktu absen masuk adalah jam 06:00 - 15:00!";
                 $tipe_pesan = "error";
             }
         }

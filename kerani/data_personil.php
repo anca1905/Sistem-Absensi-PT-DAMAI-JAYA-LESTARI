@@ -196,7 +196,13 @@ $role_filter = isset($_GET['role']) ? $_GET['role'] : 'karyawan';
             <tbody>
                 <?php 
                 $role_safe = mysqli_real_escape_string($conn, $role_filter);
-                $query = mysqli_query($conn, "SELECT * FROM users WHERE role='$role_safe' ORDER BY name ASC");
+                $afdeling_kerani = isset($_SESSION['afdeling']) ? mysqli_real_escape_string($conn, $_SESSION['afdeling']) : '';
+                
+                if (!empty($afdeling_kerani)) {
+                    $query = mysqli_query($conn, "SELECT * FROM users WHERE role='$role_safe' AND afdeling='$afdeling_kerani' ORDER BY name ASC");
+                } else {
+                    $query = mysqli_query($conn, "SELECT * FROM users WHERE role='$role_safe' ORDER BY name ASC");
+                }
                 $no = 1;
                 while($row = mysqli_fetch_assoc($query)): 
                 ?>
@@ -268,18 +274,18 @@ $role_filter = isset($_GET['role']) ? $_GET['role'] : 'karyawan';
                             <option value="mandor">Mandor</option>
                             <option value="pengawas">Pengawas</option>
                             <option value="kerani">Kerani</option>
-                            <option value="petani">Petani</option>
                         </select>
                     </div>
                     <div style="flex: 1;">
                         <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: #475569;">Afdeling</label>
                         <select name="afdeling" id="afdeling" class="filter-select" style="width: 100%; box-sizing: border-box; font-weight: normal;">
                             <option value="">- Pilih Afdeling -</option>
-                            <option value="Afd 1">Afdeling 1</option>
-                            <option value="Afd 2">Afdeling 2</option>
-                            <option value="Afd 3">Afdeling 3</option>
-                            <option value="Afd 4">Afdeling 4</option>
-                            <option value="Afd 5">Afdeling 5</option>
+                            <?php 
+                            $afd_query = mysqli_query($conn, "SELECT nama_afdeling FROM afdelings ORDER BY nama_afdeling ASC");
+                            while ($afd = mysqli_fetch_assoc($afd_query)): 
+                            ?>
+                                <option value="<?= htmlspecialchars($afd['nama_afdeling']) ?>"><?= htmlspecialchars($afd['nama_afdeling']) ?></option>
+                            <?php endwhile; ?>
                         </select>
                     </div>
                 </div>
@@ -320,7 +326,7 @@ $role_filter = isset($_GET['role']) ? $_GET['role'] : 'karyawan';
             document.getElementById('no_hp').value = '';
             document.getElementById('jabatan').value = '';
             document.getElementById('role').value = '<?= $role_filter ?>';
-            document.getElementById('afdeling').value = '';
+            document.getElementById('afdeling').value = '<?= isset($_SESSION["afdeling"]) ? $_SESSION["afdeling"] : "" ?>';
         }
         modalPersonil.style.display = 'flex';
     }

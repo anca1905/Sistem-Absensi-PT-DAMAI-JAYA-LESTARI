@@ -363,18 +363,19 @@ include 'templates/header.php';
         <form method="GET" style="display: flex; gap: 10px; align-items: center;">
             <select name="afdeling_filter" class="form-input" style="width: auto; padding: 8px 12px;">
                 <option value="">Semua Afdeling</option>
-                <option value="Afd 1" <?= (isset($_GET['afdeling_filter']) && $_GET['afdeling_filter'] == 'Afd 1') ? 'selected' : '' ?>>Afdeling 1</option>
-                <option value="Afd 2" <?= (isset($_GET['afdeling_filter']) && $_GET['afdeling_filter'] == 'Afd 2') ? 'selected' : '' ?>>Afdeling 2</option>
-                <option value="Afd 3" <?= (isset($_GET['afdeling_filter']) && $_GET['afdeling_filter'] == 'Afd 3') ? 'selected' : '' ?>>Afdeling 3</option>
-                <option value="Afd 4" <?= (isset($_GET['afdeling_filter']) && $_GET['afdeling_filter'] == 'Afd 4') ? 'selected' : '' ?>>Afdeling 4</option>
-                <option value="Afd 5" <?= (isset($_GET['afdeling_filter']) && $_GET['afdeling_filter'] == 'Afd 5') ? 'selected' : '' ?>>Afdeling 5</option>
+                <?php 
+                $afd_query1 = mysqli_query($conn, "SELECT nama_afdeling FROM afdelings ORDER BY nama_afdeling ASC");
+                while ($afd = mysqli_fetch_assoc($afd_query1)): 
+                ?>
+                    <option value="<?= htmlspecialchars($afd['nama_afdeling']) ?>" <?= (isset($_GET['afdeling_filter']) && $_GET['afdeling_filter'] == $afd['nama_afdeling']) ? 'selected' : '' ?>><?= htmlspecialchars($afd['nama_afdeling']) ?></option>
+                <?php endwhile; ?>
             </select>
             <select name="role_filter" class="form-input" style="width: auto; padding: 8px 12px;">
                 <option value="">Semua Peran</option>
                 <option value="mandor" <?= (isset($_GET['role_filter']) && $_GET['role_filter'] == 'mandor') ? 'selected' : '' ?>>Mandor</option>
                 <option value="karyawan" <?= (isset($_GET['role_filter']) && $_GET['role_filter'] == 'karyawan') ? 'selected' : '' ?>>Karyawan</option>
                 <option value="pengawas" <?= (isset($_GET['role_filter']) && $_GET['role_filter'] == 'pengawas') ? 'selected' : '' ?>>Pengawas</option>
-                <option value="petani" <?= (isset($_GET['role_filter']) && $_GET['role_filter'] == 'petani') ? 'selected' : '' ?>>Petani</option>
+                <option value="kerani" <?= (isset($_GET['role_filter']) && $_GET['role_filter'] == 'kerani') ? 'selected' : '' ?>>Kerani</option>
             </select>
             <button type="submit" class="btn btn-primary" style="padding: 8px 15px; height: 38px;">Filter</button>
         </form>
@@ -466,7 +467,7 @@ include 'templates/header.php';
                             <option value="karyawan">Karyawan</option>
                             <option value="mandor">Mandor</option>
                             <option value="pengawas">Pengawas</option>
-                            <option value="petani">Petani</option>
+                            <option value="kerani">Kerani</option>
                         </select>
                     </div>
                 </div>
@@ -476,11 +477,12 @@ include 'templates/header.php';
                         <label class="form-label">Afdeling</label>
                         <select name="afdeling" id="afdeling" class="form-input" required>
                             <option value="">Pilih Afdeling</option>
-                            <option value="Afd 1">Afdeling 1</option>
-                            <option value="Afd 2">Afdeling 2</option>
-                            <option value="Afd 3">Afdeling 3</option>
-                            <option value="Afd 4">Afdeling 4</option>
-                            <option value="Afd 5">Afdeling 5</option>
+                            <?php 
+                            $afd_query2 = mysqli_query($conn, "SELECT nama_afdeling FROM afdelings ORDER BY nama_afdeling ASC");
+                            while ($afd = mysqli_fetch_assoc($afd_query2)): 
+                            ?>
+                                <option value="<?= htmlspecialchars($afd['nama_afdeling']) ?>"><?= htmlspecialchars($afd['nama_afdeling']) ?></option>
+                            <?php endwhile; ?>
                         </select>
                     </div>
                     <div class="form-group" style="flex: 1;">

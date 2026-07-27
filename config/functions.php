@@ -46,8 +46,8 @@ function checkAndSetAlpha($conn) {
     $today = date('Y-m-d');
     $time_now = date('H:i:s');
     
-    // Jika sudah lewat jam 07:00 pagi
-    if ($time_now > '07:00:00') {
+    // Jika sudah lewat jam 15:00
+    if ($time_now > '15:00:00') {
         // Ambil semua user yang belum ada di tabel absensis hari ini
         $query = "
             SELECT id FROM users 

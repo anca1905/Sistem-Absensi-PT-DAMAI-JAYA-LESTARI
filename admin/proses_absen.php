@@ -38,7 +38,7 @@ checkAndSetAlpha($conn);
 
 if (!$dataAbsen) {
     // -- ABSEN MASUK --
-    if ($now >= '06:00:00' && $now <= '07:00:00') {
+    if ($now >= '06:00:00' && $now <= '15:00:00') {
         $status = ($now > $jamMasuk) ? 'terlambat' : 'tepat_waktu';
         $insert = mysqli_query($conn, "INSERT INTO absensis (user_id, tanggal, waktu_masuk, status_kehadiran) VALUES ('$userId', '$today', '$now', '$status')");
 
@@ -52,7 +52,7 @@ if (!$dataAbsen) {
             ]);
         }
     } else {
-        echo json_encode(['status' => 'error', 'message' => 'Batas waktu absen masuk adalah jam 06:00 - 07:00!']);
+        echo json_encode(['status' => 'error', 'message' => 'Batas waktu absen masuk adalah jam 06:00 - 15:00!']);
     }
 } else {
     // Jika sudah absen

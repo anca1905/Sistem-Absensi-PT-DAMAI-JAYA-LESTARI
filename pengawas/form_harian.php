@@ -186,7 +186,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     <select name="peran" class="form-select" onchange="document.getElementById('filterForm').submit()">
                         <option value="karyawan" <?= $peran == 'karyawan' ? 'selected' : '' ?>>Karyawan</option>
                         <option value="mandor" <?= $peran == 'mandor' ? 'selected' : '' ?>>Mandor</option>
-                        <option value="pemanen" <?= $peran == 'pemanen' ? 'selected' : '' ?>>Pemanen</option>
+                        <option value="pengawas" <?= $peran == 'pengawas' ? 'selected' : '' ?>>Pengawas</option>
                     </select>
                 </div>
             </div>

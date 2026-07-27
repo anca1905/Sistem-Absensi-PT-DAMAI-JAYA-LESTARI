@@ -19,11 +19,17 @@ $nama_bulan = array(
 );
 $periode_judul = $nama_bulan[$bulan] . ' ' . $tahun;
 
-// Ambil data users (karyawan)
-$where_clause = "WHERE role='karyawan'";
+// Ambil data users (karyawan, mandor, dll)
+$where_conditions = ["role != 'admin'"];
 if (!empty($jabatan)) {
-    $where_clause .= " AND jabatan = '" . mysqli_real_escape_string($conn, $jabatan) . "'";
+    // Dropdown filter jabatan di UI sebenarnya memilih role (mandor, karyawan, dll)
+    $jabatan_safe = mysqli_real_escape_string($conn, $jabatan);
+    $where_conditions[] = "(role = '$jabatan_safe' OR jabatan = '$jabatan_safe')";
 }
+if (!empty($afdeling)) {
+    $where_conditions[] = "afdeling = '" . mysqli_real_escape_string($conn, $afdeling) . "'";
+}
+$where_clause = "WHERE " . implode(' AND ', $where_conditions);
 $query_users = mysqli_query($conn, "SELECT * FROM users $where_clause ORDER BY name ASC");
 
 // Ambil data absensi sebulan untuk optimasi query
@@ -194,6 +200,47 @@ while ($row = mysqli_fetch_assoc($query_absen)) {
         text-align: left !important;
     }
 
+    /* Sticky Columns */
+    .table-absen thead tr:first-child th:nth-child(1),
+    .table-absen tbody td:nth-child(1) {
+        position: sticky;
+        left: 0;
+        z-index: 2;
+        background-color: inherit;
+    }
+    
+    .table-absen thead tr:first-child th:nth-child(2),
+    .table-absen tbody td:nth-child(2) {
+        position: sticky;
+        left: 40px; /* Lebar kolom NO */
+        z-index: 2;
+        background-color: inherit;
+    }
+    
+    .table-absen thead tr:first-child th:nth-child(3),
+    .table-absen tbody td:nth-child(3) {
+        position: sticky;
+        left: 160px; /* 40px + 120px */
+        z-index: 2;
+        background-color: inherit;
+        border-right: 2px solid #cbd5e1; /* Pembatas visual */
+    }
+
+    .table-absen thead tr:first-child th:nth-child(1),
+    .table-absen thead tr:first-child th:nth-child(2),
+    .table-absen thead tr:first-child th:nth-child(3) {
+        z-index: 3; /* Header harus di atas cell */
+        background-color: #f8fafc;
+    }
+    
+    .table-absen tbody tr {
+        background-color: #ffffff;
+    }
+    
+    .table-absen tbody tr:hover td {
+        background-color: #f1f5f9;
+    }
+
     /* Status Badges */
     .status-badge {
         display: inline-block;
@@ -224,16 +271,19 @@ while ($row = mysqli_fetch_assoc($query_absen)) {
             <div class="filter-group-left">
                 <select name="afdeling" class="form-select" onchange="document.getElementById('formFilter').submit();">
                     <option value="">-- Pilih Afdeling --</option>
-                    <option value="Afd 1" <?= $afdeling == 'Afd 1' ? 'selected' : '' ?>>Afdeling 1</option>
-                    <option value="Afd 2" <?= $afdeling == 'Afd 2' ? 'selected' : '' ?>>Afdeling 2</option>
-                    <option value="Afd 3" <?= $afdeling == 'Afd 3' ? 'selected' : '' ?>>Afdeling 3</option>
+                    <?php 
+                    $afd_query = mysqli_query($conn, "SELECT nama_afdeling FROM afdelings ORDER BY nama_afdeling ASC");
+                    while ($afd = mysqli_fetch_assoc($afd_query)): 
+                    ?>
+                        <option value="<?= htmlspecialchars($afd['nama_afdeling']) ?>" <?= $afdeling == $afd['nama_afdeling'] ? 'selected' : '' ?>><?= htmlspecialchars($afd['nama_afdeling']) ?></option>
+                    <?php endwhile; ?>
                 </select>
 
                 <select name="jabatan" class="form-select" onchange="document.getElementById('formFilter').submit();">
                     <option value="">-- Pilih Jabatan --</option>
                     <option value="mandor" <?= $jabatan == 'mandor' ? 'selected' : '' ?>>Mandor</option>
                     <option value="karyawan" <?= $jabatan == 'karyawan' ? 'selected' : '' ?>>Karyawan</option>
-                    <option value="pemanen" <?= $jabatan == 'pemanen' ? 'selected' : '' ?>>Pemanen</option>
+                    <option value="pengawas" <?= $jabatan == 'pengawas' ? 'selected' : '' ?>>Pengawas</option>
                     <option value="kerani" <?= $jabatan == 'kerani' ? 'selected' : '' ?>>Kerani</option>
                 </select>
             </div>

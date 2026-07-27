@@ -39,8 +39,9 @@ if (isset($_POST['simpan_data'])) {
             exit;
         }
 
-        $query = "INSERT INTO users (nik, name, email, password, role, jabatan) 
-                  VALUES ('$nik', '$nama', '$email', '" . $_POST['password'] . "', 'karyawan', '$jabatan')";
+        $afdeling_pengawas = isset($_SESSION['afdeling']) ? mysqli_real_escape_string($conn, $_SESSION['afdeling']) : '';
+        $query = "INSERT INTO users (nik, name, email, password, role, jabatan, afdeling) 
+                  VALUES ('$nik', '$nama', '$email', '" . $_POST['password'] . "', 'karyawan', '$jabatan', '$afdeling_pengawas')";
     } else {
         // --- LOGIKA UPDATE ---
         $query = "UPDATE users SET 
@@ -67,8 +68,12 @@ if (isset($_GET['hapus'])) {
 }
 
 // 3. Ambil Data Karyawan
-$data_karyawan = mysqli_query($conn, "SELECT * FROM users WHERE role='karyawan' ORDER BY id DESC");
-
+$afdeling_pengawas = isset($_SESSION['afdeling']) ? mysqli_real_escape_string($conn, $_SESSION['afdeling']) : '';
+if (!empty($afdeling_pengawas)) {
+    $data_karyawan = mysqli_query($conn, "SELECT * FROM users WHERE role='karyawan' AND afdeling='$afdeling_pengawas' ORDER BY id DESC");
+} else {
+    $data_karyawan = mysqli_query($conn, "SELECT * FROM users WHERE role='karyawan' ORDER BY id DESC");
+}
 include 'templates/header.php';
 ?>
 

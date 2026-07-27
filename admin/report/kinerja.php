@@ -425,8 +425,8 @@ $query_users = mysqli_query($conn, "SELECT * FROM users WHERE role='karyawan' OR
         document.getElementById('fileModal').classList.add('active');
         
         // Coba ganti info sub sesuai jabatan
-        if(jabatan == 'pemanen') {
-            document.getElementById('modalInfoSub').innerHTML = 'Isi di dalam file / <span style="font-style: italic;">misal objek kerjanya panen buah</span>';
+        if(jabatan == 'pengawas') {
+            document.getElementById('modalInfoSub').innerHTML = 'Isi di dalam file / <span style="font-style: italic;">Laporan hasil pengawasan</span>';
         } else if(jabatan == 'mandor') {
             document.getElementById('modalInfoSub').innerHTML = 'Isi di dalam file / <span style="font-style: italic;">Laporan supervisi blok</span>';
         } else {

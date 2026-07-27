@@ -184,7 +184,14 @@ $nama_bulan = array(
             <tbody>
                 <?php 
                 $role_safe = mysqli_real_escape_string($conn, $role_filter);
-                $query = mysqli_query($conn, "SELECT id, nik, name FROM users WHERE role='$role_safe' ORDER BY name ASC");
+                $afdeling_kerani = isset($_SESSION['afdeling']) ? mysqli_real_escape_string($conn, $_SESSION['afdeling']) : '';
+                
+                if (!empty($afdeling_kerani)) {
+                    $query = mysqli_query($conn, "SELECT id, nik, name FROM users WHERE role='$role_safe' AND afdeling='$afdeling_kerani' ORDER BY name ASC");
+                } else {
+                    $query = mysqli_query($conn, "SELECT id, nik, name FROM users WHERE role='$role_safe' ORDER BY name ASC");
+                }
+                
                 $no = 1;
                 while($user = mysqli_fetch_assoc($query)): 
                 ?>
