@@ -121,6 +121,10 @@ $nama_bulan = array(
         font-size: 10px;
     }
     .status-h { background-color: #dcfce7; color: #166534; }
+    .status-a { background-color: #fee2e2; color: #991b1b; }
+    .status-i { background-color: #e0f2fe; color: #075985; }
+    .status-s { background-color: #ede9fe; color: #5b21b6; }
+    .status-c { background-color: #ffedd5; color: #9a3412; }
     
     @media print {
         body * { visibility: hidden; }
@@ -209,7 +213,13 @@ $nama_bulan = array(
                         if(mysqli_num_rows($cek_absen) > 0) {
                             $row_abs = mysqli_fetch_assoc($cek_absen);
                             if ($row_abs['status_kehadiran'] == 'alpha') {
-                                echo '<td><span class="status-badge" style="background-color: #fee2e2; color: #991b1b;">A</span></td>';
+                                echo '<td><span class="status-badge status-a">A</span></td>';
+                            } elseif ($row_abs['status_kehadiran'] == 'izin') {
+                                echo '<td><span class="status-badge status-i">I</span></td>';
+                            } elseif ($row_abs['status_kehadiran'] == 'sakit') {
+                                echo '<td><span class="status-badge status-s">S</span></td>';
+                            } elseif ($row_abs['status_kehadiran'] == 'cuti') {
+                                echo '<td><span class="status-badge status-c">C</span></td>';
                             } else {
                                 $total_hadir++;
                                 echo '<td><span class="status-badge status-h">H</span></td>';

@@ -253,8 +253,11 @@ while ($row = mysqli_fetch_assoc($query_absen)) {
     }
     
     .status-h { background-color: #dcfce7; color: #166534; } /* Hadir */
+    .status-a { background-color: #fee2e2; color: #991b1b; } /* Alpha */
     .status-t { background-color: #fef9c3; color: #854d0e; } /* Terlambat */
-    .status-a { background-color: #fee2e2; color: #991b1b; } /* Alpa / Kosong */
+    .status-i { background-color: #e0f2fe; color: #075985; } /* Izin */
+    .status-s { background-color: #ede9fe; color: #5b21b6; } /* Sakit */
+    .status-c { background-color: #ffedd5; color: #9a3412; } /* Cuti */
 
     /* Animasi Masuk */
     @keyframes fadeIn {
@@ -365,6 +368,15 @@ while ($row = mysqli_fetch_assoc($query_absen)) {
                             } elseif ($status_absen == 'alpha') {
                                 $kode = 'A'; // Alpha
                                 $class = 'status-a';
+                            } elseif ($status_absen == 'izin') {
+                                $kode = 'I'; // Izin
+                                $class = 'status-i';
+                            } elseif ($status_absen == 'sakit') {
+                                $kode = 'S'; // Sakit
+                                $class = 'status-s';
+                            } elseif ($status_absen == 'cuti') {
+                                $kode = 'C'; // Cuti
+                                $class = 'status-c';
                             } else {
                                 // Default kosong (belum diabsen)
                             }

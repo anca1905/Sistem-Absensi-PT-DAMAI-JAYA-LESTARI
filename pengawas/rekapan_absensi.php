@@ -97,6 +97,10 @@ while ($row = mysqli_fetch_assoc($query_absen)) {
     
     .status-h { background-color: #dcfce7; color: #166534; }
     .status-t { background-color: #fef9c3; color: #854d0e; }
+    .status-a { background-color: #fee2e2; color: #991b1b; }
+    .status-i { background-color: #e0f2fe; color: #075985; }
+    .status-s { background-color: #ede9fe; color: #5b21b6; }
+    .status-c { background-color: #ffedd5; color: #9a3412; }
 
     .btn-print {
         width: 100%;
@@ -209,7 +213,13 @@ while ($row = mysqli_fetch_assoc($query_absen)) {
                                 $total_hadir++;
                                 echo '<td><span class="status-badge status-t">T</span></td>';
                             } elseif (in_array($status, ['alfa', 'alpa', 'alpha'])) {
-                                echo '<td><span class="status-badge" style="background:#fee2e2;color:#991b1b;">A</span></td>';
+                                echo '<td><span class="status-badge status-a">A</span></td>';
+                            } elseif ($status == 'izin') {
+                                echo '<td><span class="status-badge status-i">I</span></td>';
+                            } elseif ($status == 'sakit') {
+                                echo '<td><span class="status-badge status-s">S</span></td>';
+                            } elseif ($status == 'cuti') {
+                                echo '<td><span class="status-badge status-c">C</span></td>';
                             } else {
                                 echo '<td><span style="color: #cbd5e1;">-</span></td>';
                             }

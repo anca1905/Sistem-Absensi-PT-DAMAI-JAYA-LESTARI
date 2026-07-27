@@ -389,6 +389,9 @@ include '../templates/header.php';
                                     case 'sakit':
                                         $status_badge = '<span class="badge badge-primary">Sakit</span>';
                                         break;
+                                    case 'cuti':
+                                        $status_badge = '<span class="badge badge-warning" style="background:#ffedd5;color:#9a3412;">Cuti</span>';
+                                        break;
                                     case 'alpha':
                                         $status_badge = '<span class="badge badge-danger">Alpha</span>';
                                         break;
