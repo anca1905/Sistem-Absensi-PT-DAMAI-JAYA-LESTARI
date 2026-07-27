@@ -15,8 +15,16 @@ $nama_bulan = array(
 $tgl_pecah = explode('-', $tanggal);
 $format_tanggal = $tgl_pecah[2] . ' ' . $nama_bulan[$tgl_pecah[1]] . ' ' . $tgl_pecah[0];
 
-// Ambil data users (karyawan)
-$query_users = mysqli_query($conn, "SELECT * FROM users WHERE role='karyawan' ORDER BY name ASC");
+// Ambil data users (karyawan) beserta kinerja harinya
+$tgl_safe = mysqli_real_escape_string($conn, $tanggal);
+$query_users = mysqli_query($conn, "
+    SELECT u.id, u.nik, u.name, u.jabatan, lk.status as lk_status, lk.blok, lk.luas_ha, lk.objek_kerja, lk.hasil_ton, lk.hasil_kg, lk.prestasi_ton, lk.prestasi_kg, m.name as mandor_name
+    FROM users u 
+    LEFT JOIN logbook_kinerja lk ON u.id = lk.user_id AND lk.tanggal = '$tgl_safe'
+    LEFT JOIN users m ON lk.mandor_id = m.id
+    WHERE u.role='karyawan' 
+    ORDER BY u.name ASC
+");
 ?>
 
 <style>
@@ -319,15 +327,30 @@ $query_users = mysqli_query($conn, "SELECT * FROM users WHERE role='karyawan' OR
                 $no = 1;
                 if(mysqli_num_rows($query_users) > 0):
                     while($user = mysqli_fetch_assoc($query_users)): 
-                        // Dummy status & dummy report
-                        $status_rand = rand(0, 1) == 1 ? 'Selesai' : 'Belum';
+                        $status = $user['lk_status'] ? ucfirst($user['lk_status']) : 'Belum';
+                        $status_badge = 'badge-warning';
+                        if (strtolower($status) == 'diterima' || strtolower($status) == 'selesai') $status_badge = 'badge-success';
+                        
+                        $dataJSON = htmlspecialchars(json_encode([
+                            'blok' => $user['blok'] ?? '-',
+                            'luas' => $user['luas_ha'] ?? '-',
+                            'mandor' => $user['mandor_name'] ?? '-',
+                            'h_ton' => $user['hasil_ton'] ?? '0',
+                            'h_kg' => $user['hasil_kg'] ?? '0',
+                            'p_ton' => $user['prestasi_ton'] ?? '0',
+                            'p_kg' => $user['prestasi_kg'] ?? '0',
+                            'status' => $status,
+                            'status_badge' => $status_badge,
+                            'objek' => $user['objek_kerja'] ?? '-'
+                        ]), ENT_QUOTES, 'UTF-8');
                 ?>
                     <tr>
                         <td><?= $no++ ?></td>
                         <td class="text-left"><?= htmlspecialchars($user['nik']) ?></td>
                         <td class="text-left" style="font-weight: 600;"><?= htmlspecialchars($user['name']) ?></td>
                         <td>
-                            <button onclick="openReportModal('<?= htmlspecialchars((string)$user['name'], ENT_QUOTES) ?>', '<?= htmlspecialchars((string)$user['jabatan'], ENT_QUOTES) ?>')" class="btn-file">
+                            <?php if ($user['lk_status']): ?>
+                            <button onclick="openReportModal('<?= htmlspecialchars((string)$user['name'], ENT_QUOTES) ?>', '<?= htmlspecialchars((string)$user['jabatan'], ENT_QUOTES) ?>', <?= $dataJSON ?>)" class="btn-file">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                                     <polyline points="14 2 14 8 20 8"></polyline>
@@ -337,10 +360,13 @@ $query_users = mysqli_query($conn, "SELECT * FROM users WHERE role='karyawan' OR
                                 </svg>
                                 File
                             </button>
+                            <?php else: ?>
+                            <span style="color:#94a3b8; font-size:12px; font-style:italic;">-</span>
+                            <?php endif; ?>
                         </td>
                         <td>
-                            <span class="badge <?= $status_rand == 'Selesai' ? 'badge-success' : 'badge-warning' ?>">
-                                <?= $status_rand ?>
+                            <span class="badge <?= $status_badge ?>">
+                                <?= $status ?>
                             </span>
                         </td>
                     </tr>
@@ -392,22 +418,7 @@ $query_users = mysqli_query($conn, "SELECT * FROM users WHERE role='karyawan' OR
                     </tr>
                 </thead>
                 <tbody id="modalTableBody">
-                    <!-- Dummy data untuk modal -->
-                    <tr>
-                        <td>Blok A1</td>
-                        <td>10 Ha</td>
-                        <td id="modalMandorName">-</td>
-                        <td>5000 kg</td>
-                        <td>1200 kg</td>
-                        <td><span class="badge badge-success">Selesai</span></td>
-                        <td style="color:#cbd5e1; position: relative;">
-                            <!-- X Mark (Coretan sesuai sketsa) -->
-                            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="1" style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%);">
-                                <line x1="4" y1="4" x2="20" y2="20"></line>
-                                <line x1="20" y1="4" x2="4" y2="20"></line>
-                            </svg>
-                        </td>
-                    </tr>
+                    <!-- Dinamis menggunakan Javascript -->
                 </tbody>
             </table>
         </div>
@@ -420,18 +431,31 @@ $query_users = mysqli_query($conn, "SELECT * FROM users WHERE role='karyawan' OR
 </div>
 
 <script>
-    function openReportModal(name, jabatan) {
-        document.getElementById('modalMandorName').innerText = name;
-        document.getElementById('fileModal').classList.add('active');
+    // Menyimpan tanggal saat ini di JS untuk ditampilkan di modal
+    const currentDate = "<?= $format_tanggal ?>";
+
+    function openReportModal(name, role, data) {
+        document.getElementById('modalTanggal').innerText = currentDate + ' - ' + name;
+        document.getElementById('modalInfoSub').innerText = 'Objek Kerja: ' + data.objek;
         
-        // Coba ganti info sub sesuai jabatan
-        if(jabatan == 'pengawas') {
-            document.getElementById('modalInfoSub').innerHTML = 'Isi di dalam file / <span style="font-style: italic;">Laporan hasil pengawasan</span>';
-        } else if(jabatan == 'mandor') {
-            document.getElementById('modalInfoSub').innerHTML = 'Isi di dalam file / <span style="font-style: italic;">Laporan supervisi blok</span>';
-        } else {
-            document.getElementById('modalInfoSub').innerHTML = 'Isi di dalam file / <span style="font-style: italic;">misal objek kerjanya langsir manual</span>';
-        }
+        let html = `
+            <tr>
+                <td>${data.blok}</td>
+                <td>${data.luas}</td>
+                <td>${data.mandor}</td>
+                <td>${data.h_ton} Ton / ${data.h_kg} Kg</td>
+                <td>${data.p_ton} Ton / ${data.p_kg} Kg</td>
+                <td><span class="badge ${data.status_badge}">${data.status}</span></td>
+                <td style="color:#cbd5e1; position: relative;">
+                    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="1" style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%);">
+                        <line x1="4" y1="4" x2="20" y2="20"></line>
+                        <line x1="20" y1="4" x2="4" y2="20"></line>
+                    </svg>
+                </td>
+            </tr>
+        `;
+        document.getElementById('modalTableBody').innerHTML = html;
+        document.getElementById('fileModal').classList.add('active');
     }
 
     function closeReportModal() {
