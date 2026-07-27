@@ -2,6 +2,7 @@
 require '../config/config.php';
 include 'templates/header.php';
 
+$user_id = $_SESSION['user_id'];
 $bulan = isset($_GET['bulan']) ? $_GET['bulan'] : date('m');
 $tahun = isset($_GET['tahun']) ? $_GET['tahun'] : date('Y');
 $jumlah_hari = cal_days_in_month(CAL_GREGORIAN, $bulan, $tahun);
@@ -12,6 +13,17 @@ $nama_bulan = array(
     '07' => 'Juli', '08' => 'Agustus', '09' => 'September',
     '10' => 'Oktober', '11' => 'November', '12' => 'Desember'
 );
+
+// Ambil data absensi dari DB
+$query_absen = mysqli_query($conn, "
+    SELECT DAY(tanggal) as hari, status_kehadiran
+    FROM absensis
+    WHERE user_id = '$user_id' AND MONTH(tanggal) = '$bulan' AND YEAR(tanggal) = '$tahun'
+");
+$data_absen = [];
+while ($row = mysqli_fetch_assoc($query_absen)) {
+    $data_absen[$row['hari']] = $row['status_kehadiran'];
+}
 ?>
 
 <style>
@@ -189,11 +201,15 @@ $nama_bulan = array(
                         <?php 
                         $total_hadir = 0;
                         for($i = 1; $i <= $jumlah_hari; $i++): 
-                            // Dummy: 90% hadir
-                            $hadir = (rand(1, 10) > 1);
-                            if($hadir) {
+                            $status = isset($data_absen[$i]) ? $data_absen[$i] : null;
+                            if ($status == 'tepat_waktu' || $status == 'hadir') {
                                 $total_hadir++;
                                 echo '<td><span class="status-badge status-h">H</span></td>';
+                            } elseif ($status == 'terlambat') {
+                                $total_hadir++;
+                                echo '<td><span class="status-badge status-t">T</span></td>';
+                            } elseif ($status == 'alfa' || $status == 'alpa') {
+                                echo '<td><span class="status-badge" style="background:#fee2e2;color:#991b1b;">A</span></td>';
                             } else {
                                 echo '<td><span style="color: #cbd5e1;">-</span></td>';
                             }

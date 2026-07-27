@@ -5,12 +5,23 @@ include 'templates/header.php';
 // Filter parameter
 $tanggal = isset($_GET['tanggal']) ? $_GET['tanggal'] : date('Y-m-d');
 $peran = isset($_GET['peran']) ? $_GET['peran'] : 'karyawan';
+$pengawas_id = $_SESSION['user_id'];
+$afdeling_pengawas = isset($_SESSION['afdeling']) ? mysqli_real_escape_string($conn, $_SESSION['afdeling']) : '';
 
-// Query dummy untuk data karyawan yang hadir hari ini
-$query_users = mysqli_query($conn, "SELECT id, nik, name, role FROM users WHERE role='$peran' ORDER BY name ASC");
+// Ambil daftar karyawan dari afdeling pengawas
+$peran_safe = mysqli_real_escape_string($conn, $peran);
+if (!empty($afdeling_pengawas)) {
+    $query_users = mysqli_query($conn, "SELECT id, nik, name, role FROM users WHERE role='$peran_safe' AND afdeling='$afdeling_pengawas' ORDER BY name ASC");
+} else {
+    $query_users = mysqli_query($conn, "SELECT id, nik, name, role FROM users WHERE role='$peran_safe' ORDER BY name ASC");
+}
 
-// --- Data Master (Hardcoded berdasarkan Sketsa) ---
-$list_mandor = ['Amir', 'Ketut primayana', 'Baharuddin inti'];
+// Ambil daftar mandor dari DB
+$query_mandor = mysqli_query($conn, "SELECT name FROM users WHERE role='mandor'" . (!empty($afdeling_pengawas) ? " AND afdeling='$afdeling_pengawas'" : "") . " ORDER BY name ASC");
+$list_mandor = [];
+while($m = mysqli_fetch_assoc($query_mandor)) { $list_mandor[] = $m['name']; }
+
+// --- Data Master (blok & objek masih statis karena belum ada tabel khusus) ---
 $list_objek = [
     'Langsir manual', 'Membabat gawangan', 'Kutip brondolan', 
     'Rawat jalan', 'Korek janjangan', 'Potong buah / panen', 
@@ -23,8 +34,29 @@ $list_blok = [
     'K.39' => '30.98', 'L.39' => '31.17', 'L.40' => '30.22'
 ];
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    swalRedirect('Laporan berhasil disimpan!', 'index.php', 'success');
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['rows'])) {
+    $tgl_safe = mysqli_real_escape_string($conn, $tanggal);
+    $saved = 0;
+    foreach ($_POST['rows'] as $row_data) {
+        $user_id_row = (int)$row_data['user_id'];
+        $blok = mysqli_real_escape_string($conn, $row_data['blok'] ?? '');
+        $luas = mysqli_real_escape_string($conn, $row_data['luas'] ?? '');
+        $objek = mysqli_real_escape_string($conn, $row_data['objek'] ?? '');
+        $mandor = mysqli_real_escape_string($conn, $row_data['mandor'] ?? '');
+        $jam = (float)($row_data['jam'] ?? 0);
+
+        if ($user_id_row && !empty($objek)) {
+            // Cek duplikat
+            $cek = mysqli_query($conn, "SELECT id FROM logbook_kinerja WHERE user_id=$user_id_row AND tanggal='$tgl_safe' AND objek_kerja='$objek' AND blok='$blok'");
+            if (mysqli_num_rows($cek) == 0) {
+                mysqli_query($conn, "INSERT INTO logbook_kinerja (user_id, tanggal, blok, luas_ha, objek_kerja, jumlah_jam_kerja, status) 
+                                     VALUES ($user_id_row, '$tgl_safe', '$blok', '$luas', '$objek', $jam, 'ditinjau')");
+                $saved++;
+            }
+        }
+    }
+    swalRedirect("$saved baris laporan berhasil disimpan!", 'index.php', 'success');
+    exit;
 }
 ?>
 
@@ -197,7 +229,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <?php endif; ?>
 
         <!-- Tabel Form Harian -->
-        <form method="POST" action="form_harian.php">
+        <form method="POST" action="form_harian.php?tanggal=<?= $tanggal ?>&peran=<?= $peran ?>">
             <div class="table-responsive">
                 <table class="table-absen">
                     <thead>
@@ -206,23 +238,27 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                             <th>NIK</th>
                             <th>NAMA</th>
                             <th>STATUS<br>KEHADIRAN</th>
-                            <th>KETERANGAN</th>
                             <?php if ($peran != 'mandor'): ?>
                             <!-- Kolom Input Pengawas -->
                             <th>MANDOR</th>
                             <th>OBJEK KERJA</th>
                             <th>BLOK</th>
                             <th>LUAS HA</th>
+                            <th>JAM KERJA</th>
                             <?php endif; ?>
                         </tr>
                     </thead>
                     <tbody>
                         <?php 
                         $no = 1;
+                        $tgl_safe = mysqli_real_escape_string($conn, $tanggal);
                         if(mysqli_num_rows($query_users) > 0):
                             while($user = mysqli_fetch_assoc($query_users)): 
-                                // Simulasi Status
-                                $hadir = rand(0, 5) > 0; // Sebagian besar hadir
+                                // Ambil status absensi real dari DB
+                                $q_status = mysqli_query($conn, "SELECT status_kehadiran FROM absensis WHERE user_id='{$user['id']}' AND tanggal='$tgl_safe'");
+                                $absen_row = mysqli_fetch_assoc($q_status);
+                                $hadir = $absen_row ? true : false;
+                                $status_absen = $absen_row ? $absen_row['status_kehadiran'] : 'Belum Absen';
                         ?>
                             <tr>
                                 <td style="text-align:center;"><?= $no++ ?></td>
@@ -230,17 +266,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                 <td style="font-weight:700; color:var(--text-dark);"><?= htmlspecialchars($user['name']) ?></td>
                                 <td style="text-align:center;">
                                     <?php if($hadir): ?>
-                                        <span class="status-badge status-h">HADIR</span>
+                                        <span class="status-badge status-h"><?= ucfirst($status_absen) ?></span>
                                     <?php else: ?>
-                                        <span class="status-badge status-a">ALPA</span>
+                                        <span class="status-badge status-a">Belum</span>
                                     <?php endif; ?>
                                 </td>
-                                <td><input type="text" name="keterangan[<?= $user['id'] ?>]" placeholder="Otomatis / Isi note" value="<?= $hadir ? 'Masuk' : 'Tidak Hadir' ?>"></td>
                                 <?php if ($peran != 'mandor'): ?>
+                                <input type="hidden" name="rows[<?= $no-1 ?>][user_id]" value="<?= $user['id'] ?>">
                                 <!-- Select Mandor -->
                                 <td>
-                                    <select name="mandor[<?= $user['id'] ?>]">
-                                        <option value="">-- Isi Pengawas --</option>
+                                    <select name="rows[<?= $no-1 ?>][mandor]">
+                                        <option value="">-- Pilih Mandor --</option>
                                         <?php foreach($list_mandor as $m): ?>
                                             <option value="<?= $m ?>"><?= $m ?></option>
                                         <?php endforeach; ?>
@@ -249,8 +285,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
                                 <!-- Select Objek Kerja -->
                                 <td>
-                                    <select name="objek[<?= $user['id'] ?>]">
-                                        <option value="">-- Isi Pengawas --</option>
+                                    <select name="rows[<?= $no-1 ?>][objek]">
+                                        <option value="">-- Objek Kerja --</option>
                                         <?php foreach($list_objek as $o): ?>
                                             <option value="<?= $o ?>"><?= $o ?></option>
                                         <?php endforeach; ?>
@@ -259,8 +295,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
                                 <!-- Select Blok (onchange akan mengisi luas) -->
                                 <td>
-                                    <select name="blok[<?= $user['id'] ?>]" onchange="isiLuas(this, 'luas_<?= $user['id'] ?>')">
-                                        <option value="" data-luas="">-- Isi Pengawas --</option>
+                                    <select name="rows[<?= $no-1 ?>][blok]" onchange="isiLuas(this, 'luas_<?= $user['id'] ?>', 'luas_input_<?= $user['id'] ?>')">
+                                        <option value="" data-luas="">-- Pilih Blok --</option>
                                         <?php foreach($list_blok as $blok => $luas): ?>
                                             <option value="<?= $blok ?>" data-luas="<?= $luas ?>"><?= $blok ?></option>
                                         <?php endforeach; ?>
@@ -269,7 +305,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
                                 <!-- Input Luas Ha (Readonly / Autofill) -->
                                 <td>
-                                    <input type="text" id="luas_<?= $user['id'] ?>" name="luas[<?= $user['id'] ?>]" class="input-readonly" readonly placeholder="0.00">
+                                    <input type="text" id="luas_<?= $user['id'] ?>" name="rows[<?= $no-1 ?>][luas]" class="input-readonly" readonly placeholder="0.00">
+                                </td>
+                                
+                                <!-- Jam Kerja -->
+                                <td>
+                                    <input type="number" step="0.5" min="0" max="24" name="rows[<?= $no-1 ?>][jam]" class="form-input" placeholder="0" style="width:60px;">
                                 </td>
                                 <?php endif; ?>
                             </tr>
@@ -278,13 +319,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         else: 
                         ?>
                             <tr>
-                                <td colspan="<?= $peran == 'mandor' ? 5 : 9 ?>" style="text-align:center; padding:30px; color:var(--text-muted);">Belum ada data.</td>
+                                <td colspan="<?= $peran == 'mandor' ? 4 : 9 ?>" style="text-align:center; padding:30px; color:var(--text-muted);">Belum ada karyawan di afdeling ini.</td>
                             </tr>
                         <?php endif; ?>
                     </tbody>
                 </table>
             </div>
 
+            <?php if ($peran != 'mandor'): ?>
             <button type="submit" class="btn-submit">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px; vertical-align: middle;">
                     <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
@@ -293,6 +335,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 </svg>
                 Simpan Laporan Kerja
             </button>
+            <?php endif; ?>
         </form>
 
     </div>

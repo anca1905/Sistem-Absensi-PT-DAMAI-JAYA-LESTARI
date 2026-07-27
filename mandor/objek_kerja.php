@@ -2,14 +2,18 @@
 require '../config/config.php';
 include 'templates/header.php';
 
+$mandor_id = $_SESSION['user_id'];
 $tanggal = isset($_GET['tanggal']) ? $_GET['tanggal'] : date('Y-m-d');
 
-// Dummy Query
-$query_users = mysqli_query($conn, "SELECT id, nik, name FROM users WHERE role='karyawan' ORDER BY name ASC LIMIT 5");
+// Ambil data logbook kinerja karyawan berdasarkan afdeling mandor (verifikasi oleh mandor)
+$afdeling_mandor = isset($_SESSION['afdeling']) ? mysqli_real_escape_string($conn, $_SESSION['afdeling']) : '';
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action'])) {
-    // Simulasi verifikasi
-    swalRedirect('Laporan ' . htmlspecialchars($_POST['name']) . ' telah ' . htmlspecialchars($_POST['action']) . '!', "objek_kerja.php?tanggal=$tanggal", 'success');
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && isset($_POST['log_id'])) {
+    $log_id = (int)$_POST['log_id'];
+    $action = mysqli_real_escape_string($conn, $_POST['action']);
+    mysqli_query($conn, "UPDATE logbook_kinerja SET status='$action' WHERE id=$log_id");
+    swalRedirect('Verifikasi berhasil disimpan!', "objek_kerja.php?tanggal=$tanggal", 'success');
+    exit;
 }
 ?>
 
@@ -215,33 +219,57 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action'])) {
                 <tbody>
                     <?php 
                     $no = 1;
-                    $dummy_bloks = ['H.39', 'I.39', 'J.40', 'K.39', 'L.40'];
-                    $dummy_luas = ['8.66', '29.96', '27.05', '30.98', '30.22'];
-                    $dummy_objeks = ['Langsir manual', 'Membabat gawangan', 'Kutip brondolan', 'Potong buah', 'Muat TBS ke truk'];
+                    // Ambil logbook kinerja karyawan di afdeling yang sama dengan mandor
+                    $tgl_safe = mysqli_real_escape_string($conn, $tanggal);
+                    if (!empty($afdeling_mandor)) {
+                        $query_logbook = mysqli_query($conn, "
+                            SELECT lk.id, lk.blok, lk.luas_ha, lk.objek_kerja, lk.status, lk.hasil_ton, lk.hasil_kg, lk.prestasi_ton, lk.prestasi_kg,
+                                   u.nik, u.name
+                            FROM logbook_kinerja lk
+                            JOIN users u ON lk.user_id = u.id
+                            WHERE lk.tanggal = '$tgl_safe' AND u.afdeling = '$afdeling_mandor'
+                            ORDER BY u.name ASC
+                        ");
+                    } else {
+                        $query_logbook = mysqli_query($conn, "
+                            SELECT lk.id, lk.blok, lk.luas_ha, lk.objek_kerja, lk.status, lk.hasil_ton, lk.hasil_kg, lk.prestasi_ton, lk.prestasi_kg,
+                                   u.nik, u.name
+                            FROM logbook_kinerja lk
+                            JOIN users u ON lk.user_id = u.id
+                            WHERE lk.tanggal = '$tgl_safe'
+                            ORDER BY u.name ASC
+                        ");
+                    }
 
-                    if(mysqli_num_rows($query_users) > 0):
-                        while($user = mysqli_fetch_assoc($query_users)): 
-                            $idx = ($no - 1) % 5;
+                    if($query_logbook && mysqli_num_rows($query_logbook) > 0):
+                        while($row = mysqli_fetch_assoc($query_logbook)):
+                            $status_color = '#854d0e'; $status_text = 'Ditinjau';
+                            if($row['status'] == 'diterima') { $status_color = '#166534'; $status_text = 'Diterima'; }
+                            if($row['status'] == 'ditolak') { $status_color = '#991b1b'; $status_text = 'Ditolak'; }
                     ?>
                         <tr>
                             <td><?= $no++ ?></td>
-                            <td><?= $dummy_bloks[$idx] ?></td>
-                            <td><?= $dummy_luas[$idx] ?></td>
-                            <td><?= htmlspecialchars($user['nik']) ?></td>
-                            <td><?= htmlspecialchars($user['name']) ?></td>
-                            <td><?= $dummy_objeks[$idx] ?></td>
+                            <td><?= htmlspecialchars($row['blok'] ?? '-') ?></td>
+                            <td><?= htmlspecialchars($row['luas_ha'] ?? '-') ?></td>
+                            <td><?= htmlspecialchars($row['nik']) ?></td>
+                            <td><?= htmlspecialchars($row['name']) ?></td>
+                            <td><?= htmlspecialchars($row['objek_kerja'] ?? '-') ?></td>
                             <td>
-                                <button type="button" class="btn-file" onclick="openModal('<?= $user['name'] ?>', '<?= date('d M Y', strtotime($tanggal)) ?> - <?= $dummy_objeks[$idx] ?>')">
+                                <button type="button" class="btn-file" onclick="openModal('<?= htmlspecialchars($row['name']) ?>', '<?= date('d M Y', strtotime($tanggal)) ?> - <?= htmlspecialchars($row['objek_kerja'] ?? '') ?>', <?= $row['id'] ?>)">
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-                                    File
+                                    Detail
                                 </button>
                             </td>
                             <td>
+                                <?php if($row['status'] == 'ditinjau'): ?>
                                 <form method="POST" style="display:inline;">
-                                    <input type="hidden" name="name" value="<?= htmlspecialchars($user['name']) ?>">
-                                    <button type="submit" name="action" value="ditolak" class="btn-verif btn-tolak">Ditolak</button>
-                                    <button type="submit" name="action" value="diterima" class="btn-verif btn-terima">Diterima</button>
+                                    <input type="hidden" name="log_id" value="<?= $row['id'] ?>">
+                                    <button type="submit" name="action" value="ditolak" class="btn-verif btn-tolak">Tolak</button>
+                                    <button type="submit" name="action" value="diterima" class="btn-verif btn-terima">Terima</button>
                                 </form>
+                                <?php else: ?>
+                                <span style="font-weight:700; color:<?= $status_color ?>;"><?= $status_text ?></span>
+                                <?php endif; ?>
                             </td>
                         </tr>
                     <?php 
@@ -249,7 +277,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action'])) {
                     else: 
                     ?>
                         <tr>
-                            <td colspan="8" style="text-align:center; padding:30px; color:var(--text-muted);">Belum ada data.</td>
+                            <td colspan="8" style="text-align:center; padding:30px; color:var(--text-muted);">Belum ada laporan kinerja untuk tanggal ini.</td>
                         </tr>
                     <?php endif; ?>
                 </tbody>

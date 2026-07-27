@@ -15,7 +15,7 @@ if (isset($_POST['login'])) {
     $data = mysqli_fetch_assoc($query);
 
     if ($data) {
-        if ($password = $data['password']) {
+        if ($password == $data['password']) {
             $_SESSION['user_id'] = $data['id'];
             $_SESSION['nama']    = $data['name'];
             $_SESSION['role']    = $data['role'];

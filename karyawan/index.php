@@ -221,22 +221,28 @@ include 'templates/header.php';
         </h3>
         
         <div>
-            <!-- Dummy Data -->
+            <?php 
+            $uid = $_SESSION['user_id'];
+            $q_izin = mysqli_query($conn, "SELECT jenis, keterangan, tanggal_izin, status FROM perizinan WHERE user_id='$uid' ORDER BY id DESC LIMIT 3");
+            if (mysqli_num_rows($q_izin) > 0):
+                while ($izin = mysqli_fetch_assoc($q_izin)):
+                    $badge_class = 'status-badge-proses';
+                    $badge_text = 'Proses';
+                    if ($izin['status'] == 'disetujui') { $badge_class = 'status-badge-diterima'; $badge_text = 'Disetujui'; }
+                    if ($izin['status'] == 'ditolak') { $badge_class = 'status-badge-ditolak'; $badge_text = 'Ditolak'; }
+            ?>
             <div class="status-item">
                 <div>
-                    <div class="status-text">Izin (Keperluan Keluarga)</div>
-                    <div class="status-desc">Diajukan: 20 Juni 2024</div>
+                    <div class="status-text"><?= ucfirst(htmlspecialchars($izin['jenis'])) ?></div>
+                    <div class="status-desc">Diajukan: <?= date('d M Y', strtotime($izin['tanggal_izin'])) ?></div>
                 </div>
-                <span class="status-badge status-badge-proses">Proses</span>
+                <span class="status-badge <?= $badge_class ?>"><?= $badge_text ?></span>
             </div>
-            
-            <div class="status-item">
-                <div>
-                    <div class="status-text">Sakit (Tifus)</div>
-                    <div class="status-desc">Keterangan kurang lengkap</div>
-                </div>
-                <span class="status-badge status-badge-ditolak">Ditolak</span>
+            <?php endwhile; else: ?>
+            <div style="text-align:center; padding: 20px; color: #94a3b8; font-size: 13px;">
+                Belum ada pengajuan izin.
             </div>
+            <?php endif; ?>
         </div>
     </div>
 

@@ -3,38 +3,23 @@ require '../config/config.php';
 include 'templates/header.php';
 
 $tanggal = isset($_GET['tanggal']) ? $_GET['tanggal'] : date('Y-m-d');
+$user_id = $_SESSION['user_id'];
 
-// Simulasi Data Dummy Tugas Hari Ini yang dikelompokkan berdasar kategori kerja
-$tasks_perawatan = [];
-$tasks_potong_buah = [];
-$tasks_muat_tbs = [];
-
-$tasks_langsir = [
-    ['id'=>5, 'blok'=>'249', 'luas'=>'21.45', 'mandor'=>'Idris', 'objek'=>'Langsir manual']
-];
-
-$tasks_jaga = [];
+// Ambil tugas/logbook yang sudah diassign pengawas ke karyawan ini
+$tgl_safe = mysqli_real_escape_string($conn, $tanggal);
+$query_tasks = mysqli_query($conn, "SELECT * FROM logbook_kinerja WHERE user_id=$user_id AND tanggal='$tgl_safe' ORDER BY id ASC");
+$all_tasks = [];
+while($t = mysqli_fetch_assoc($query_tasks)) {
+    $all_tasks[] = $t;
+}
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $user_id = $_SESSION['user_id'] ?? 1; // Fallback to 1 if not set
-    $tgl_input = mysqli_real_escape_string($conn, $tanggal);
-    
-    $all_tasks = array_merge($tasks_perawatan, $tasks_potong_buah, $tasks_muat_tbs, $tasks_langsir, $tasks_jaga);
+    $tgl_input = $tgl_safe;
     
     foreach($all_tasks as $t) {
-        $id = $t['id'];
-        $blok = $t['blok'];
-        $luas = $t['luas'];
-        $objek = $t['objek'];
+        $log_id = $t['id'];
+        $id = $log_id; // use DB id as key
         
-        $kategori = '';
-        if(in_array($t, $tasks_perawatan)) $kategori = 'perawatan';
-        if(in_array($t, $tasks_potong_buah)) $kategori = 'potong_buah';
-        if(in_array($t, $tasks_muat_tbs)) $kategori = 'muat_tbs';
-        if(in_array($t, $tasks_langsir)) $kategori = 'langsir';
-        if(in_array($t, $tasks_jaga)) $kategori = 'jaga';
-
-        $aksi = isset($_POST["aksi_$id"]) ? $_POST["aksi_$id"] : 'belum';
         $tbs = isset($_POST["tbs_$id"]) ? (int)$_POST["tbs_$id"] : 0;
         $kosong = isset($_POST["kosong_$id"]) ? (int)$_POST["kosong_$id"] : 0;
         $brondol = isset($_POST["brondol_$id"]) ? (int)$_POST["brondol_$id"] : 0;
@@ -49,21 +34,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         $jam_kerja = $jam > 0 ? $jam : $jam_jaga;
 
-        $check = mysqli_query($conn, "SELECT id FROM logbook_kinerja WHERE user_id=$user_id AND tanggal='$tgl_input' AND objek_kerja='$objek' AND blok='$blok'");
-        if(mysqli_num_rows($check) > 0) {
-            $row = mysqli_fetch_assoc($check);
-            $log_id = $row['id'];
-            mysqli_query($conn, "UPDATE logbook_kinerja SET 
-                tbs=$tbs, tandan_kosong=$kosong, tandan_brondol=$brondol, total_tandan=$total,
-                hasil_langsir_kg=$hasil_kg, jumlah_jam_kerja=$jam_kerja, aksi='$aksi',
-                hasil_ton=$hasil_ton_l, hasil_kg=$hasil_kg_l, prestasi_ton=$pres_ton, prestasi_kg=$pres_kg, status='ditinjau'
-                WHERE id=$log_id");
-        } else {
-            mysqli_query($conn, "INSERT INTO logbook_kinerja 
-                (user_id, tanggal, blok, luas_ha, objek_kerja, kategori_task, tbs, tandan_kosong, tandan_brondol, total_tandan, hasil_langsir_kg, jumlah_jam_kerja, aksi, hasil_ton, hasil_kg, prestasi_ton, prestasi_kg, status)
-                VALUES 
-                ($user_id, '$tgl_input', '$blok', '$luas', '$objek', '$kategori', $tbs, $kosong, $brondol, $total, $hasil_kg, $jam_kerja, '$aksi', $hasil_ton_l, $hasil_kg_l, $pres_ton, $pres_kg, 'ditinjau')");
-        }
+        mysqli_query($conn, "UPDATE logbook_kinerja SET 
+            tbs=$tbs, tandan_kosong=$kosong, tandan_brondol=$brondol, total_tandan=$total,
+            hasil_langsir_kg=$hasil_kg, jumlah_jam_kerja=$jam_kerja,
+            hasil_ton=$hasil_ton_l, hasil_kg=$hasil_kg_l, prestasi_ton=$pres_ton, prestasi_kg=$pres_kg, status='ditinjau'
+            WHERE id=$log_id AND user_id=$user_id");
     }
     swalRedirect('Semua data logbook berhasil disimpan!', "logbook.php?tanggal=$tgl_input", 'success');
 }
