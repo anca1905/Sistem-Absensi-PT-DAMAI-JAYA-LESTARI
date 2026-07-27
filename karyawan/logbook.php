@@ -231,242 +231,62 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <!-- FORM UTAMA -->
     <form method="POST">
         
-        <?php if(count($tasks_perawatan) > 0): ?>
-        <!-- TABEL 1: PERAWATAN (Sketsa 3.2) -->
+        <?php if(count($all_tasks) > 0): ?>
+        <!-- TABEL LOGBOOK DARI DATABASE -->
         <div class="card-container">
             <h3 class="table-title">
                 <span style="display:inline-block; width:12px; height:12px; background:var(--primary-start); border-radius:3px;"></span>
-                Objek Kerja: Perawatan
+                Daftar Tugas Hari Ini - <?= date('d M Y', strtotime($tanggal)) ?>
             </h3>
             <div class="table-responsive">
-                <table class="table-logbook table-perawatan">
+                <table class="table-logbook" style="min-width: 750px;">
                     <thead>
                         <tr>
-                            <th>TANGGAL</th>
+                            <th>NO</th>
                             <th>BLOK</th>
                             <th>LUAS HA</th>
-                            <th>MANDOR</th>
                             <th>OBJEK KERJA</th>
-                            <th>AKSI</th>
+                            <th>JAM KERJA</th>
                             <th>STATUS</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <?php foreach($tasks_perawatan as $t): ?>
+                        <?php $no = 1; foreach($all_tasks as $t): 
+                            $st = $t['status'] ?? 'ditinjau';
+                            $st_color = '#94a3b8'; $st_bg = '#f1f5f9';
+                            if($st == 'diterima') { $st_color = '#166534'; $st_bg = '#dcfce7'; }
+                            if($st == 'ditolak') { $st_color = '#991b1b'; $st_bg = '#fee2e2'; }
+                        ?>
                         <tr>
-                            <td><?= date('d/m/Y', strtotime($tanggal)) ?></td>
-                            <td style="color:#64748b; font-weight:600;"><?= $t['blok'] ?></td>
-                            <td style="color:#64748b; font-weight:600;"><?= $t['luas'] ?></td>
-                            <td style="color:#64748b; font-weight:600;"><?= $t['mandor'] ?></td>
-                            <td style="text-align:left; font-weight:700;"><?= $t['objek'] ?></td>
+                            <td><?= $no++ ?></td>
+                            <td style="color:#64748b; font-weight:600;"><?= htmlspecialchars($t['blok'] ?? '-') ?></td>
+                            <td style="color:#64748b; font-weight:600;"><?= htmlspecialchars($t['luas_ha'] ?? '-') ?></td>
+                            <td style="text-align:left; font-weight:700;"><?= htmlspecialchars($t['objek_kerja'] ?? '-') ?></td>
                             <td>
-                                <select name="aksi_<?= $t['id'] ?>" class="select-aksi">
-                                    <option value="belum">Belum</option>
-                                    <option value="selesai">Selesai</option>
-                                </select>
+                                <?php if($st == 'ditinjau'): ?>
+                                <input type="number" step="0.5" min="0" max="24" name="jam_<?= $t['id'] ?>" class="input-mini" placeholder="0" value="<?= $t['jumlah_jam_kerja'] ?>">
+                                <?php else: ?>
+                                <?= $t['jumlah_jam_kerja'] ?> jam
+                                <?php endif; ?>
                             </td>
-                            <td><span style="background:#f1f5f9; color:#94a3b8; padding:4px 8px; border-radius:4px; font-size:10px; font-weight:800;">DITINJAU</span></td>
+                            <td><span style="background:<?= $st_bg ?>; color:<?= $st_color ?>; padding:4px 8px; border-radius:4px; font-size:10px; font-weight:800;"><?= strtoupper($st) ?></span></td>
                         </tr>
                         <?php endforeach; ?>
                     </tbody>
                 </table>
             </div>
         </div>
-        <?php endif; ?>
-
-        <?php if(count($tasks_potong_buah) > 0): ?>
-        <!-- TABEL 2: POTONG BUAH (Sketsa 3.3) -->
-        <div class="card-container">
-            <h3 class="table-title">
-                <span style="display:inline-block; width:12px; height:12px; background:#f59e0b; border-radius:3px;"></span>
-                Objek Kerja: Potong Buah / Panen
-            </h3>
-            <div class="table-responsive">
-                <table class="table-logbook table-potong">
-                    <thead>
-                        <tr>
-                            <th rowspan="2">TANGGAL</th>
-                            <th rowspan="2">BLOK</th>
-                            <th rowspan="2">LUAS HA</th>
-                            <th rowspan="2">MANDOR</th>
-                            <th colspan="4">JUMLAH JANJANGAN</th>
-                            <th rowspan="2">AKSI</th>
-                            <th rowspan="2">STATUS</th>
-                        </tr>
-                        <tr>
-                            <th>TANDAN BUAH<br>SEGAR</th>
-                            <th>TANDAN<br>KOSONG</th>
-                            <th>TANDAN BUAH<br>BRONDOL</th>
-                            <th>TOTAL</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach($tasks_potong_buah as $t): ?>
-                        <tr>
-                            <td><?= date('d/m/Y', strtotime($tanggal)) ?></td>
-                            <td style="color:#64748b; font-weight:600;"><?= $t['blok'] ?></td>
-                            <td style="color:#64748b; font-weight:600;"><?= $t['luas'] ?></td>
-                            <td style="color:#64748b; font-weight:600;"><?= $t['mandor'] ?></td>
-                            <td><input type="number" name="tbs_<?= $t['id'] ?>" class="input-mini" placeholder="0"></td>
-                            <td><input type="number" name="tk_<?= $t['id'] ?>" class="input-mini" placeholder="0"></td>
-                            <td><input type="number" name="tbb_<?= $t['id'] ?>" class="input-mini" placeholder="0"></td>
-                            <td><input type="number" name="tot_<?= $t['id'] ?>" class="input-mini" placeholder="0"></td>
-                            <td>
-                                <select name="aksi_<?= $t['id'] ?>" class="select-aksi">
-                                    <option value="belum">Belum</option>
-                                    <option value="selesai">Selesai</option>
-                                </select>
-                            </td>
-                            <td><span style="background:#f1f5f9; color:#94a3b8; padding:4px 8px; border-radius:4px; font-size:10px; font-weight:800;">DITINJAU</span></td>
-                        </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-        <?php endif; ?>
-
-        <?php if(count($tasks_muat_tbs) > 0): ?>
-        <!-- TABEL 3: MUAT TBS (Sketsa 3.4) -->
-        <div class="card-container">
-            <h3 class="table-title">
-                <span style="display:inline-block; width:12px; height:12px; background:#10b981; border-radius:3px;"></span>
-                Objek Kerja: Muat TBS
-            </h3>
-            <div class="table-responsive">
-                <table class="table-logbook table-muat">
-                    <thead>
-                        <tr>
-                            <th>TANGGAL</th>
-                            <th>BLOK</th>
-                            <th>LUAS HA</th>
-                            <th>MANDOR</th>
-                            <th>HASIL LANGSIRAN<br>(KG)</th>
-                            <th>JUMLAH JAM<br>KERJA</th>
-                            <th>AKSI</th>
-                            <th>STATUS</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach($tasks_muat_tbs as $t): ?>
-                        <tr>
-                            <td><?= date('d/m/Y', strtotime($tanggal)) ?></td>
-                            <td style="color:#64748b; font-weight:600;"><?= $t['blok'] ?></td>
-                            <td style="color:#64748b; font-weight:600;"><?= $t['luas'] ?></td>
-                            <td style="color:#64748b; font-weight:600;"><?= $t['mandor'] ?></td>
-                            <td><input type="number" name="hasil_muat_<?= $t['id'] ?>" class="input-medium" placeholder="0"></td>
-                            <td><input type="text" name="jam_kerja_<?= $t['id'] ?>" class="input-mini" placeholder="Ex: 8"></td>
-                            <td>
-                                <select name="aksi_<?= $t['id'] ?>" class="select-aksi">
-                                    <option value="belum">Belum</option>
-                                    <option value="selesai">Selesai</option>
-                                </select>
-                            </td>
-                            <td><span style="background:#f1f5f9; color:#94a3b8; padding:4px 8px; border-radius:4px; font-size:10px; font-weight:800;">DITINJAU</span></td>
-                        </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-        <?php endif; ?>
-
-        <?php if(count($tasks_langsir) > 0): ?>
-        <!-- TABEL 4: LANGSIR MANUAL (Sketsa 3 Awal) -->
-        <div class="card-container">
-            <h3 class="table-title">
-                <span style="display:inline-block; width:12px; height:12px; background:#8b5cf6; border-radius:3px;"></span>
-                Objek Kerja: Langsir Manual
-            </h3>
-            <div class="table-responsive">
-                <table class="table-logbook table-langsir">
-                    <thead>
-                        <tr>
-                            <th rowspan="2">TANGGAL</th>
-                            <th rowspan="2">BLOK</th>
-                            <th rowspan="2">LUAS HA</th>
-                            <th rowspan="2">MANDOR</th>
-                            <th colspan="2">HASIL</th>
-                            <th colspan="2">PRESTASI</th>
-                            <th rowspan="2">AKSI</th>
-                            <th rowspan="2">STATUS</th>
-                        </tr>
-                        <tr>
-                            <th>TANDAN</th>
-                            <th>KG</th>
-                            <th>TANDAN</th>
-                            <th>KG</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach($tasks_langsir as $t): ?>
-                        <tr>
-                            <td><?= date('d/m/Y', strtotime($tanggal)) ?></td>
-                            <td style="color:#64748b; font-weight:600;"><?= $t['blok'] ?></td>
-                            <td style="color:#64748b; font-weight:600;"><?= $t['luas'] ?></td>
-                            <td style="color:#64748b; font-weight:600;"><?= $t['mandor'] ?></td>
-                            <td><input type="number" name="hasil_ton_<?= $t['id'] ?>" class="input-mini" placeholder="0"></td>
-                            <td><input type="number" name="hasil_kg_<?= $t['id'] ?>" class="input-mini" placeholder="0"></td>
-                            <td><input type="number" name="prestasi_ton_<?= $t['id'] ?>" class="input-mini" placeholder="0"></td>
-                            <td><input type="number" name="prestasi_kg_<?= $t['id'] ?>" class="input-mini" placeholder="0"></td>
-                            <td>
-                                <input type="text" class="input-mini" value="Belum" readonly style="background:#f1f5f9; border:none; width:60px; cursor:not-allowed;">
-                            </td>
-                            <td><span style="background:#f1f5f9; color:#94a3b8; padding:4px 8px; border-radius:4px; font-size:10px; font-weight:800;">DITINJAU</span></td>
-                        </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-        <?php endif; ?>
-
-        <?php if(count($tasks_jaga) > 0): ?>
-        <!-- TABEL 5: JAGA (Sketsa 3.5) -->
-        <div class="card-container">
-            <h3 class="table-title">
-                <span style="display:inline-block; width:12px; height:12px; background:#ec4899; border-radius:3px;"></span>
-                Objek Kerja: Penjagaan
-            </h3>
-            <div class="table-responsive">
-                <table class="table-logbook table-jaga">
-                    <thead>
-                        <tr>
-                            <th>TANGGAL</th>
-                            <th>BLOK</th>
-                            <th>LUAS HA</th>
-                            <th>MANDOR</th>
-                            <th>OBJEK KERJA</th>
-                            <th>JUMLAH JAM<br>KERJA</th>
-                            <th>AKSI</th>
-                            <th>STATUS</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach($tasks_jaga as $t): ?>
-                        <tr>
-                            <td><?= date('d/m/Y', strtotime($tanggal)) ?></td>
-                            <td style="color:#64748b; font-weight:600;"><?= $t['blok'] ?></td>
-                            <td style="color:#64748b; font-weight:600;"><?= $t['luas'] ?></td>
-                            <td style="color:#64748b; font-weight:600;"><?= $t['mandor'] ?></td>
-                            <td style="text-align:left; font-weight:700;"><?= $t['objek'] ?></td>
-                            <td><input type="text" name="jam_jaga_<?= $t['id'] ?>" class="input-mini" placeholder="Ex: 8"></td>
-                            <td>
-                                <select name="aksi_<?= $t['id'] ?>" class="select-aksi">
-                                    <option value="belum">Belum</option>
-                                    <option value="selesai">Selesai</option>
-                                </select>
-                            </td>
-                            <td><span style="background:#f1f5f9; color:#94a3b8; padding:4px 8px; border-radius:4px; font-size:10px; font-weight:800;">DITINJAU</span></td>
-                        </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-        <?php endif; ?>
-
+        
         <button type="submit" class="btn-submit">Simpan Logbook Hari Ini</button>
+        
+        <?php else: ?>
+        <div class="card-container" style="text-align:center; padding:40px;">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5" style="margin-bottom:12px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+            <p style="color:#94a3b8; font-size:14px; font-weight:600;">Belum ada tugas untuk tanggal ini.</p>
+            <p style="color:#cbd5e1; font-size:12px;">Pengawas belum mengisi Form Harian untuk Anda.</p>
+        </div>
+        <?php endif; ?>
+        
     </form>
 </div>
 

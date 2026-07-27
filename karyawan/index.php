@@ -256,22 +256,28 @@ include 'templates/header.php';
         </h3>
         
         <div>
-            <!-- Dummy Data -->
+            <?php 
+            $uid = $_SESSION['user_id'];
+            $q_log = mysqli_query($conn, "SELECT objek_kerja, tanggal, status FROM logbook_kinerja WHERE user_id='$uid' ORDER BY id DESC LIMIT 3");
+            if (mysqli_num_rows($q_log) > 0):
+                while ($log = mysqli_fetch_assoc($q_log)):
+                    $badge_class = 'status-badge-proses';
+                    $badge_text = 'Ditinjau';
+                    if ($log['status'] == 'diterima') { $badge_class = 'status-badge-diterima'; $badge_text = 'Diterima'; }
+                    if ($log['status'] == 'ditolak') { $badge_class = 'status-badge-ditolak'; $badge_text = 'Ditolak'; }
+            ?>
             <div class="status-item">
                 <div>
-                    <div class="status-text">Langsir manual</div>
-                    <div class="status-desc">03 Juni 2026</div>
+                    <div class="status-text"><?= htmlspecialchars($log['objek_kerja']) ?></div>
+                    <div class="status-desc"><?= date('d M Y', strtotime($log['tanggal'])) ?></div>
                 </div>
-                <span class="status-badge status-badge-diterima">Diterima</span>
+                <span class="status-badge <?= $badge_class ?>"><?= $badge_text ?></span>
             </div>
-            
-            <div class="status-item">
-                <div>
-                    <div class="status-text">Membabat gawangan</div>
-                    <div class="status-desc">04 Juni 2026</div>
-                </div>
-                <span class="status-badge status-badge-ditolak">Ditolak</span>
+            <?php endwhile; else: ?>
+            <div style="text-align:center; padding: 20px; color: #94a3b8; font-size: 13px;">
+                Belum ada logbook kegiatan.
             </div>
+            <?php endif; ?>
         </div>
     </div>
 </div>
