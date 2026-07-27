@@ -17,9 +17,9 @@ if (!empty($afdeling_pengawas)) {
 }
 
 // Ambil daftar mandor dari DB
-$query_mandor = mysqli_query($conn, "SELECT name FROM users WHERE role='mandor'" . (!empty($afdeling_pengawas) ? " AND afdeling='$afdeling_pengawas'" : "") . " ORDER BY name ASC");
+$query_mandor = mysqli_query($conn, "SELECT id, name FROM users WHERE role='mandor'" . (!empty($afdeling_pengawas) ? " AND afdeling='$afdeling_pengawas'" : "") . " ORDER BY name ASC");
 $list_mandor = [];
-while($m = mysqli_fetch_assoc($query_mandor)) { $list_mandor[] = $m['name']; }
+while($m = mysqli_fetch_assoc($query_mandor)) { $list_mandor[] = $m; }
 
 // --- Data Master (blok & objek masih statis karena belum ada tabel khusus) ---
 $list_objek = [
@@ -42,15 +42,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['rows'])) {
         $blok = mysqli_real_escape_string($conn, $row_data['blok'] ?? '');
         $luas = mysqli_real_escape_string($conn, $row_data['luas'] ?? '');
         $objek = mysqli_real_escape_string($conn, $row_data['objek'] ?? '');
-        $mandor = mysqli_real_escape_string($conn, $row_data['mandor'] ?? '');
+        $mandor = (int)($row_data['mandor'] ?? 0);
+        $mandor_val = $mandor > 0 ? $mandor : 'NULL';
         $jam = (float)($row_data['jam'] ?? 0);
 
         if ($user_id_row && !empty($objek)) {
-            // Cek duplikat
-            $cek = mysqli_query($conn, "SELECT id FROM logbook_kinerja WHERE user_id=$user_id_row AND tanggal='$tgl_safe' AND objek_kerja='$objek' AND blok='$blok'");
+            // Cek duplikat per hari
+            $cek = mysqli_query($conn, "SELECT id FROM logbook_kinerja WHERE user_id=$user_id_row AND tanggal='$tgl_safe'");
             if (mysqli_num_rows($cek) == 0) {
-                mysqli_query($conn, "INSERT INTO logbook_kinerja (user_id, tanggal, blok, luas_ha, objek_kerja, jumlah_jam_kerja, status) 
-                                     VALUES ($user_id_row, '$tgl_safe', '$blok', '$luas', '$objek', $jam, 'ditinjau')");
+                mysqli_query($conn, "INSERT INTO logbook_kinerja (user_id, mandor_id, tanggal, blok, luas_ha, objek_kerja, jumlah_jam_kerja, status) 
+                                     VALUES ($user_id_row, $mandor_val, '$tgl_safe', '$blok', '$luas', '$objek', $jam, 'ditinjau')");
+                $saved++;
+            } else {
+                mysqli_query($conn, "UPDATE logbook_kinerja SET mandor_id=$mandor_val, blok='$blok', luas_ha='$luas', objek_kerja='$objek', jumlah_jam_kerja=$jam WHERE user_id=$user_id_row AND tanggal='$tgl_safe'");
                 $saved++;
             }
         }
@@ -262,6 +266,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['rows'])) {
                                 $absen_row = mysqli_fetch_assoc($q_status);
                                 $hadir = $absen_row ? true : false;
                                 $status_absen = $absen_row ? $absen_row['status_kehadiran'] : 'Belum Absen';
+
+                                // Ambil data kinerja jika sudah ada
+                                $q_kinerja = mysqli_query($conn, "SELECT * FROM logbook_kinerja WHERE user_id='{$user['id']}' AND tanggal='$tgl_safe'");
+                                $kinerja_row = mysqli_fetch_assoc($q_kinerja);
+                                $ex_mandor = $kinerja_row ? $kinerja_row['mandor_id'] : '';
+                                $ex_objek = $kinerja_row ? $kinerja_row['objek_kerja'] : '';
+                                $ex_blok = $kinerja_row ? $kinerja_row['blok'] : '';
+                                $ex_luas = $kinerja_row ? $kinerja_row['luas_ha'] : '';
+                                $ex_jam = $kinerja_row ? $kinerja_row['jumlah_jam_kerja'] : '';
                         ?>
                             <tr>
                                 <td style="text-align:center;"><?= $no++ ?></td>
@@ -290,7 +303,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['rows'])) {
                                     <select name="rows[<?= $no-1 ?>][mandor]">
                                         <option value="">-- Pilih Mandor --</option>
                                         <?php foreach($list_mandor as $m): ?>
-                                            <option value="<?= $m ?>"><?= $m ?></option>
+                                            <option value="<?= $m['id'] ?>" <?= ($ex_mandor == $m['id']) ? 'selected' : '' ?>><?= htmlspecialchars($m['name']) ?></option>
                                         <?php endforeach; ?>
                                     </select>
                                 </td>
@@ -300,7 +313,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['rows'])) {
                                     <select name="rows[<?= $no-1 ?>][objek]">
                                         <option value="">-- Objek Kerja --</option>
                                         <?php foreach($list_objek as $o): ?>
-                                            <option value="<?= $o ?>"><?= $o ?></option>
+                                            <option value="<?= $o ?>" <?= ($ex_objek == $o) ? 'selected' : '' ?>><?= $o ?></option>
                                         <?php endforeach; ?>
                                     </select>
                                 </td>
@@ -310,19 +323,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['rows'])) {
                                     <select name="rows[<?= $no-1 ?>][blok]" onchange="isiLuas(this, 'luas_<?= $user['id'] ?>', 'luas_input_<?= $user['id'] ?>')">
                                         <option value="" data-luas="">-- Pilih Blok --</option>
                                         <?php foreach($list_blok as $blok => $luas): ?>
-                                            <option value="<?= $blok ?>" data-luas="<?= $luas ?>"><?= $blok ?></option>
+                                            <option value="<?= $blok ?>" data-luas="<?= $luas ?>" <?= ($ex_blok == $blok) ? 'selected' : '' ?>><?= $blok ?></option>
                                         <?php endforeach; ?>
                                     </select>
                                 </td>
 
                                 <!-- Input Luas Ha (Readonly / Autofill) -->
                                 <td>
-                                    <input type="text" id="luas_<?= $user['id'] ?>" name="rows[<?= $no-1 ?>][luas]" class="input-readonly" readonly placeholder="0.00">
+                                    <input type="text" id="luas_<?= $user['id'] ?>" name="rows[<?= $no-1 ?>][luas]" value="<?= htmlspecialchars($ex_luas) ?>" class="input-readonly" readonly placeholder="0.00">
                                 </td>
                                 
                                 <!-- Jam Kerja -->
                                 <td>
-                                    <input type="number" step="0.5" min="0" max="24" name="rows[<?= $no-1 ?>][jam]" class="form-input" placeholder="0" style="width:60px;">
+                                    <input type="number" step="0.5" min="0" max="24" name="rows[<?= $no-1 ?>][jam]" value="<?= htmlspecialchars($ex_jam) ?>" class="form-input" placeholder="0" style="width:60px;">
                                 </td>
                                 <?php endif; ?>
                             </tr>

@@ -37,6 +37,19 @@ $status_db = ($action == 'setuju') ? 'disetujui' : 'ditolak';
 $q_update = mysqli_query($conn, "UPDATE perizinan SET status='$status_db' WHERE id=$id");
 
 if ($q_update) {
+    if ($status_db == 'disetujui') {
+        $uid = $row['user_id'];
+        $tgl = $row['tanggal_izin'];
+        $jenis = strtolower($row['jenis']);
+        
+        $c_abs = mysqli_query($conn, "SELECT id FROM absensis WHERE user_id='$uid' AND tanggal='$tgl'");
+        if(mysqli_num_rows($c_abs) > 0) {
+            mysqli_query($conn, "UPDATE absensis SET status_kehadiran='$jenis' WHERE user_id='$uid' AND tanggal='$tgl'");
+        } else {
+            mysqli_query($conn, "INSERT INTO absensis (user_id, tanggal, waktu_masuk, status_kehadiran) VALUES ('$uid', '$tgl', '00:00:00', '$jenis')");
+        }
+    }
+
     // Kirim WA notifikasi ke pemohon
     if (!empty($row['no_hp'])) {
         $pesan = "Halo *{$row['name']}*,\n\nPengajuan *{$row['jenis']}* Anda untuk tanggal *{$row['tanggal_izin']}* telah *".strtoupper($status_db)."* oleh Kerani.\n\n_Ini adalah pesan otomatis dari Sistem Informasi Karyawan PT DJL._";

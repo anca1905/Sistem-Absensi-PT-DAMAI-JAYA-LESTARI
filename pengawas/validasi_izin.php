@@ -16,6 +16,21 @@ if (isset($_POST['proses_izin'])) {
 
     $query_update = "UPDATE perizinan SET status='$status' WHERE id='$id_izin'";
     if (mysqli_query($conn, $query_update)) {
+        if ($status == 'disetujui') {
+            $q_izin = mysqli_query($conn, "SELECT user_id, tanggal_izin, jenis FROM perizinan WHERE id='$id_izin'");
+            if ($d_izin = mysqli_fetch_assoc($q_izin)) {
+                $uid = $d_izin['user_id'];
+                $tgl = $d_izin['tanggal_izin'];
+                $jenis = strtolower($d_izin['jenis']);
+                
+                $c_abs = mysqli_query($conn, "SELECT id FROM absensis WHERE user_id='$uid' AND tanggal='$tgl'");
+                if(mysqli_num_rows($c_abs) > 0) {
+                    mysqli_query($conn, "UPDATE absensis SET status_kehadiran='$jenis' WHERE user_id='$uid' AND tanggal='$tgl'");
+                } else {
+                    mysqli_query($conn, "INSERT INTO absensis (user_id, tanggal, waktu_masuk, status_kehadiran) VALUES ('$uid', '$tgl', '00:00:00', '$jenis')");
+                }
+            }
+        }
         swalRedirect('Status berhasil diupdate!', 'validasi_izin.php', 'success');
     } else {
         swalAlert('Gagal mengupdate status!', 'error');

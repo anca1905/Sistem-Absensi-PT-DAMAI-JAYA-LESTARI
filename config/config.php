@@ -19,4 +19,4 @@ require_once 'functions.php';
 require_once 'wa_helper.php';
 require_once 'alert_helper.php';
 
-define('BASE_URL', 'https://alecia-decem-matha.ngrok-free.dev/amanda/amanda/');
+define('BASE_URL', 'http://localhost/amanda/amanda/');
