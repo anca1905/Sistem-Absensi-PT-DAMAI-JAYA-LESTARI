@@ -356,7 +356,7 @@ include 'templates/header.php';
     </div>
 
     <!-- Filter & Aksi -->
-    <div class="print-hide" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
+    <div class="print-hide" style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
         <form method="GET" style="display: flex; gap: 10px; align-items: center;">
             <select name="afdeling_filter" class="form-input" style="width: auto; padding: 8px 12px;">
                 <option value="">Semua Afdeling</option>

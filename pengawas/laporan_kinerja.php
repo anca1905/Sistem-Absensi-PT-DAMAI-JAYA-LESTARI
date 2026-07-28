@@ -211,12 +211,12 @@ if (!empty($afdeling_pengawas)) {
 
     <div class="card-container">
         
-        <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 16px; gap: 10px;">
-            <form id="filterForm" method="GET" style="flex: 1;">
+        <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; margin-bottom: 16px; gap: 10px;">
+            <form id="filterForm" method="GET" style="flex: 1; min-width: 150px;">
                 <label style="font-size: 11px; font-weight: 700; color: #64748b; margin-bottom:4px; display:block;">Pilih Tanggal</label>
-                <input type="date" name="tanggal" class="form-input" value="<?= $tanggal ?>" onchange="document.getElementById('filterForm').submit()">
+                <input type="date" name="tanggal" class="form-input" value="<?= $tanggal ?>" onchange="document.getElementById('filterForm').submit()" style="width: 100%;">
             </form>
-            <button class="btn-print" onclick="window.print()">
+            <button class="btn-print" onclick="window.print()" style="white-space: nowrap; flex-shrink: 0;">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
                 Cetak PDF
             </button>

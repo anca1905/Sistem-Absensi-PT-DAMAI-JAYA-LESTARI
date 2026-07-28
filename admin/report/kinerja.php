@@ -298,7 +298,7 @@ $query_users = mysqli_query($conn, "
         </div>
 
         <div class="filter-group-right">
-            <button type="button" class="btn-action btn-primary" onclick="window.print()">
+            <button type="button" class="btn-action btn-primary" onclick="window.print()" style="white-space: nowrap; flex-shrink: 0;">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <polyline points="6 9 6 2 18 2 18 9"></polyline>
                     <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
@@ -402,7 +402,7 @@ $query_users = mysqli_query($conn, "
             </div>
             
             <div style="display: flex; gap: 12px; align-items: center;">
-                <button type="button" class="btn-action btn-primary" onclick="window.print()">Cetak PDF</button>
+                <button type="button" class="btn-action btn-primary" onclick="window.print()" style="white-space: nowrap; flex-shrink: 0;">Cetak PDF</button>
                 <button class="btn-close" onclick="closeReportModal()">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <line x1="18" y1="6" x2="6" y2="18"></line>
