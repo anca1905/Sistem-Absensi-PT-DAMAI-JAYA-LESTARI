@@ -351,11 +351,11 @@ if (!empty($afdeling_pengawas)) {
 
         document.getElementById('modalThead').innerHTML = thead;
         document.getElementById('modalTbody').innerHTML = tbody;
-        document.getElementById('fileModal').classList.add('active');
+        document.getElementById('fileModal').style.display = 'flex';
     }
 
     function closeModal() {
-        document.getElementById('fileModal').classList.remove('active');
+        document.getElementById('fileModal').style.display = 'none';
     }
 
     // Close when clicking outside
