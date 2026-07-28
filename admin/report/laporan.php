@@ -1,6 +1,8 @@
 <?php
 require '../../config/config.php';
 include '../templates/header.php';
+<style type="text/css" media="print">@page { size: landscape; }</style>
+
 
 // Filter parameter
 $bulan = isset($_GET['bulan']) ? $_GET['bulan'] : date('m');

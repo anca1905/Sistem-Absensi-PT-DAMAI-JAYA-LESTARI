@@ -17,6 +17,8 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'pengawas') {
     <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
     <title>Dashboard Pengawas - PT DJL</title>
     
+    <link rel="stylesheet" href="../assets/css/print.css" media="print">
+    
     <!-- Mobile-first CSS styling (Theme: Blue Premium) -->
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
@@ -128,7 +130,19 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'pengawas') {
 </head>
 <body>
     <div class="mobile-container">
-        <!-- Header / Navbar -->
+        <!-- Hidden Print Header (Kop Surat) -->
+        <div id="print-header">
+            <!-- Asumsikan ada logo di assets/img/logo.png, jika tidak ada, alt text akan tampil -->
+            <img src="../assets/img/logo.png" alt="Logo PT DJL" class="print-logo" onerror="this.style.display='none'">
+            <div class="print-header-text">
+                <h1>PT Damai Jaya Lestari</h1>
+                <h2>Kantor Pusat / Cabang Operasional</h2>
+                <p>Jl. Jend. Sudirman No. 123, Kel. Suka Maju, Kec. Perkebunan, Kab. Sejahtera</p>
+                <p>Telp: (021) 1234567 | Email: info@damaijayalestari.co.id</p>
+            </div>
+        </div>
+
+        <!-- Header Biru Mobile -->
         <header class="mobile-header">
             <a href="<?= BASE_URL ?>pengawas/index.php" class="akun-btn">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">

@@ -1,0 +1,165 @@
+/* 
+ * Global Print Stylesheet for PT Damai Jaya Lestari
+ * Memastikan semua cetakan website berformat dokumen resmi.
+ */
+
+@media print {
+    /* 1. Sembunyikan elemen UI aplikasi */
+    .sidebar, 
+    .mobile-header,
+    .top-header,
+    .navbar, 
+    .btn-back, 
+    .btn-print, 
+    .btn, 
+    .btn-action, 
+    .btn-file, 
+    .btn-verif, 
+    .btn-verif2,
+    .btn-tolak,
+    .btn-terima,
+    form:not(.print-form), 
+    .mobile-nav, 
+    header:not(#print-header), 
+    footer, 
+    .modal-header, 
+    .page-title, 
+    .status-card, 
+    .welcome-card,
+    .pagination,
+    .card-title,
+    p[style*="Geser tabel"],
+    .akun-btn,
+    .keluar-btn,
+    .alert {
+        display: none !important;
+    }
+
+    /* 2. Reset Layout (Full Width, No Background) */
+    body {
+        background: white !important;
+        color: black !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        font-family: 'Times New Roman', Times, serif !important;
+    }
+    
+    .wrapper {
+        height: auto !important;
+        display: block !important;
+    }
+    
+    .main-content {
+        display: block !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        flex: none !important;
+        height: auto !important;
+    }
+    
+    .content-body {
+        padding: 0 !important;
+        margin: 0 !important;
+        overflow: visible !important;
+        height: auto !important;
+    }
+
+    .card-container, .mobile-container {
+        box-shadow: none !important;
+        border: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        max-width: 100% !important;
+        border-radius: 0 !important;
+        background: transparent !important;
+    }
+
+    /* 3. Tampilkan Kop Surat Resmi (Diinjeksi di Header) */
+    #print-header {
+        display: flex !important;
+        align-items: center;
+        border-bottom: 4px solid black;
+        padding-bottom: 15px;
+        margin-bottom: 25px;
+        width: 100%;
+    }
+    
+    .print-logo {
+        width: 80px;
+        height: auto;
+        margin-right: 20px;
+    }
+
+    .print-header-text {
+        flex: 1;
+        text-align: center;
+    }
+
+    .print-header-text h1 {
+        margin: 0;
+        font-size: 24pt;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .print-header-text h2 {
+        margin: 5px 0;
+        font-size: 14pt;
+        font-weight: normal;
+    }
+
+    .print-header-text p {
+        margin: 2px 0;
+        font-size: 11pt;
+    }
+
+    /* 4. Format Tabel Resmi */
+    .table-responsive {
+        border: none !important;
+        overflow: visible !important;
+        margin-top: 20px;
+    }
+
+    table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+        font-size: 11pt !important;
+    }
+
+    th, td {
+        border: 1px solid black !important;
+        color: black !important;
+        padding: 8px 10px !important;
+        text-align: center;
+    }
+
+    th {
+        background-color: #f0f0f0 !important;
+        font-weight: bold !important;
+        -webkit-print-color-adjust: exact;
+        text-transform: uppercase;
+    }
+    
+    td.text-left, .table-absen td:nth-child(2), .table-kinerja td:nth-child(3) {
+        text-align: left !important;
+    }
+
+    .modal-overlay {
+        display: none !important; 
+    }
+
+    /* Halaman A4 Default */
+    @page {
+        size: A4 portrait;
+        margin: 15mm;
+    }
+}
+
+/* Sembunyikan Kop Surat saat tidak dicetak */
+@media screen {
+    #print-header {
+        display: none !important;
+    }
+}

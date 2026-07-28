@@ -19,6 +19,7 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'admin') {
     <title>Sistem Administrasi - PT Damai Jaya Lestari</title>
 
     <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/style.css">
+    <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/print.css" media="print">
     <!-- SweetAlert2 -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
@@ -27,6 +28,18 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'admin') {
 <body>
 
     <div class="wrapper">
+    
+        <!-- Hidden Print Header (Kop Surat) -->
+        <div id="print-header">
+            <!-- Asumsikan ada logo di assets/img/logo.png, jika tidak ada, alt text akan tampil -->
+            <img src="<?= BASE_URL ?>assets/img/logo.png" alt="Logo PT DJL" class="print-logo" onerror="this.style.display='none'">
+            <div class="print-header-text">
+                <h1>PT Damai Jaya Lestari</h1>
+                <h2>Kantor Pusat / Cabang Operasional</h2>
+                <p>Jl. Jend. Sudirman No. 123, Kel. Suka Maju, Kec. Perkebunan, Kab. Sejahtera</p>
+                <p>Telp: (021) 1234567 | Email: info@damaijayalestari.co.id</p>
+            </div>
+        </div>
 
         <div id="sidebarOverlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
 
