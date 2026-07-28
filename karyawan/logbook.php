@@ -19,17 +19,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     foreach($all_tasks as $t) {
         $id = $t['id'];
         
-        $tbs = isset($_POST["tbs_$id"]) ? (int)$_POST["tbs_$id"] : 0;
-        $kosong = isset($_POST["kosong_$id"]) ? (int)$_POST["kosong_$id"] : 0;
-        $brondol = isset($_POST["brondol_$id"]) ? (int)$_POST["brondol_$id"] : 0;
-        $total = isset($_POST["total_$id"]) ? (int)$_POST["total_$id"] : 0;
-        $hasil_langsir_kg = isset($_POST["hasil_langsir_$id"]) ? (float)$_POST["hasil_langsir_$id"] : 0;
-        $jam = isset($_POST["jam_$id"]) ? (float)$_POST["jam_$id"] : 0;
-        $hasil_ton = isset($_POST["hasil_ton_$id"]) ? (float)$_POST["hasil_ton_$id"] : 0;
-        $hasil_kg = isset($_POST["hasil_kg_$id"]) ? (float)$_POST["hasil_kg_$id"] : 0;
-        $pres_ton = isset($_POST["prestasi_ton_$id"]) ? (float)$_POST["prestasi_ton_$id"] : 0;
-        $pres_kg = isset($_POST["prestasi_kg_$id"]) ? (float)$_POST["prestasi_kg_$id"] : 0;
-        $aksi = isset($_POST["aksi_$id"]) ? mysqli_real_escape_string($conn, $_POST["aksi_$id"]) : 'belum';
+        $tbs = isset($_POST["tbs_$id"]) ? (int)$_POST["tbs_$id"] : $t['tbs'];
+        $kosong = isset($_POST["kosong_$id"]) ? (int)$_POST["kosong_$id"] : $t['tandan_kosong'];
+        $brondol = isset($_POST["brondol_$id"]) ? (int)$_POST["brondol_$id"] : $t['tandan_brondol'];
+        $total = isset($_POST["total_$id"]) ? (int)$_POST["total_$id"] : $t['total_tandan'];
+        $hasil_langsir_kg = isset($_POST["hasil_langsir_$id"]) ? (float)$_POST["hasil_langsir_$id"] : $t['hasil_langsir_kg'];
+        $jam = isset($_POST["jam_$id"]) ? (float)$_POST["jam_$id"] : $t['jumlah_jam_kerja'];
+        $hasil_ton = isset($_POST["hasil_ton_$id"]) ? (float)$_POST["hasil_ton_$id"] : $t['hasil_ton'];
+        $hasil_kg = isset($_POST["hasil_kg_$id"]) ? (float)$_POST["hasil_kg_$id"] : $t['hasil_kg'];
+        $pres_ton = isset($_POST["prestasi_ton_$id"]) ? (float)$_POST["prestasi_ton_$id"] : $t['prestasi_ton'];
+        $pres_kg = isset($_POST["prestasi_kg_$id"]) ? (float)$_POST["prestasi_kg_$id"] : $t['prestasi_kg'];
+        $aksi = isset($_POST["aksi_$id"]) ? mysqli_real_escape_string($conn, $_POST["aksi_$id"]) : $t['aksi'];
 
         mysqli_query($conn, "UPDATE logbook_kinerja SET 
             tbs=$tbs, tandan_kosong=$kosong, tandan_brondol=$brondol, total_tandan=$total,

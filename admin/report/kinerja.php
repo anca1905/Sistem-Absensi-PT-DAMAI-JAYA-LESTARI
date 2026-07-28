@@ -441,16 +441,16 @@ $query_users = mysqli_query($conn, "
         let cat = data.kategori;
         let obj = data.objek.toLowerCase();
 
-        if (cat === 'langsir' || obj.includes('membabat')) {
+        if (cat === 'langsir' || obj.includes('membabat') || obj.includes('langsir')) {
             thead = `<tr><th rowspan="2">Blok</th><th rowspan="2">Luas Ha</th><th rowspan="2">Mandor</th><th colspan="2">Hasil</th><th colspan="2">Prestasi</th><th rowspan="2">Aksi</th><th rowspan="2">Status</th></tr><tr><th>Ton</th><th>Kg</th><th>Ton</th><th>Kg</th></tr>`;
             tbody = `<tr><td>${data.blok}</td><td>${data.luas}</td><td>${data.mandor}</td><td>${data.h_ton}</td><td>${data.h_kg}</td><td>${data.p_ton}</td><td>${data.p_kg}</td><td>${data.aksi}</td><td><span class="badge ${data.status_badge}">${data.status}</span></td></tr>`;
-        } else if (cat === 'potong_buah') {
+        } else if (cat === 'potong_buah' || obj.includes('potong') || obj.includes('panen')) {
             thead = `<tr><th rowspan="2">Blok</th><th rowspan="2">Luas Ha</th><th rowspan="2">Mandor</th><th colspan="4">Jumlah Janjangan</th><th rowspan="2">Aksi</th><th rowspan="2">Status</th></tr><tr><th>TBS</th><th>Kosong</th><th>Brondol</th><th>Total</th></tr>`;
             tbody = `<tr><td>${data.blok}</td><td>${data.luas}</td><td>${data.mandor}</td><td>${data.tbs}</td><td>${data.kosong}</td><td>${data.brondol}</td><td>${data.total}</td><td>${data.aksi}</td><td><span class="badge ${data.status_badge}">${data.status}</span></td></tr>`;
-        } else if (cat === 'muat_tbs') {
+        } else if (cat === 'muat_tbs' || obj.includes('muat')) {
             thead = `<tr><th>Blok</th><th>Luas Ha</th><th>Mandor</th><th>Hasil Langsir (Kg)</th><th>Jam Kerja</th><th>Aksi</th><th>Status</th></tr>`;
             tbody = `<tr><td>${data.blok}</td><td>${data.luas}</td><td>${data.mandor}</td><td>${data.langsir_kg}</td><td>${data.jam}</td><td>${data.aksi}</td><td><span class="badge ${data.status_badge}">${data.status}</span></td></tr>`;
-        } else if (cat === 'jaga') {
+        } else if (cat === 'jaga' || obj.includes('jaga')) {
             thead = `<tr><th>Blok</th><th>Luas Ha / Mandor</th><th>Jam Kerja</th><th>Aksi</th><th>Status</th></tr>`;
             tbody = `<tr><td>${data.blok}</td><td>${data.luas} / ${data.mandor}</td><td>${data.jam}</td><td>${data.aksi}</td><td><span class="badge ${data.status_badge}">${data.status}</span></td></tr>`;
         } else {
