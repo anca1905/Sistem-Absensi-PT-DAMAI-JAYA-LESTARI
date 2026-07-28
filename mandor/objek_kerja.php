@@ -273,7 +273,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && isset($_P
                                         'langsir_kg' => $row['hasil_langsir_kg'] ?? '0',
                                         'jam' => $row['jumlah_jam_kerja'] ?? '0',
                                         'aksi' => ucfirst($row['aksi'] ?? 'Belum'),
-                                        'status' => $status_label,
+                                        'status' => $status_text,
                                         'status_color' => $status_color
                                     ]), ENT_QUOTES, 'UTF-8');
                                 ?>
@@ -290,7 +290,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && isset($_P
                                     <button type="submit" name="action" value="diterima" class="btn-verif btn-terima">Terima</button>
                                 </form>
                                 <?php else: ?>
-                                <span style="font-weight:700; color:<?= $status_color ?>;"><?= $status_label ?></span>
+                                <span style="font-weight:700; color:<?= $status_color ?>;"><?= $status_text ?></span>
                                 <?php endif; ?>
                             </td>
                         </tr>
