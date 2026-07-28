@@ -129,7 +129,7 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'mandor') {
 <body>
     <div class="mobile-container">
         <!-- Hidden Print Header (Kop Surat) -->
-        <div id="print-header">
+        <div id="print-header" style="display: none;">
             <!-- Asumsikan ada logo di assets/img/logo.png, jika tidak ada, alt text akan tampil -->
             <img src="../assets/img/logo.png" alt="Logo PT DJL" class="print-logo" onerror="this.style.display='none'">
             <div class="print-header-text">
