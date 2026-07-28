@@ -1,7 +1,9 @@
 <?php
 require '../config/config.php';
 include 'templates/header.php';
+?>
 <style type="text/css" media="print">@page { size: landscape; }</style>
+<?php
 
 
 $role_filter = isset($_GET['role']) ? $_GET['role'] : 'karyawan';
