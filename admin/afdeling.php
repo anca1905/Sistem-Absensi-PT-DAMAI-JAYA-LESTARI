@@ -54,90 +54,13 @@ $data_afdeling = mysqli_query($conn, "SELECT * FROM afdelings ORDER BY nama_afde
 include 'templates/header.php';
 ?>
 
-<style>
-    .page-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 24px;
-    }
-    .page-title {
-        font-size: 20px;
-        font-weight: 700;
-        color: #1e293b;
-    }
-    .btn {
-        padding: 10px 20px;
-        border-radius: 6px;
-        font-weight: 600;
-        font-size: 13px;
-        cursor: pointer;
-        border: none;
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        text-decoration: none;
-        transition: all 0.2s;
-    }
-    .btn-primary { background-color: #4f46e5; color: white; box-shadow: 0 2px 5px rgba(79, 70, 229, 0.3); }
-    .btn-primary:hover { background-color: #4338ca; transform: translateY(-1px); }
-    .btn-danger { background-color: #ef4444; color: white; }
-    .btn-danger:hover { background-color: #dc2626; }
-    .btn-warning { background-color: #f59e0b; color: white; }
-    .btn-warning:hover { background-color: #d97706; }
-    .table-container {
-        background: white; border-radius: 8px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        border: 1px solid #e2e8f0; overflow: hidden;
-    }
-    table { width: 100%; border-collapse: collapse; }
-    th {
-        background-color: #f8fafc; color: #64748b; font-weight: 600;
-        text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px;
-        padding: 16px; text-align: left; border-bottom: 1px solid #e2e8f0;
-    }
-    td {
-        padding: 16px; border-bottom: 1px solid #f1f5f9;
-        color: #334155; font-size: 14px;
-    }
-    tr:last-child td { border-bottom: none; }
-    tr:hover td { background-color: #f8fafc; }
-    
-    .modal-overlay {
-        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        background: rgba(0, 0, 0, 0.5); z-index: 999; display: none;
-        justify-content: center; align-items: center; backdrop-filter: blur(2px);
-        opacity: 0; transition: opacity 0.3s;
-    }
-    .modal-overlay.show { display: flex; opacity: 1; }
-    .modal-box {
-        background: white; width: 100%; max-width: 400px; border-radius: 12px;
-        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); overflow: hidden;
-        transform: scale(0.95); transition: transform 0.3s;
-    }
-    .modal-overlay.show .modal-box { transform: scale(1); }
-    .modal-header {
-        padding: 20px; border-bottom: 1px solid #e2e8f0; display: flex;
-        justify-content: space-between; align-items: center; background-color: #f8fafc;
-    }
-    .modal-title { font-weight: 700; color: #1e293b; font-size: 16px; }
-    .modal-close { background: none; border: none; font-size: 24px; color: #94a3b8; cursor: pointer; }
-    .modal-body { padding: 24px; }
-    .form-group { margin-bottom: 16px; }
-    .form-label { display: block; margin-bottom: 6px; font-size: 13px; font-weight: 600; color: #475569; }
-    .form-input {
-        width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1;
-        border-radius: 6px; font-size: 14px; transition: border 0.2s; box-sizing: border-box;
-    }
-    .form-input:focus { outline: none; border-color: #4f46e5; box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1); }
-    .modal-footer { padding: 16px 24px; background-color: #f8fafc; border-top: 1px solid #e2e8f0; text-align: right; }
-</style>
+<!-- Styles dari admin-components.css -->
 
 <div>
     <div class="page-header">
         <div>
             <h1 class="page-title">Manajemen Afdeling</h1>
-            <p style="color: #64748b; font-size: 13px; margin-top: 4px;">Kelola wilayah kerja atau divisi secara dinamis.</p>
+            <p class="page-subtitle">Kelola wilayah kerja atau divisi secara dinamis.</p>
         </div>
         <button onclick="openModal('add')" class="btn btn-primary">
             + Tambah Afdeling
@@ -145,7 +68,7 @@ include 'templates/header.php';
     </div>
 
     <div class="table-container">
-        <table>
+        <table class="data-table">
             <thead>
                 <tr>
                     <th width="10%">No</th>
@@ -162,10 +85,10 @@ include 'templates/header.php';
                             <div style="font-weight: 600;"><?= $row['nama_afdeling'] ?></div>
                         </td>
                         <td style="text-align: right;">
-                            <button onclick='editData(<?= json_encode($row) ?>)' class="btn btn-warning" style="padding: 6px 10px; font-size: 11px;">
+                            <button onclick='editData(<?= json_encode($row) ?>)' class="btn btn-warning btn-sm">
                                 Edit
                             </button>
-                            <a href="?hapus=<?= $row['id'] ?>" onclick="return confirm('Yakin hapus afdeling ini?')" class="btn btn-danger" style="padding: 6px 10px; font-size: 11px;">
+                            <a href="?hapus=<?= $row['id'] ?>" onclick="return confirm('Yakin hapus afdeling ini?')" class="btn btn-danger btn-sm">
                                 Hapus
                             </a>
                         </td>
@@ -195,7 +118,7 @@ include 'templates/header.php';
 
                 <div class="form-group">
                     <label class="form-label">Nama Afdeling / Divisi</label>
-                    <input type="text" name="nama_afdeling" id="nama_afdeling" class="form-input" required placeholder="Contoh: Afdeling 1">
+                    <input type="text" name="nama_afdeling" id="nama_afdeling" class="form-input form-input-full" required placeholder="Contoh: Afdeling 1">
                 </div>
             </div>
 

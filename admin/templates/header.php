@@ -19,6 +19,7 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'admin') {
     <title>Sistem Administrasi - PT Damai Jaya Lestari</title>
 
     <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/style.css">
+    <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/admin-components.css">
     <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/print.css" media="print">
     <!-- SweetAlert2 -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">

@@ -1,63 +1,51 @@
-/* 
- * Global Print Stylesheet for PT Damai Jaya Lestari
- * Memastikan semua cetakan website berformat dokumen resmi.
+/*
+ * ================================================================
+ * print.css  —  Global Print Stylesheet
+ * PT Damai Jaya Lestari - Sistem Absensi
+ *
+ * STRATEGI:
+ * Saat mencetak, sembunyikan sidebar + header + semua konten web
+ * di dalam content-body, KECUALI #official-print-doc.
+ * ================================================================
  */
 
 @media print {
-    /* 1. Sembunyikan elemen UI aplikasi */
-    .sidebar, 
-    .mobile-header,
-    .top-header,
-    .navbar, 
-    .btn-back, 
-    .btn-print, 
-    .btn, 
-    .btn-action, 
-    .btn-file, 
-    .btn-verif, 
-    .btn-verif2,
-    .btn-tolak,
-    .btn-terima,
-    form:not(.print-form), 
-    .mobile-nav, 
-    header:not(#print-header), 
-    footer, 
-    .modal-header, 
-    .page-title, 
-    .status-card, 
-    .welcome-card,
-    .pagination,
-    .card-title,
-    p[style*="Geser tabel"],
-    .akun-btn,
-    .keluar-btn,
-    .alert {
-        display: none !important;
-    }
 
-    /* 2. Reset Layout (Full Width, No Background) */
+    /* --- Reset body untuk print --- */
     body {
         background: white !important;
         color: black !important;
         margin: 0 !important;
         padding: 0 !important;
         font-family: 'Times New Roman', Times, serif !important;
+        font-size: 12pt !important;
+        overflow: visible !important;
     }
-    
+
+    /* --- Sembunyikan elemen UI --- */
+    .sidebar,
+    .sidebar-overlay,
+    .top-header,
+    .toggle-btn {
+        display: none !important;
+    }
+
+    /* --- Reset layout wrapper agar tidak flex/overflow --- */
     .wrapper {
-        height: auto !important;
         display: block !important;
+        height: auto !important;
+        overflow: visible !important;
     }
-    
+
     .main-content {
         display: block !important;
         width: 100% !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        flex: none !important;
         height: auto !important;
+        overflow: visible !important;
+        padding: 0 !important;
+        margin: 0 !important;
     }
-    
+
     .content-body {
         padding: 0 !important;
         margin: 0 !important;
@@ -65,101 +53,120 @@
         height: auto !important;
     }
 
-    .card-container, .mobile-container {
-        box-shadow: none !important;
-        border: none !important;
-        padding: 0 !important;
-        margin: 0 !important;
-        max-width: 100% !important;
-        border-radius: 0 !important;
-        background: transparent !important;
-    }
-
-    /* 3. Tampilkan Kop Surat Resmi (Diinjeksi di Header) */
-    #print-header {
-        display: flex !important;
-        align-items: center;
-        border-bottom: 4px solid black;
-        padding-bottom: 15px;
-        margin-bottom: 25px;
-        width: 100%;
-    }
-    
-    .print-logo {
-        width: 80px;
-        height: auto;
-        margin-right: 20px;
-    }
-
-    .print-header-text {
-        flex: 1;
-        text-align: center;
-    }
-
-    .print-header-text h1 {
-        margin: 0;
-        font-size: 24pt;
-        font-weight: bold;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-    }
-
-    .print-header-text h2 {
-        margin: 5px 0;
-        font-size: 14pt;
-        font-weight: normal;
-    }
-
-    .print-header-text p {
-        margin: 2px 0;
-        font-size: 11pt;
-    }
-
-    /* 4. Format Tabel Resmi */
-    .table-responsive {
-        border: none !important;
-        overflow: visible !important;
-        margin-top: 20px;
-    }
-
-    table {
-        width: 100% !important;
-        border-collapse: collapse !important;
-        font-size: 11pt !important;
-    }
-
-    th, td {
-        border: 1px solid black !important;
-        color: black !important;
-        padding: 8px 10px !important;
-        text-align: center;
-    }
-
-    th {
-        background-color: #f0f0f0 !important;
-        font-weight: bold !important;
-        -webkit-print-color-adjust: exact;
-        text-transform: uppercase;
-    }
-    
-    td.text-left, .table-absen td:nth-child(2), .table-kinerja td:nth-child(3) {
-        text-align: left !important;
-    }
-
-    .modal-overlay {
-        display: none !important; 
-    }
-
-    /* Halaman A4 Default */
-    @page {
-        size: A4 portrait;
-        margin: 15mm;
-    }
-}
-
-/* Sembunyikan Kop Surat saat tidak dicetak */
-@media screen {
-    #print-header {
+    /* --- Sembunyikan SEMUA konten web dalam content-body --- */
+    .content-body > *:not(#official-print-doc) {
         display: none !important;
     }
+
+    /* --- Tampilkan HANYA official-print-doc --- */
+    #official-print-doc {
+        display: block !important;
+    }
+
+    /* --- Sembunyikan modal jika terbuka --- */
+    .modal-overlay {
+        display: none !important;
+    }
+
+    /* ================================================================
+     * LAYOUT DOKUMEN RESMI
+     * ================================================================ */
+
+    /* Kop Surat */
+    .doc-header {
+        display: flex !important;
+        align-items: center;
+        border-bottom: 3px solid black;
+        padding-bottom: 12px;
+        margin-bottom: 18px;
+    }
+    .doc-header-logo {
+        width: 70px; height: auto; margin-right: 20px;
+    }
+    .doc-header-text { flex: 1; text-align: center; }
+    .doc-header-text h1 {
+        margin: 0; font-size: 18pt; font-weight: bold;
+        text-transform: uppercase; letter-spacing: 1px;
+    }
+    .doc-header-text h2 {
+        margin: 4px 0; font-size: 12pt; font-weight: normal;
+    }
+    .doc-header-text p { margin: 2px 0; font-size: 10pt; }
+
+    /* Judul Dokumen */
+    .doc-title { text-align: center; margin-bottom: 14px; }
+    .doc-title h3 {
+        font-size: 14pt; font-weight: bold;
+        text-transform: uppercase; margin: 0 0 4px 0;
+        text-decoration: underline;
+    }
+    .doc-title p { font-size: 11pt; margin: 0; }
+
+    /* Metadata */
+    .doc-meta {
+        display: flex; justify-content: space-between;
+        margin-bottom: 10px; font-size: 10.5pt;
+        flex-wrap: wrap; gap: 4px;
+    }
+
+    /* Tabel Dokumen */
+    .doc-table {
+        width: 100%; border-collapse: collapse;
+        margin-bottom: 22px; font-size: 10pt;
+    }
+    .doc-table th {
+        background-color: #e0e0e0 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+        border: 1px solid black !important;
+        padding: 7px 8px !important;
+        text-align: center !important;
+        font-weight: bold !important;
+        font-size: 9.5pt !important;
+        color: black !important;
+    }
+    .doc-table td {
+        border: 1px solid black !important;
+        padding: 5px 8px !important;
+        color: black !important;
+        font-size: 9.5pt !important;
+        vertical-align: top;
+    }
+    .doc-table td.text-center { text-align: center !important; }
+    .doc-table td.text-left   { text-align: left !important; }
+
+    /* Status warna di tabel cetak */
+    .doc-status-H { background-color: #d4edda !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .doc-status-A { background-color: #f8d7da !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .doc-status-I { background-color: #d1ecf1 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .doc-status-S { background-color: #e2d9f3 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .doc-status-C { background-color: #fde5cc !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+    /* Tanda Tangan */
+    .doc-signature {
+        display: flex !important;
+        justify-content: space-between;
+        margin-top: 36px;
+        font-size: 11pt;
+    }
+    .doc-signature-col { text-align: center; min-width: 170px; }
+    .doc-signature-col p { margin: 0 0 60px 0; }
+    .doc-signature-col .sig-name {
+        font-weight: bold; border-top: 1px solid black;
+        padding-top: 4px; display: inline-block; min-width: 150px;
+    }
+
+    /* Catatan Kaki */
+    .doc-footer {
+        margin-top: 18px; font-size: 9pt; color: #444;
+        border-top: 1px solid #aaa; padding-top: 6px;
+    }
+
+    /* Tombol-tombol yang tidak perlu tercetak */
+    .doc-print-btn { display: none !important; }
+}
+
+/* --- Sembunyikan div cetak di layar (dilengkapi juga di admin-components.css) --- */
+@media screen {
+    #official-print-doc { display: none !important; }
 }

@@ -1,0 +1,350 @@
+/*
+ * ================================================================
+ * admin-components.css
+ * Komponen UI terpusat untuk seluruh halaman Admin
+ * PT Damai Jaya Lestari - Sistem Absensi
+ * ================================================================
+ */
+
+/*
+ * Sembunyikan div dokumen cetak resmi di layar.
+ * Hanya tampil saat window.print() dipanggil (diatur di print.css).
+ */
+#official-print-doc {
+    display: none !important;
+}
+
+/* ---- 1. PAGE HEADER (Judul + Tombol Aksi) ---- */
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+.page-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0;
+}
+.page-subtitle {
+    color: #64748b;
+    font-size: 13px;
+    margin-top: 4px;
+}
+
+/* ---- 2. REPORT CARD (Pembungkus halaman laporan) ---- */
+.report-wrapper {
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+    padding: 24px;
+    border: 1px solid #e2e8f0;
+}
+.report-top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+.filter-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+.filter-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #475569;
+    white-space: nowrap;
+}
+.report-title-center {
+    text-align: center;
+    flex: 1;
+    min-width: 200px;
+}
+.report-title-center h2 {
+    font-size: 22px;
+    font-weight: 800;
+    color: #1e293b;
+    margin: 0 0 4px 0;
+    letter-spacing: -0.5px;
+}
+.report-title-center p {
+    color: #64748b;
+    font-size: 13px;
+    margin: 0;
+}
+
+/* ---- 3. FORM CONTROLS ---- */
+.form-input,
+.form-select {
+    padding: 9px 14px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 14px;
+    outline: none;
+    background: #f8fafc;
+    color: #334155;
+    font-family: inherit;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+.form-input:focus,
+.form-select:focus {
+    border-color: #3b82f6;
+    background: #ffffff;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+}
+.form-label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #475569;
+}
+.form-group {
+    margin-bottom: 16px;
+}
+.form-input-full {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* ---- 4. BUTTONS ---- */
+.btn {
+    padding: 9px 18px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    text-decoration: none;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+.btn-primary {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+    box-shadow: 0 3px 8px rgba(59, 130, 246, 0.3);
+}
+.btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 5px 14px rgba(59, 130, 246, 0.4);
+}
+.btn-secondary {
+    background: #f1f5f9;
+    color: #475569;
+    border: 1px solid #e2e8f0;
+}
+.btn-secondary:hover {
+    background: #e2e8f0;
+}
+.btn-success {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    box-shadow: 0 3px 8px rgba(16, 185, 129, 0.3);
+}
+.btn-success:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 5px 14px rgba(16, 185, 129, 0.4);
+}
+.btn-danger {
+    background-color: #ef4444;
+    color: white;
+    box-shadow: 0 3px 8px rgba(239, 68, 68, 0.25);
+}
+.btn-danger:hover {
+    background-color: #dc2626;
+    transform: translateY(-1px);
+}
+.btn-warning {
+    background-color: #f59e0b;
+    color: white;
+    box-shadow: 0 3px 8px rgba(245, 158, 11, 0.25);
+}
+.btn-warning:hover {
+    background-color: #d97706;
+    transform: translateY(-1px);
+}
+.btn-sm {
+    padding: 6px 12px;
+    font-size: 12px;
+    border-radius: 6px;
+}
+.btn-file {
+    background: #f8fafc;
+    color: #3b82f6;
+    border: 1px dashed #cbd5e1;
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+}
+.btn-file:hover {
+    background: #eff6ff;
+    border-color: #3b82f6;
+}
+
+/* ---- 5. DATA TABLE ---- */
+.table-container {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e2e8f0;
+    overflow: hidden;
+}
+.table-responsive {
+    overflow-x: auto;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+}
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+.data-table th {
+    background-color: #f8fafc;
+    color: #475569;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+    padding: 14px 16px;
+    text-align: left;
+    border-bottom: 2px solid #e2e8f0;
+    white-space: nowrap;
+}
+.data-table th.text-center { text-align: center; }
+.data-table td {
+    padding: 14px 16px;
+    border-bottom: 1px solid #f1f5f9;
+    color: #334155;
+    font-size: 14px;
+    vertical-align: middle;
+}
+.data-table tbody tr:last-child td { border-bottom: none; }
+.data-table tbody tr:hover td { background-color: #f8fafc; }
+
+/* For dense tables (absensi grid) */
+.data-table-dense th, .data-table-dense td {
+    padding: 10px 8px;
+    font-size: 12px;
+}
+
+/* ---- 6. BADGES & STATUS ---- */
+.badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1;
+}
+.badge-success { background: #dcfce7; color: #166534; }
+.badge-warning { background: #fef9c3; color: #854d0e; }
+.badge-danger  { background: #fee2e2; color: #991b1b; }
+.badge-info    { background: #e0f2fe; color: #075985; }
+.badge-purple  { background: #ede9fe; color: #5b21b6; }
+
+/* Status badge bulat untuk tabel absensi */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 11px;
+}
+.status-H { background-color: #dcfce7; color: #166534; }
+.status-A { background-color: #fee2e2; color: #991b1b; }
+.status-T { background-color: #fef9c3; color: #854d0e; }
+.status-I { background-color: #e0f2fe; color: #075985; }
+.status-S { background-color: #ede9fe; color: #5b21b6; }
+.status-C { background-color: #ffedd5; color: #9a3412; }
+
+/* ---- 7. MODAL ---- */
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(15, 23, 42, 0.5);
+    z-index: 999;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(3px);
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+.modal-overlay.show {
+    display: flex;
+    opacity: 1;
+}
+.modal-box {
+    background: white;
+    width: 100%;
+    max-width: 440px;
+    border-radius: 14px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    overflow: hidden;
+    transform: scale(0.96);
+    transition: transform 0.2s;
+}
+.modal-overlay.show .modal-box { transform: scale(1); }
+.modal-box-lg { max-width: 800px; }
+.modal-header {
+    padding: 18px 20px;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f8fafc;
+}
+.modal-title { font-weight: 700; color: #1e293b; font-size: 15px; margin: 0; }
+.modal-subtitle { color: #64748b; font-size: 12px; margin: 2px 0 0 0; }
+.modal-close {
+    background: none; border: none; font-size: 22px;
+    color: #94a3b8; cursor: pointer; line-height: 1;
+    transition: color 0.2s;
+}
+.modal-close:hover { color: #1e293b; }
+.modal-body { padding: 20px; }
+.modal-footer {
+    padding: 14px 20px;
+    background: #f8fafc;
+    border-top: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+/* ---- 8. UTILITY ---- */
+.text-left   { text-align: left !important; }
+.text-center { text-align: center !important; }
+.text-right  { text-align: right !important; }
+.text-muted  { color: #94a3b8; }
+.fw-bold     { font-weight: 700; }
+
+/* Sticky column helper for wide tables */
+.sticky-col {
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    background-color: inherit;
+}

@@ -3,476 +3,471 @@ require '../../config/config.php';
 include '../templates/header.php';
 
 // Filter parameter
-$tanggal = isset($_GET['tanggal']) ? $_GET['tanggal'] : date('Y-m-d');
+$tanggal  = isset($_GET['tanggal'])  ? $_GET['tanggal']  : date('Y-m-d');
+$afdeling = isset($_GET['afdeling']) ? $_GET['afdeling'] : '';
 
-// Array nama bulan
-$nama_bulan = array(
-    '01' => 'Januari', '02' => 'Februari', '03' => 'Maret',
-    '04' => 'April', '05' => 'Mei', '06' => 'Juni',
-    '07' => 'Juli', '08' => 'Agustus', '09' => 'September',
-    '10' => 'Oktober', '11' => 'November', '12' => 'Desember'
-);
-$tgl_pecah = explode('-', $tanggal);
+$nama_bulan = [
+    '01'=>'Januari','02'=>'Februari','03'=>'Maret',
+    '04'=>'April',  '05'=>'Mei',     '06'=>'Juni',
+    '07'=>'Juli',   '08'=>'Agustus', '09'=>'September',
+    '10'=>'Oktober','11'=>'November','12'=>'Desember'
+];
+$tgl_pecah      = explode('-', $tanggal);
 $format_tanggal = $tgl_pecah[2] . ' ' . $nama_bulan[$tgl_pecah[1]] . ' ' . $tgl_pecah[0];
 
-// Ambil data users (karyawan) beserta kinerja harinya
-$tgl_safe = mysqli_real_escape_string($conn, $tanggal);
+// Filter query
+$where_conditions = ["u.role='karyawan'"];
+if (!empty($afdeling)) {
+    $where_conditions[] = "u.afdeling = '" . mysqli_real_escape_string($conn, $afdeling) . "'";
+}
+$where_clause = "WHERE " . implode(' AND ', $where_conditions);
+
+$tgl_safe    = mysqli_real_escape_string($conn, $tanggal);
 $query_users = mysqli_query($conn, "
-    SELECT u.id, u.nik, u.name, u.jabatan, lk.status as lk_status, lk.blok, lk.luas_ha, lk.objek_kerja, lk.hasil_ton, lk.hasil_kg, lk.prestasi_ton, lk.prestasi_kg, m.name as mandor_name
-    FROM users u 
+    SELECT u.id, u.nik, u.name, u.jabatan, u.afdeling,
+           lk.status as lk_status, lk.kategori_task, lk.blok, lk.luas_ha,
+           lk.objek_kerja, lk.hasil_ton, lk.hasil_kg, lk.prestasi_ton, lk.prestasi_kg,
+           lk.tbs, lk.tandan_kosong, lk.tandan_brondol, lk.total_tandan,
+           lk.hasil_langsir_kg, lk.jumlah_jam_kerja, lk.aksi,
+           m.name as mandor_name
+    FROM users u
     LEFT JOIN logbook_kinerja lk ON u.id = lk.user_id AND lk.tanggal = '$tgl_safe'
     LEFT JOIN users m ON lk.mandor_id = m.id
-    WHERE u.role='karyawan' 
+    $where_clause
     ORDER BY u.name ASC
 ");
+
+// Kumpulkan + proses semua data
+$print_data = [];
+while ($user = mysqli_fetch_assoc($query_users)) {
+    $cat = $user['kategori_task'] ?? '';
+    $obj = strtolower($user['objek_kerja'] ?? '');
+    $detail = '-';
+    if ($cat==='langsir' || strpos($obj,'langsir')!==false || strpos($obj,'membabat')!==false) {
+        $detail = "Hasil: {$user['hasil_ton']} Ton {$user['hasil_kg']} Kg | Prestasi: {$user['prestasi_ton']} Ton {$user['prestasi_kg']} Kg";
+    } elseif ($cat==='potong_buah' || strpos($obj,'potong')!==false || strpos($obj,'panen')!==false) {
+        $detail = "TBS: {$user['tbs']} | Kosong: {$user['tandan_kosong']} | Brondol: {$user['tandan_brondol']} | Total: {$user['total_tandan']}";
+    } elseif ($cat==='muat_tbs' || strpos($obj,'muat')!==false) {
+        $detail = "Langsir: {$user['hasil_langsir_kg']} Kg | Jam: {$user['jumlah_jam_kerja']}";
+    } elseif ($cat==='jaga' || strpos($obj,'jaga')!==false) {
+        $detail = "Jam Kerja: {$user['jumlah_jam_kerja']}";
+    } elseif (!empty($user['objek_kerja'])) {
+        $detail = "Aksi: " . ($user['aksi'] ?? '-');
+    }
+    $user['_detail'] = $detail;
+    $print_data[] = $user;
+}
 ?>
 
 <style>
-    /* Global Report Styles (Sama dengan Laporan Absensi) */
-    .report-wrapper {
-        background: #ffffff;
-        border-radius: 16px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
-        padding: 24px;
-        animation: fadeIn 0.4s ease-out;
-        border: 1px solid #f1f5f9;
+    /* Tombol file di tabel kinerja */
+    .kinerja-tbl { width: 100%; border-collapse: collapse; }
+    .kinerja-tbl th {
+        background-color: #f8fafc; color: #475569; font-weight: 700; text-transform: uppercase;
+        font-size: 11px; letter-spacing: 0.5px; padding: 14px 16px; text-align: left; border-bottom: 2px solid #e2e8f0;
     }
+    .kinerja-tbl td {
+        padding: 14px 16px; border-bottom: 1px solid #f1f5f9; color: #334155; font-size: 14px; vertical-align: middle;
+    }
+    .kinerja-tbl tbody tr:last-child td { border-bottom: none; }
+    .kinerja-tbl tbody tr:hover td { background-color: #f8fafc; }
 
-    .report-top-bar {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: space-between;
-        align-items: flex-start;
-        margin-bottom: 24px;
-        gap: 20px;
-    }
-
-    .filter-group-left {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        flex: 1;
-        min-width: 250px;
-    }
-
-    .filter-group-right {
-        display: flex;
-        align-items: flex-end;
-        justify-content: flex-end;
-        gap: 12px;
-        flex: 1;
-    }
-
-    .report-title-center {
-        text-align: center;
-        flex: 2;
-        min-width: 300px;
-    }
-
-    .report-title-center h2 {
-        font-size: 24px;
-        font-weight: 800;
-        color: #1e293b;
-        margin-bottom: 4px;
-        letter-spacing: -0.5px;
-    }
-
-    .report-title-center p {
-        color: #64748b;
-        font-size: 14px;
-        margin: 0;
-    }
-
-    /* Inputs & Selects */
-    .form-input {
-        padding: 10px 16px;
-        border-radius: 8px;
-        border: 1px solid #cbd5e1;
-        background-color: #f8fafc;
-        font-size: 14px;
-        color: #334155;
-        font-family: inherit;
-        outline: none;
-        transition: all 0.2s;
-    }
-
-    .form-input:focus {
-        border-color: #3b82f6;
-        background-color: #ffffff;
-        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
-    }
-
-    /* Buttons */
-    .btn-action {
-        padding: 10px 20px;
-        border-radius: 8px;
-        font-weight: 600;
-        font-size: 14px;
-        cursor: pointer;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        transition: all 0.2s;
-        border: none;
-        height: 40px;
-    }
-
-    .btn-primary {
-        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-        color: white;
-        box-shadow: 0 4px 10px rgba(59, 130, 246, 0.25);
-    }
-
-    .btn-primary:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 6px 15px rgba(59, 130, 246, 0.35);
-    }
-
-    /* File Button / Link Style */
-    .btn-file {
-        background: #f1f5f9;
-        color: #3b82f6;
-        border: 1px dashed #94a3b8;
-        padding: 6px 16px;
-        border-radius: 6px;
-        font-size: 13px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.2s;
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-    }
-
-    .btn-file:hover {
-        background: #e0f2fe;
-        border-color: #3b82f6;
-        color: #2563eb;
-    }
-
-    /* Table Styles */
-    .table-responsive {
-        overflow-x: auto;
-        border-radius: 12px;
-        border: 1px solid #e2e8f0;
-    }
-
-    .table-absen {
-        width: 100%;
-        border-collapse: collapse;
-        white-space: nowrap;
-        font-size: 14px;
-    }
-
-    .table-absen th, .table-absen td {
-        padding: 14px 16px;
-        border: 1px solid #e2e8f0;
-        text-align: center;
-    }
-
-    .table-absen th {
-        background-color: #f8fafc;
-        color: #475569;
-        font-weight: 700;
-        text-transform: uppercase;
-        font-size: 13px;
-        letter-spacing: 0.5px;
-    }
-
-    .table-absen tbody tr:hover {
-        background-color: #f1f5f9;
-    }
-
-    .text-left { text-align: left !important; }
-
-    /* Modal Styles */
-    .modal-overlay {
-        position: fixed;
-        top: 0; left: 0; right: 0; bottom: 0;
-        background: rgba(15, 23, 42, 0.6);
-        backdrop-filter: blur(4px);
-        z-index: 9999;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        opacity: 0;
-        visibility: hidden;
-        transition: all 0.3s ease;
-    }
-
-    .modal-overlay.active {
-        opacity: 1;
-        visibility: visible;
-    }
-
-    .modal-content {
-        background: #fff;
-        border-radius: 16px;
-        width: 90%;
-        max-width: 900px;
-        max-height: 90vh;
-        overflow-y: auto;
-        padding: 24px;
-        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-        transform: scale(0.95);
-        transition: transform 0.3s ease;
-    }
-
-    .modal-overlay.active .modal-content {
-        transform: scale(1);
-    }
-
-    .modal-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 20px;
-        padding-bottom: 16px;
-        border-bottom: 1px solid #e2e8f0;
-    }
-    
-    .modal-header-info h3 {
-        margin: 0; font-size: 20px; color: #0f172a; font-weight: 800;
-    }
-    .modal-header-info p {
-        margin: 4px 0 0 0; color: #64748b; font-size: 14px;
-    }
-
-    .btn-close {
-        background: #f1f5f9;
-        border: none;
-        width: 36px; height: 36px;
-        border-radius: 50%;
-        display: flex; align-items: center; justify-content: center;
-        cursor: pointer;
-        color: #64748b;
-        transition: background 0.2s;
-    }
-    .btn-close:hover { background: #e2e8f0; color: #0f172a; }
-
-    /* Badge */
-    .badge {
-        padding: 6px 12px;
-        border-radius: 20px;
-        font-size: 12px;
-        font-weight: 700;
-    }
-    .badge-success { background: #dcfce7; color: #166534; }
-    .badge-warning { background: #fef9c3; color: #854d0e; }
-
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(10px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-
-    /* Print styles */
-    @media print {
-        body * { visibility: hidden; }
-        .main-content { margin: 0 !important; padding: 0 !important; }
-        .report-wrapper, .report-wrapper * { visibility: visible; }
-        .report-wrapper { position: absolute; left: 0; top: 0; width: 100%; box-shadow: none; border: none; padding: 0; }
-        .btn-action, .top-header, .sidebar, .sidebar-overlay, .btn-file { display: none !important; }
-        .form-input { border: none; appearance: none; font-weight: bold; padding: 0; }
-        
-        /* Jika modal print */
-        .modal-overlay.active, .modal-overlay.active * { visibility: visible; }
-        .modal-overlay.active { position: absolute; left: 0; top: 0; width: 100%; background: none; }
-        .modal-content { box-shadow: none; max-width: 100%; width: 100%; padding: 0; transform: none !important; }
-        .btn-close { display: none !important; }
-    }
+    /* Modal (UI only) */
+    #fileModal.show { display: flex; opacity: 1; }
+    .modal-table { width: 100%; border-collapse: collapse; }
+    .modal-table th { background: #f8fafc; color: #475569; font-size: 12px; font-weight: 700; text-transform: uppercase; padding: 10px 12px; border-bottom: 2px solid #e2e8f0; text-align: center; }
+    .modal-table td { padding: 12px; border-bottom: 1px solid #f1f5f9; color: #334155; font-size: 13px; text-align: center; }
+    .modal-table tbody tr:last-child td { border-bottom: none; }
 </style>
 
+<!-- ========== WEB UI ========== -->
 <div class="report-wrapper">
-    <!-- Top Action Bar -->
-    <div class="report-top-bar">
-        
-        <div class="filter-group-left">
-            <span style="font-weight: 600; font-size: 14px; color: #475569;">Pilih Periode:</span>
-            <input type="date" class="form-input" value="<?= $tanggal ?>" onchange="window.location.href='kinerja.php?tanggal='+this.value">
-        </div>
+    <form method="GET" action="kinerja.php" id="formFilter">
+        <div class="report-top-bar">
+            <div class="filter-group">
+                <span class="filter-label">Pilih Periode:</span>
+                <input type="date" name="tanggal" class="form-input" value="<?= $tanggal ?>" onchange="document.getElementById('formFilter').submit();">
 
-        <div class="report-title-center">
-            <h2>Laporan Kinerja Hari Ini</h2>
-            <p>Tanggal: <strong><?= $format_tanggal ?></strong></p>
-        </div>
+                <span class="filter-label">Afdeling:</span>
+                <select name="afdeling" class="form-select" onchange="document.getElementById('formFilter').submit();">
+                    <option value="">Semua</option>
+                    <?php
+                    $afd_q = mysqli_query($conn, "SELECT nama_afdeling FROM afdelings ORDER BY nama_afdeling ASC");
+                    while ($afd = mysqli_fetch_assoc($afd_q)):
+                    ?>
+                        <option value="<?= htmlspecialchars($afd['nama_afdeling']) ?>" <?= $afdeling==$afd['nama_afdeling'] ? 'selected':'' ?>>
+                            <?= htmlspecialchars($afd['nama_afdeling']) ?>
+                        </option>
+                    <?php endwhile; ?>
+                </select>
+            </div>
 
-        <div class="filter-group-right">
-            <button type="button" class="btn-action btn-primary" onclick="window.print()" style="white-space: nowrap; flex-shrink: 0;">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <div class="report-title-center">
+                <h2>Laporan Kinerja Harian</h2>
+                <p>Tanggal: <strong><?= $format_tanggal ?></strong>
+                    <?= !empty($afdeling) ? ' &mdash; '.htmlspecialchars($afdeling) : '' ?>
+                </p>
+            </div>
+
+            <button type="button" class="btn btn-primary" onclick="window.print()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <polyline points="6 9 6 2 18 2 18 9"></polyline>
                     <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
                     <rect x="6" y="14" width="12" height="8"></rect>
                 </svg>
-                Cetak PDF
+                Cetak Dokumen
             </button>
         </div>
+    </form>
 
-    </div>
-
-    <!-- Tabel Utama -->
-    <div class="table-responsive">
-        <table class="table-absen">
+    <div class="table-container">
+        <table class="kinerja-tbl">
             <thead>
                 <tr>
-                    <th style="width: 50px;">NO</th>
-                    <th class="text-left" style="width: 150px;">NIK</th>
-                    <th class="text-left">NAMA</th>
-                    <th>LAPORAN</th>
-                    <th style="width: 150px;">STATUS</th>
+                    <th width="4%" class="text-center">NO</th>
+                    <th width="13%">NIK</th>
+                    <th width="20%">NAMA</th>
+                    <th width="13%">AFDELING</th>
+                    <th width="25%" class="text-center">LAPORAN KERJA</th>
+                    <th width="15%" class="text-center">STATUS</th>
                 </tr>
             </thead>
             <tbody>
-                <?php 
-                $no = 1;
-                if(mysqli_num_rows($query_users) > 0):
-                    while($user = mysqli_fetch_assoc($query_users)): 
-                        $status = $user['lk_status'] ? ucfirst($user['lk_status']) : 'Belum';
-                        $status_badge = 'badge-warning';
-                        if (strtolower($status) == 'diterima' || strtolower($status) == 'selesai') $status_badge = 'badge-success';
-                        
-                        $dataJSON = htmlspecialchars(json_encode([
-                            'kategori' => $user['kategori_task'] ?? 'perawatan',
-                            'objek' => $user['objek_kerja'] ?? '-',
-                            'blok' => $user['blok'] ?? '-',
-                            'luas' => $user['luas_ha'] ?? '-',
-                            'mandor' => $user['mandor_name'] ?? '-',
-                            'h_ton' => $user['hasil_ton'] ?? '0',
-                            'h_kg' => $user['hasil_kg'] ?? '0',
-                            'p_ton' => $user['prestasi_ton'] ?? '0',
-                            'p_kg' => $user['prestasi_kg'] ?? '0',
-                            'tbs' => $user['tbs'] ?? '0',
-                            'kosong' => $user['tandan_kosong'] ?? '0',
-                            'brondol' => $user['tandan_brondol'] ?? '0',
-                            'total' => $user['total_tandan'] ?? '0',
-                            'langsir_kg' => $user['hasil_langsir_kg'] ?? '0',
-                            'jam' => $user['jumlah_jam_kerja'] ?? '0',
-                            'aksi' => ucfirst($user['aksi'] ?? 'Belum'),
-                            'status' => $status,
-                            'status_badge' => $status_badge
-                        ]), ENT_QUOTES, 'UTF-8');
+                <?php if (count($print_data) > 0): $no = 1; foreach ($print_data as $user):
+                    $status = $user['lk_status'] ? ucfirst($user['lk_status']) : 'Belum';
+                    $badge  = (strtolower($status)=='diterima'||strtolower($status)=='selesai') ? 'badge-success' : 'badge-warning';
+
+                    $dataJSON = htmlspecialchars(json_encode([
+                        'kategori'  => $user['kategori_task'] ?? 'perawatan',
+                        'objek'     => $user['objek_kerja'] ?? '-',
+                        'blok'      => $user['blok'] ?? '-',
+                        'luas'      => $user['luas_ha'] ?? '-',
+                        'mandor'    => $user['mandor_name'] ?? '-',
+                        'h_ton'     => $user['hasil_ton'] ?? '0',
+                        'h_kg'      => $user['hasil_kg'] ?? '0',
+                        'p_ton'     => $user['prestasi_ton'] ?? '0',
+                        'p_kg'      => $user['prestasi_kg'] ?? '0',
+                        'tbs'       => $user['tbs'] ?? '0',
+                        'kosong'    => $user['tandan_kosong'] ?? '0',
+                        'brondol'   => $user['tandan_brondol'] ?? '0',
+                        'total'     => $user['total_tandan'] ?? '0',
+                        'langsir'   => $user['hasil_langsir_kg'] ?? '0',
+                        'jam'       => $user['jumlah_jam_kerja'] ?? '0',
+                        'aksi'      => ucfirst($user['aksi'] ?? '-'),
+                        'status'    => $status,
+                        'badge'     => $badge,
+                    ]), ENT_QUOTES, 'UTF-8');
                 ?>
                     <tr>
-                        <td><?= $no++ ?></td>
-                        <td class="text-left"><?= htmlspecialchars($user['nik']) ?></td>
-                        <td class="text-left" style="font-weight: 600;"><?= htmlspecialchars($user['name']) ?></td>
-                        <td>
+                        <td class="text-center"><?= $no++ ?></td>
+                        <td><?= htmlspecialchars($user['nik']) ?></td>
+                        <td style="font-weight:600;"><?= htmlspecialchars($user['name']) ?></td>
+                        <td><?= htmlspecialchars($user['afdeling'] ?? '-') ?></td>
+                        <td class="text-center">
                             <?php if ($user['lk_status']): ?>
-                            <button onclick="openReportModal('<?= htmlspecialchars((string)$user['name'], ENT_QUOTES) ?>', '<?= htmlspecialchars((string)$user['jabatan'], ENT_QUOTES) ?>', <?= $dataJSON ?>)" class="btn-file">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                    <polyline points="14 2 14 8 20 8"></polyline>
-                                    <line x1="16" y1="13" x2="8" y2="13"></line>
-                                    <line x1="16" y1="17" x2="8" y2="17"></line>
-                                    <polyline points="10 9 9 9 8 9"></polyline>
-                                </svg>
-                                File
-                            </button>
+                                <button onclick="openModal('<?= htmlspecialchars($user['name'], ENT_QUOTES) ?>', '<?= htmlspecialchars($user['nik'], ENT_QUOTES) ?>', '<?= htmlspecialchars($user['afdeling'] ?? '-', ENT_QUOTES) ?>', <?= $dataJSON ?>)" class="btn-file">
+                                    Lihat File
+                                </button>
                             <?php else: ?>
-                            <span style="color:#94a3b8; font-size:12px; font-style:italic;">-</span>
+                                <span class="text-muted" style="font-style:italic;">Belum lapor</span>
                             <?php endif; ?>
                         </td>
-                        <td>
-                            <span class="badge <?= $status_badge ?>">
-                                <?= $status ?>
-                            </span>
-                        </td>
+                        <td class="text-center"><span class="badge <?= $badge ?>"><?= $status ?></span></td>
                     </tr>
-                <?php 
-                    endwhile;
-                else: 
-                ?>
-                    <tr>
-                        <td colspan="5" style="padding: 30px; color: #64748b;">Tidak ada data.</td>
-                    </tr>
+                <?php endforeach; else: ?>
+                    <tr><td colspan="6" style="padding:30px; text-align:center; color:#94a3b8;">Tidak ada data karyawan.</td></tr>
                 <?php endif; ?>
             </tbody>
         </table>
     </div>
 </div>
 
-<!-- MODAL: Isi File Detail Pekerjaan -->
+<!-- ========== MODAL DOKUMEN KINERJA (Tampilan Dokumen Resmi) ========== -->
 <div id="fileModal" class="modal-overlay">
-    <div class="modal-content">
-        
+    <div class="modal-box" style="max-width: 820px; max-height: 90vh; overflow-y: auto;">
+        <!-- Header Modal -->
         <div class="modal-header">
-            <div class="modal-header-info">
-                <h3 id="modalTanggal"><?= $format_tanggal ?></h3>
-                <p id="modalInfoSub">Isi di dalam file / <span style="font-style: italic;">misal objek kerjanya langsir manual</span></p>
+            <div>
+                <p class="modal-title">📄 Dokumen Kinerja Karyawan</p>
+                <p class="modal-subtitle" id="modalSubtitle"><?= $format_tanggal ?></p>
             </div>
-            
-            <div style="display: flex; gap: 12px; align-items: center;">
-                <button type="button" class="btn-action btn-primary" onclick="window.print()" style="white-space: nowrap; flex-shrink: 0;">Cetak PDF</button>
-                <button class="btn-close" onclick="closeReportModal()">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                        <line x1="6" y1="6" x2="18" y2="18"></line>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <button class="btn btn-primary btn-sm" onclick="cetakDokumenModal()">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="6 9 6 2 18 2 18 9"></polyline>
+                        <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                        <rect x="6" y="14" width="12" height="8"></rect>
                     </svg>
+                    Cetak Dokumen Ini
                 </button>
+                <button class="modal-close" onclick="tutupModal()">&times;</button>
             </div>
         </div>
 
-        <div class="table-responsive" style="margin-bottom: 12px;">
-            <table class="table-absen">
-                <thead id="modalThead">
-                </thead>
-                <tbody id="modalTableBody">
-                </tbody>
+        <!-- Isi Modal: Dokumen Resmi -->
+        <div class="modal-body" style="padding: 28px;" id="docModalContent">
+
+            <!-- Kop Surat -->
+            <div style="display:flex; align-items:center; border-bottom: 3px solid #1e293b; padding-bottom: 14px; margin-bottom: 18px;">
+                <img src="<?= BASE_URL ?>assets/img/logo.png" alt="" style="width:60px; height:auto; margin-right:16px;" onerror="this.style.display='none'">
+                <div style="flex:1; text-align:center;">
+                    <div style="font-size:18px; font-weight:800; text-transform:uppercase; letter-spacing:1px; color:#1e293b;">PT Damai Jaya Lestari</div>
+                    <div style="font-size:13px; color:#475569; margin-top:2px;">Laporan Kinerja Harian Karyawan</div>
+                    <div style="font-size:11px; color:#64748b; margin-top:2px;">Jl. Perkebunan No. 1 | Telp: (021) 000-0000 | Email: admin@djl.co.id</div>
+                </div>
+            </div>
+
+            <!-- Judul -->
+            <div style="text-align:center; margin-bottom:14px;">
+                <div style="font-size:15px; font-weight:800; text-transform:uppercase; text-decoration:underline; color:#1e293b;" id="docJudul">LAPORAN KINERJA HARIAN</div>
+                <div style="font-size:13px; color:#475569; margin-top:4px;" id="docTanggal">Tanggal: <?= $format_tanggal ?></div>
+            </div>
+
+            <!-- Info Karyawan -->
+            <div style="display:flex; gap:30px; margin-bottom:16px; font-size:13px; flex-wrap:wrap;">
+                <div><span style="color:#64748b;">Nama Karyawan&nbsp;:</span> <strong id="docNama">-</strong></div>
+                <div><span style="color:#64748b;">NIK&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:</span> <strong id="docNIK">-</strong></div>
+                <div><span style="color:#64748b;">Afdeling&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:</span> <strong id="docAfdeling">-</strong></div>
+                <div><span style="color:#64748b;">Mandor&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:</span> <strong id="docMandor">-</strong></div>
+            </div>
+
+            <!-- Tabel Detail Kinerja -->
+            <table id="docTable" style="width:100%; border-collapse:collapse; font-size:13px; margin-bottom:20px;">
+                <thead id="docThead" style="background:#f1f5f9;"></thead>
+                <tbody id="docTbody"></tbody>
             </table>
+
+            <!-- Info Tambahan -->
+            <div id="docInfo" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:12px; font-size:12px; color:#475569; margin-bottom:20px;">
+            </div>
+
+            <!-- Tanda Tangan -->
+            <div style="display:flex; justify-content:space-between; margin-top:30px; text-align:center; font-size:13px; flex-wrap:wrap; gap:20px;">
+                <div style="min-width:160px;">
+                    <div>Mengetahui,</div>
+                    <div style="color:#64748b; font-size:12px;">Manager / Askep</div>
+                    <div style="margin-top:60px; border-top:1px solid #334155; padding-top:4px; font-weight:700;">(_____________________)</div>
+                </div>
+                <div style="min-width:160px;">
+                    <div>Diperiksa Oleh,</div>
+                    <div style="color:#64748b; font-size:12px;">Pengawas Lapangan</div>
+                    <div style="margin-top:60px; border-top:1px solid #334155; padding-top:4px; font-weight:700;">(_____________________)</div>
+                </div>
+                <div style="min-width:160px;">
+                    <div>Dibuat Oleh,</div>
+                    <div style="color:#64748b; font-size:12px;">Kerani / Admin</div>
+                    <div style="margin-top:60px; border-top:1px solid #334155; padding-top:4px; font-weight:700;">(_____________________)</div>
+                </div>
+            </div>
+
+            <!-- Footer Dokumen -->
+            <div style="margin-top:20px; font-size:10px; color:#94a3b8; border-top:1px solid #e2e8f0; padding-top:8px;">
+                Dokumen ini dicetak melalui Sistem Informasi PT Damai Jaya Lestari pada <?= date('d F Y') ?>.
+            </div>
         </div>
+    </div>
+</div>
 
-        <p style="font-size: 13px; color: #64748b; font-style: italic; margin-top: 20px;">
-            * Bentuk file bisa berubah-ubah sesuai objek kerja.
-        </p>
+<!-- ========== DOKUMEN CETAK SEMUA (Cetak Dokumen tombol utama) ========== -->
+<div id="official-print-doc">
+    <style>@media print { @page { size: landscape; margin: 12mm; } }</style>
 
+    <!-- Kop Surat -->
+    <div class="doc-header">
+        <img src="<?= BASE_URL ?>assets/img/logo.png" alt="" class="doc-header-logo" onerror="this.style.display='none'">
+        <div class="doc-header-text">
+            <h1>PT Damai Jaya Lestari</h1>
+            <h2>Laporan Kinerja Harian Karyawan</h2>
+            <p>Jl. Perkebunan No. 1 &nbsp;|&nbsp; Telp: (021) 000-0000 &nbsp;|&nbsp; Email: admin@djl.co.id</p>
+        </div>
+    </div>
+
+    <div class="doc-title">
+        <h3>Laporan Kinerja &mdash; <?= $format_tanggal ?></h3>
+    </div>
+    <div class="doc-meta">
+        <div><strong>Afdeling&nbsp;:</strong> <?= !empty($afdeling) ? htmlspecialchars($afdeling) : 'Semua Afdeling' ?></div>
+        <div><strong>Jumlah Karyawan:</strong> <?= count($print_data) ?> orang</div>
+        <div><strong>Dicetak&nbsp;&nbsp;:</strong> <?= date('d F Y, H:i') ?> WIB</div>
+    </div>
+
+    <table class="doc-table">
+        <thead>
+            <tr>
+                <th style="width:25px;">No</th>
+                <th style="width:80px; text-align:left;">NIK</th>
+                <th style="min-width:120px; text-align:left;">Nama Karyawan</th>
+                <th style="width:70px; text-align:left;">Afdeling</th>
+                <th style="min-width:100px; text-align:left;">Objek Kerja</th>
+                <th style="width:80px;">Blok / Luas (Ha)</th>
+                <th style="min-width:160px; text-align:left;">Detail Hasil Kerja</th>
+                <th style="width:80px;">Mandor</th>
+                <th style="width:60px;">Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php if(count($print_data) > 0): $pno=1; foreach($print_data as $p): ?>
+            <tr>
+                <td class="text-center"><?= $pno++ ?></td>
+                <td><?= htmlspecialchars($p['nik']) ?></td>
+                <td><?= htmlspecialchars($p['name']) ?></td>
+                <td><?= htmlspecialchars($p['afdeling'] ?? '-') ?></td>
+                <td><?= htmlspecialchars($p['objek_kerja'] ?? '-') ?></td>
+                <td class="text-center"><?= htmlspecialchars($p['blok']??'-') ?> / <?= htmlspecialchars($p['luas_ha']??'-') ?></td>
+                <td><?= htmlspecialchars($p['_detail']) ?></td>
+                <td><?= htmlspecialchars($p['mandor_name']??'-') ?></td>
+                <td class="text-center"><?= $p['lk_status'] ? ucfirst($p['lk_status']) : 'Belum' ?></td>
+            </tr>
+            <?php endforeach; else: ?>
+            <tr><td colspan="9" class="text-center" style="padding:16px;">Tidak ada data kinerja karyawan pada tanggal ini.</td></tr>
+            <?php endif; ?>
+        </tbody>
+    </table>
+
+    <div class="doc-signature">
+        <div class="doc-signature-col">
+            <p>Mengetahui,<br>Manager / Askep</p>
+            <span class="sig-name">(_____________________)</span>
+        </div>
+        <div class="doc-signature-col">
+            <p>Diperiksa Oleh,<br>Pengawas Lapangan</p>
+            <span class="sig-name">(_____________________)</span>
+        </div>
+        <div class="doc-signature-col">
+            <p>Dibuat Oleh,<br>Kerani / Admin</p>
+            <span class="sig-name">(_____________________)</span>
+        </div>
+    </div>
+    <div class="doc-footer">
+        Dokumen ini dicetak secara otomatis oleh Sistem Informasi PT Damai Jaya Lestari pada <?= date('d F Y \p\u\k\u\l H:i') ?> WIB.
     </div>
 </div>
 
 <script>
-    // Menyimpan tanggal saat ini di JS untuk ditampilkan di modal
-    const currentDate = "<?= $format_tanggal ?>";
+const modal = document.getElementById('fileModal');
 
-    function openReportModal(name, role, data) {
-        document.getElementById('modalTanggal').innerText = currentDate + ' - ' + name;
-        document.getElementById('modalInfoSub').innerText = 'Objek Kerja: ' + data.objek;
-        
-        let thead = '';
-        let tbody = '';
-        let cat = data.kategori;
-        let obj = data.objek.toLowerCase();
+// Data per karyawan diisi saat openModal dipanggil
+let currentDocName = '';
 
-        if (cat === 'langsir' || obj.includes('membabat') || obj.includes('langsir')) {
-            thead = `<tr><th rowspan="2">Blok</th><th rowspan="2">Luas Ha</th><th rowspan="2">Mandor</th><th colspan="2">Hasil</th><th colspan="2">Prestasi</th><th rowspan="2">Aksi</th><th rowspan="2">Status</th></tr><tr><th>Ton</th><th>Kg</th><th>Ton</th><th>Kg</th></tr>`;
-            tbody = `<tr><td>${data.blok}</td><td>${data.luas}</td><td>${data.mandor}</td><td>${data.h_ton}</td><td>${data.h_kg}</td><td>${data.p_ton}</td><td>${data.p_kg}</td><td>${data.aksi}</td><td><span class="badge ${data.status_badge}">${data.status}</span></td></tr>`;
-        } else if (cat === 'potong_buah' || obj.includes('potong') || obj.includes('panen')) {
-            thead = `<tr><th rowspan="2">Blok</th><th rowspan="2">Luas Ha</th><th rowspan="2">Mandor</th><th colspan="4">Jumlah Janjangan</th><th rowspan="2">Aksi</th><th rowspan="2">Status</th></tr><tr><th>TBS</th><th>Kosong</th><th>Brondol</th><th>Total</th></tr>`;
-            tbody = `<tr><td>${data.blok}</td><td>${data.luas}</td><td>${data.mandor}</td><td>${data.tbs}</td><td>${data.kosong}</td><td>${data.brondol}</td><td>${data.total}</td><td>${data.aksi}</td><td><span class="badge ${data.status_badge}">${data.status}</span></td></tr>`;
-        } else if (cat === 'muat_tbs' || obj.includes('muat')) {
-            thead = `<tr><th>Blok</th><th>Luas Ha</th><th>Mandor</th><th>Hasil Langsir (Kg)</th><th>Jam Kerja</th><th>Aksi</th><th>Status</th></tr>`;
-            tbody = `<tr><td>${data.blok}</td><td>${data.luas}</td><td>${data.mandor}</td><td>${data.langsir_kg}</td><td>${data.jam}</td><td>${data.aksi}</td><td><span class="badge ${data.status_badge}">${data.status}</span></td></tr>`;
-        } else if (cat === 'jaga' || obj.includes('jaga')) {
-            thead = `<tr><th>Blok</th><th>Luas Ha / Mandor</th><th>Jam Kerja</th><th>Aksi</th><th>Status</th></tr>`;
-            tbody = `<tr><td>${data.blok}</td><td>${data.luas} / ${data.mandor}</td><td>${data.jam}</td><td>${data.aksi}</td><td><span class="badge ${data.status_badge}">${data.status}</span></td></tr>`;
-        } else {
-            thead = `<tr><th>Blok</th><th>Luas Ha</th><th>Mandor</th><th>Aksi</th><th>Status</th></tr>`;
-            tbody = `<tr><td>${data.blok}</td><td>${data.luas}</td><td>${data.mandor}</td><td>${data.aksi}</td><td><span class="badge ${data.status_badge}">${data.status}</span></td></tr>`;
-        }
+function openModal(name, nik, afdeling, data) {
+    currentDocName = name;
 
-        document.getElementById('modalThead').innerHTML = thead;
-        document.getElementById('modalTableBody').innerHTML = tbody;
-        document.getElementById('fileModal').classList.add('active');
+    // Isi info karyawan di modal
+    document.getElementById('docNama').textContent     = name;
+    document.getElementById('docNIK').textContent      = nik;
+    document.getElementById('docAfdeling').textContent = afdeling;
+    document.getElementById('docMandor').textContent   = data.mandor;
+    document.getElementById('docJudul').textContent    = 'LAPORAN KINERJA HARIAN — ' + name.toUpperCase();
+
+    const cat = data.kategori, obj = (data.objek||'').toLowerCase();
+    let thead = '', tbody = '', info = '';
+
+    const tdStyle = 'border:1px solid #cbd5e1; padding:9px 12px; font-size:13px;';
+    const thStyle = 'border:1px solid #cbd5e1; padding:9px 12px; background:#f1f5f9; font-weight:700; font-size:12px; text-transform:uppercase; color:#475569;';
+
+    if (cat === 'langsir' || obj.includes('langsir') || obj.includes('membabat')) {
+        thead = `<tr>
+            <th style="${thStyle}">Blok</th><th style="${thStyle}">Luas (Ha)</th><th style="${thStyle}">Objek Kerja</th>
+            <th style="${thStyle}" colspan="2">Hasil Kerja</th><th style="${thStyle}" colspan="2">Prestasi</th><th style="${thStyle}">Status</th>
+        </tr><tr>
+            <th style="${thStyle}"></th><th style="${thStyle}"></th><th style="${thStyle}"></th>
+            <th style="${thStyle}">Ton</th><th style="${thStyle}">Kg</th><th style="${thStyle}">Ton</th><th style="${thStyle}">Kg</th>
+            <th style="${thStyle}"></th>
+        </tr>`;
+        tbody = `<tr>
+            <td style="${tdStyle}">${data.blok}</td><td style="${tdStyle}">${data.luas}</td><td style="${tdStyle}">${data.objek}</td>
+            <td style="${tdStyle}; text-align:center;">${data.h_ton}</td><td style="${tdStyle}; text-align:center;">${data.h_kg}</td>
+            <td style="${tdStyle}; text-align:center;">${data.p_ton}</td><td style="${tdStyle}; text-align:center;">${data.p_kg}</td>
+            <td style="${tdStyle}; text-align:center; font-weight:700;">${data.status}</td>
+        </tr>`;
+        info = `<strong>Aksi:</strong> ${data.aksi}`;
+    } else if (cat === 'potong_buah' || obj.includes('potong') || obj.includes('panen')) {
+        thead = `<tr>
+            <th style="${thStyle}">Blok</th><th style="${thStyle}">Luas (Ha)</th><th style="${thStyle}">Objek Kerja</th>
+            <th style="${thStyle}" colspan="4">Data Janjangan</th><th style="${thStyle}">Status</th>
+        </tr><tr>
+            <th style="${thStyle}"></th><th style="${thStyle}"></th><th style="${thStyle}"></th>
+            <th style="${thStyle}">TBS</th><th style="${thStyle}">Kosong</th><th style="${thStyle}">Brondol</th><th style="${thStyle}">Total</th>
+            <th style="${thStyle}"></th>
+        </tr>`;
+        tbody = `<tr>
+            <td style="${tdStyle}">${data.blok}</td><td style="${tdStyle}">${data.luas}</td><td style="${tdStyle}">${data.objek}</td>
+            <td style="${tdStyle}; text-align:center;">${data.tbs}</td><td style="${tdStyle}; text-align:center;">${data.kosong}</td>
+            <td style="${tdStyle}; text-align:center;">${data.brondol}</td><td style="${tdStyle}; text-align:center; font-weight:700;">${data.total}</td>
+            <td style="${tdStyle}; text-align:center; font-weight:700;">${data.status}</td>
+        </tr>`;
+        info = `<strong>Aksi:</strong> ${data.aksi}`;
+    } else if (cat === 'muat_tbs' || obj.includes('muat')) {
+        thead = `<tr>
+            <th style="${thStyle}">Blok</th><th style="${thStyle}">Objek Kerja</th>
+            <th style="${thStyle}">Hasil Langsir (Kg)</th><th style="${thStyle}">Jam Kerja</th><th style="${thStyle}">Status</th>
+        </tr>`;
+        tbody = `<tr>
+            <td style="${tdStyle}">${data.blok}</td><td style="${tdStyle}">${data.objek}</td>
+            <td style="${tdStyle}; text-align:center; font-weight:700;">${data.langsir} Kg</td>
+            <td style="${tdStyle}; text-align:center;">${data.jam}</td>
+            <td style="${tdStyle}; text-align:center; font-weight:700;">${data.status}</td>
+        </tr>`;
+        info = `<strong>Aksi:</strong> ${data.aksi}`;
+    } else if (cat === 'jaga' || obj.includes('jaga')) {
+        thead = `<tr>
+            <th style="${thStyle}">Blok</th><th style="${thStyle}">Objek Kerja</th>
+            <th style="${thStyle}">Jam Kerja</th><th style="${thStyle}">Status</th>
+        </tr>`;
+        tbody = `<tr>
+            <td style="${tdStyle}">${data.blok}</td><td style="${tdStyle}">${data.objek}</td>
+            <td style="${tdStyle}; text-align:center;">${data.jam}</td>
+            <td style="${tdStyle}; text-align:center; font-weight:700;">${data.status}</td>
+        </tr>`;
+        info = `<strong>Aksi:</strong> ${data.aksi}`;
+    } else {
+        thead = `<tr>
+            <th style="${thStyle}">Blok</th><th style="${thStyle}">Luas (Ha)</th>
+            <th style="${thStyle}">Objek Kerja</th><th style="${thStyle}">Aksi</th><th style="${thStyle}">Status</th>
+        </tr>`;
+        tbody = `<tr>
+            <td style="${tdStyle}">${data.blok}</td><td style="${tdStyle}">${data.luas}</td>
+            <td style="${tdStyle}">${data.objek}</td><td style="${tdStyle}">${data.aksi}</td>
+            <td style="${tdStyle}; text-align:center; font-weight:700;">${data.status}</td>
+        </tr>`;
     }
 
-    function closeReportModal() {
-        document.getElementById('fileModal').classList.remove('active');
-    }
+    document.getElementById('docThead').innerHTML = thead;
+    document.getElementById('docTbody').innerHTML = tbody;
+    document.getElementById('docInfo').innerHTML  = info || '<em style="color:#94a3b8;">Tidak ada keterangan tambahan.</em>';
+    modal.classList.add('show');
+}
 
-    // Tutup modal jika klik di luar area konten
-    document.getElementById('fileModal').addEventListener('click', function(e) {
-        if(e.target === this) {
-            closeReportModal();
-        }
-    });
+function tutupModal() {
+    modal.classList.remove('show');
+}
+
+// Cetak dokumen individual per karyawan menggunakan window baru
+function cetakDokumenModal() {
+    const content = document.getElementById('docModalContent').innerHTML;
+    const win = window.open('', '_blank', 'width=900,height=700');
+    win.document.write(`<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Laporan Kinerja - ${currentDocName}</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Times New Roman', Times, serif; padding: 20mm; font-size: 12pt; color: #000; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 18pt; }
+        th, td { border: 1px solid #000; padding: 6pt 8pt; }
+        @page { size: A4 portrait; margin: 20mm; }
+    </style>
+</head>
+<body>${content}</body>
+</html>`);
+    win.document.close();
+    win.focus();
+    setTimeout(() => { win.print(); }, 400);
+}
+
+modal.addEventListener('click', e => { if (e.target === modal) tutupModal(); });
 </script>
 
 <?php include '../templates/footer.php'; ?>
+
