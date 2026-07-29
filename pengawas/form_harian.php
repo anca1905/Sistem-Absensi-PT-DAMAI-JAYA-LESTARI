@@ -93,6 +93,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['rows'])) {
         font-family: inherit;
         outline: none;
         transition: all 0.2s;
+        box-sizing: border-box;
     }
     
     .form-select:focus, .form-input:focus {
@@ -222,13 +223,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['rows'])) {
         
         <!-- Filter Top -->
         <form id="filterForm" method="GET">
-            <div style="display: flex; gap: 10px; margin-bottom: 16px;">
-                <div style="flex: 1;">
-                    <label style="font-size: 11px; font-weight: 700; color: #64748b; margin-bottom:4px; display:block;">Pilih Tanggal</label>
+            <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px;">
+                <div>
+                    <label style="font-size: 11px; font-weight: 700; color: #64748b; margin-bottom:6px; display:block;">Pilih Tanggal</label>
                     <input type="date" name="tanggal" class="form-input" value="<?= $tanggal ?>" onchange="document.getElementById('filterForm').submit()">
                 </div>
-                <div style="flex: 1;">
-                    <label style="font-size: 11px; font-weight: 700; color: #64748b; margin-bottom:4px; display:block;">Pilih Peran</label>
+                <div>
+                    <label style="font-size: 11px; font-weight: 700; color: #64748b; margin-bottom:6px; display:block;">Pilih Peran</label>
                     <select name="peran" class="form-select" onchange="document.getElementById('filterForm').submit()">
                         <option value="karyawan" <?= $peran == 'karyawan' ? 'selected' : '' ?>>Karyawan</option>
                         <option value="mandor" <?= $peran == 'mandor' ? 'selected' : '' ?>>Mandor</option>

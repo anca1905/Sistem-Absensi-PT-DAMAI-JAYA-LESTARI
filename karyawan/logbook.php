@@ -88,6 +88,7 @@ foreach($all_tasks as $t) {
         font-family: inherit;
         outline: none;
         transition: all 0.2s;
+        box-sizing: border-box;
     }
     
     .form-input:focus {
@@ -193,6 +194,7 @@ foreach($all_tasks as $t) {
         justify-content: center;
         gap: 10px;
         transition: all 0.2s;
+        box-sizing: border-box;
         box-shadow: 0 4px 15px rgba(66, 88, 255, 0.25);
         margin-top: 24px;
     }

@@ -39,6 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && isset($_P
         font-family: inherit;
         outline: none;
         transition: all 0.2s;
+        box-sizing: border-box;
     }
     
     .form-input:focus {
@@ -95,6 +96,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && isset($_P
         font-size: 11px;
         cursor: pointer;
         transition: all 0.2s;
+        box-sizing: border-box;
     }
     .btn-file:hover { background: #e0f2fe; border-color: #7dd3fc; }
 

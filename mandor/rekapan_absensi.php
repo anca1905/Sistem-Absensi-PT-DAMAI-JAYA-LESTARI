@@ -51,6 +51,7 @@ while ($row = mysqli_fetch_assoc($query_absen)) {
         outline: none;
         margin-bottom: 10px;
         transition: all 0.2s;
+        box-sizing: border-box;
     }
     
     .form-select:focus {
@@ -119,6 +120,7 @@ while ($row = mysqli_fetch_assoc($query_absen)) {
         justify-content: center;
         gap: 10px;
         transition: all 0.2s;
+        box-sizing: border-box;
         box-shadow: 0 4px 15px rgba(66, 88, 255, 0.25);
     }
 
@@ -169,7 +171,7 @@ while ($row = mysqli_fetch_assoc($query_absen)) {
         <!-- Filter Form -->
         <form id="filterForm" method="GET">
             <label style="font-size: 13px; font-weight: 700; color: #475569; display: block; margin-bottom: 8px;">Pilih Periode</label>
-            <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+            <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px;">
                 <select name="bulan" class="form-select" onchange="document.getElementById('filterForm').submit()">
                     <?php foreach($nama_bulan as $num => $name): ?>
                         <option value="<?= $num ?>" <?= $bulan == $num ? 'selected' : '' ?>><?= $name ?></option>
