@@ -132,8 +132,14 @@ if (!empty($afdeling)) {
 </style>
 
 <div class="report-wrapper">
-    <div class="report-header">
+    <div class="report-header" style="display: flex; justify-content: space-between; align-items: center;">
         <h2 class="page-title">Data Penggajian Karyawan</h2>
+        <?php if (!empty($afdeling)): ?>
+        <a href="cetak_penggajian.php?afdeling=<?= urlencode($afdeling) ?>&jabatan=<?= urlencode($jabatan) ?>&bulan=<?= urlencode($bulan) ?>&tahun=<?= urlencode($tahun) ?>" target="_blank" class="btn-action btn-primary" style="text-decoration: none; display: inline-flex; align-items: center; gap: 8px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+            Cetak Laporan
+        </a>
+        <?php endif; ?>
     </div>
 
     <div class="card-container">
