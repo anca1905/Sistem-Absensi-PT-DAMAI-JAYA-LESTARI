@@ -4,6 +4,7 @@ include 'templates/header.php';
 
 // Filter parameter
 $afdeling = isset($_GET['afdeling']) ? $_GET['afdeling'] : '';
+$jabatan = isset($_GET['jabatan']) ? $_GET['jabatan'] : '';
 $bulan = isset($_GET['bulan']) ? str_pad($_GET['bulan'], 2, '0', STR_PAD_LEFT) : date('m');
 $tahun = isset($_GET['tahun']) ? $_GET['tahun'] : date('Y');
 
@@ -53,7 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         }
         
         $msg = ($action_status == 'published') ? "Slip gaji berhasil diterbitkan!" : "Draft gaji berhasil disimpan!";
-        swalRedirect($msg, "penggajian.php?afdeling=$afdeling&bulan=$bulan&tahun=$tahun", 'success');
+        swalRedirect($msg, "penggajian.php?afdeling=$afdeling&jabatan=$jabatan&bulan=$bulan&tahun=$tahun", 'success');
         exit;
     }
 }
@@ -63,13 +64,21 @@ $users = [];
 $total_published = 0;
 if (!empty($afdeling)) {
     $afd_safe = mysqli_real_escape_string($conn, $afdeling);
-    $query = mysqli_query($conn, "
-        SELECT u.id, u.nik, u.name, u.role, p.hk_dibayar, p.tarif_hk, p.uang_lembur, p.uang_premi, p.potongan_bpjs, p.potongan_koperasi, p.gaji_kotor, p.gaji_bersih, p.status 
+    $query_str = "
+        SELECT u.id, u.nik, u.name, u.role, p.hk_dibayar, p.tarif_hk, p.uang_lembur, p.uang_premi, p.potongan_bpjs, p.potongan_koperasi, p.gaji_kotor, p.gaji_bersih, p.status,
+               (SELECT COUNT(id) FROM absensis a WHERE a.user_id = u.id AND MONTH(a.tanggal) = '$bulan' AND YEAR(a.tanggal) = '$tahun' AND a.status_kehadiran IN ('hadir', 'terlambat')) AS auto_hk
         FROM users u 
         LEFT JOIN penggajian p ON u.id = p.user_id AND p.periode_bulan = '$bulan' AND p.periode_tahun = '$tahun'
         WHERE u.afdeling = '$afd_safe' AND u.role IN ('karyawan', 'mandor', 'pengawas', 'kerani')
-        ORDER BY u.name ASC
-    ");
+    ";
+    
+    if (!empty($jabatan)) {
+        $jabatan_safe = mysqli_real_escape_string($conn, $jabatan);
+        $query_str .= " AND u.role = '$jabatan_safe' ";
+    }
+    
+    $query_str .= " ORDER BY u.name ASC";
+    $query = mysqli_query($conn, $query_str);
     while ($row = mysqli_fetch_assoc($query)) {
         $users[] = $row;
         if ($row['status'] == 'published') $total_published++;
@@ -147,6 +156,16 @@ if (!empty($afdeling)) {
                 </select>
             </div>
             <div class="form-group">
+                <label style="font-size:12px; font-weight:700; color:#64748b; margin-bottom:6px; display:block;">Jabatan</label>
+                <select name="jabatan" class="form-select" onchange="document.getElementById('filterForm').submit()">
+                    <option value="">-- Semua Jabatan --</option>
+                    <option value="karyawan" <?= $jabatan == 'karyawan' ? 'selected' : '' ?>>Karyawan</option>
+                    <option value="mandor" <?= $jabatan == 'mandor' ? 'selected' : '' ?>>Mandor</option>
+                    <option value="pengawas" <?= $jabatan == 'pengawas' ? 'selected' : '' ?>>Pengawas</option>
+                    <option value="kerani" <?= $jabatan == 'kerani' ? 'selected' : '' ?>>Kerani</option>
+                </select>
+            </div>
+            <div class="form-group">
                 <label style="font-size:12px; font-weight:700; color:#64748b; margin-bottom:6px; display:block;">Afdeling</label>
                 <select name="afdeling" class="form-select" onchange="document.getElementById('filterForm').submit()">
                     <option value="">-- Pilih Afdeling --</option>
@@ -201,7 +220,7 @@ if (!empty($afdeling)) {
                                     <strong style="color:var(--text-dark); display:block;"><?= htmlspecialchars($u['name']) ?></strong>
                                     <span style="color:#64748b; font-size:11px;"><?= htmlspecialchars($u['nik']) ?> &bull; <?= ucfirst($u['role']) ?></span>
                                 </td>
-                                <td><input type="number" step="0.5" name="gaji[<?= $u['id'] ?>][hk]" class="input-gaji input-hk val-hk" value="<?= $u['hk_dibayar'] ?? '' ?>" oninput="kalkulasiBaris(this)"></td>
+                                <td><input type="number" step="0.5" name="gaji[<?= $u['id'] ?>][hk]" class="input-gaji input-hk val-hk" value="<?= $u['hk_dibayar'] ?? $u['auto_hk'] ?>" oninput="kalkulasiBaris(this)"></td>
                                 <td><input type="text" name="gaji[<?= $u['id'] ?>][tarif]" class="input-gaji val-tarif format-rupiah" value="<?= number_format($u['tarif_hk'] ?? 0, 0, ',', '.') ?>" oninput="kalkulasiBaris(this)"></td>
                                 <td><input type="text" name="gaji[<?= $u['id'] ?>][lembur]" class="input-gaji val-lembur format-rupiah" value="<?= number_format($u['uang_lembur'] ?? 0, 0, ',', '.') ?>" oninput="kalkulasiBaris(this)"></td>
                                 <td><input type="text" name="gaji[<?= $u['id'] ?>][premi]" class="input-gaji val-premi format-rupiah" value="<?= number_format($u['uang_premi'] ?? 0, 0, ',', '.') ?>" oninput="kalkulasiBaris(this)"></td>
