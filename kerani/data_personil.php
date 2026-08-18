@@ -170,11 +170,6 @@ $role_filter = isset($_GET['role']) ? $_GET['role'] : 'karyawan';
             <option value="pengawas" <?= $role_filter == 'pengawas' ? 'selected' : '' ?>>Pengawas</option>
         </select>
     </form>
-    
-    <button class="btn-add" onclick="openPersonilModal('add')">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-        Tambah <?= ucfirst($role_filter) ?>
-    </button>
 </div>
 
 <div class="card">
@@ -212,8 +207,6 @@ $role_filter = isset($_GET['role']) ? $_GET['role'] : 'karyawan';
                     <td>
                         <div class="action-group">
                             <a href="../admin/cetak_kartu.php?id=<?= $row['id'] ?>" target="_blank" class="btn-action btn-idcard">ID Card</a>
-                            <button onclick='editPersonilData(<?= htmlspecialchars(json_encode($row), ENT_QUOTES, "UTF-8") ?>)' class="btn-action btn-edit">Edit</button>
-                            <a href="?role=<?= urlencode($role_filter) ?>&hapus=<?= $row['id'] ?>" onclick="return confirm('Yakin hapus data ini?')" class="btn-action btn-delete">Hapus</a>
                         </div>
                     </td>
                 </tr>
@@ -229,130 +222,6 @@ $role_filter = isset($_GET['role']) ? $_GET['role'] : 'karyawan';
     </div>
 </div>
 
-<!-- Modal Form Personil -->
-<div id="modalFormPersonil" class="modal-overlay" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 9999; justify-content: center; align-items: center;">
-    <div class="modal-content" style="background: white; border-radius: 12px; width: 100%; max-width: 500px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.1);">
-        <form method="POST">
-            <input type="hidden" name="id_karyawan" id="id_karyawan">
-            
-            <div class="modal-header" style="padding: 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; background: #f8fafc;">
-                <h3 id="modalTitle" style="margin: 0; font-size: 18px; color: #1e293b;">Tambah Personil</h3>
-                <button type="button" onclick="closePersonilModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #64748b; padding: 0; line-height: 1;">&times;</button>
-            </div>
 
-            <div class="modal-body" style="padding: 20px; display: flex; flex-direction: column; gap: 15px;">
-                <div>
-                    <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: #475569;">Nama Lengkap</label>
-                    <input type="text" name="nama" id="nama" required class="filter-select" style="width: 100%; box-sizing: border-box; font-weight: normal;">
-                </div>
-                <div>
-                    <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: #475569;">NIK</label>
-                    <input type="text" name="nik" id="nik" required class="filter-select" style="width: 100%; box-sizing: border-box; font-weight: normal;">
-                </div>
-                <div>
-                    <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: #475569;">Email (Opsional)</label>
-                    <input type="email" name="email" id="email" class="filter-select" style="width: 100%; box-sizing: border-box; font-weight: normal;">
-                </div>
-
-                <div>
-                    <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: #475569;">No HP / WhatsApp (Opsional)</label>
-                    <input type="text" name="no_hp" id="no_hp" class="filter-select" style="width: 100%; box-sizing: border-box; font-weight: normal;" placeholder="08xxxxxxxx">
-                </div>
-                <div>
-                    <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: #475569;">Password (Opsional)</label>
-                    <div style="position:relative;">
-                        <input type="password" name="password" id="password" class="filter-select" style="width: 100%; box-sizing: border-box; font-weight: normal;" placeholder="Kosongkan jika tidak mengubah">
-                        <button type="button" onclick="togglePassword()" 
-                                style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#94a3b8;padding:4px;display:flex;align-items:center;"
-                                title="Tampilkan/Sembunyikan Password">
-                            <svg id="eye-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                                <circle cx="12" cy="12" r="3"></circle>
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-                <div style="display: flex; gap: 15px;">
-                    <div style="flex: 1;">
-                        <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: #475569;">Jabatan</label>
-                        <select name="role" id="role" class="filter-select" style="width: 100%; box-sizing: border-box; font-weight: normal;">
-                            <option value="karyawan">Karyawan</option>
-                            <option value="mandor">Mandor</option>
-                            <option value="pengawas">Pengawas</option>
-                            <option value="kerani">Kerani</option>
-                        </select>
-                    </div>
-                    <div style="flex: 1;">
-                        <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: #475569;">Afdeling</label>
-                        <select name="afdeling" id="afdeling" class="filter-select" style="width: 100%; box-sizing: border-box; font-weight: normal;">
-                            <option value="">- Pilih Afdeling -</option>
-                            <?php 
-                            $afd_query = mysqli_query($conn, "SELECT nama_afdeling FROM afdelings ORDER BY nama_afdeling ASC");
-                            while ($afd = mysqli_fetch_assoc($afd_query)): 
-                            ?>
-                                <option value="<?= htmlspecialchars($afd['nama_afdeling']) ?>"><?= htmlspecialchars($afd['nama_afdeling']) ?></option>
-                            <?php endwhile; ?>
-                        </select>
-                    </div>
-                </div>
-            </div>
-
-            <div class="modal-footer" style="padding: 20px; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 10px; background: #f8fafc;">
-                <button type="button" onclick="closePersonilModal()" class="filter-select" style="background: white; font-weight: 600;">Batal</button>
-                <button type="submit" name="simpan_data" class="btn-add">Simpan Data</button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<script>
-    const modalPersonil = document.getElementById('modalFormPersonil');
-
-    function editPersonilData(data) {
-        document.getElementById('modalTitle').innerText = 'Edit Personil';
-        document.getElementById('id_karyawan').value = data.id;
-        document.getElementById('nama').value = data.name;
-        document.getElementById('nik').value = data.nik;
-        document.getElementById('email').value = data.email || '';
-        document.getElementById('no_hp').value = data.no_hp || '';
-        document.getElementById('password').value = '';
-
-        document.getElementById('role').value = data.role || 'karyawan';
-        document.getElementById('afdeling').value = data.afdeling || '';
-        
-        modalPersonil.style.display = 'flex';
-    }
-
-    function openPersonilModal(type) {
-        if(type === 'add') {
-            document.getElementById('modalTitle').innerText = 'Tambah Personil';
-            document.getElementById('id_karyawan').value = '';
-            document.getElementById('nama').value = '';
-            document.getElementById('nik').value = '';
-            document.getElementById('email').value = '';
-            document.getElementById('no_hp').value = '';
-
-            document.getElementById('role').value = '<?= $role_filter ?>';
-            document.getElementById('afdeling').value = '<?= isset($_SESSION["afdeling"]) ? $_SESSION["afdeling"] : "" ?>';
-        }
-        modalPersonil.style.display = 'flex';
-    }
-
-    function closePersonilModal() {
-        modalPersonil.style.display = 'none';
-    }
-
-    function togglePassword() {
-        const pwd = document.getElementById('password');
-        const eyeIcon = document.getElementById('eye-icon');
-        if (pwd.type === 'password') {
-            pwd.type = 'text';
-            eyeIcon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line>';
-        } else {
-            pwd.type = 'password';
-            eyeIcon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle>';
-        }
-    }
-</script>
 
 <?php include 'templates/footer.php'; ?>

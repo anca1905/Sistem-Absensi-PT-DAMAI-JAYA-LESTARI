@@ -29,6 +29,8 @@ if (isset($_POST['login'])) {
                 header("Location: mandor/index.php");
             } elseif ($data['role'] == 'kerani') {
                 header("Location: kerani/index.php");
+            } elseif ($data['role'] == 'keuangan') {
+                header("Location: keuangan/index.php");
             } else {
                 header("Location: karyawan/index.php");
             }

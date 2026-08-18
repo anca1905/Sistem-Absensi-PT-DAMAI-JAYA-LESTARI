@@ -14,7 +14,6 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'mandor') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
     <link rel="stylesheet" href="../assets/css/print.css" media="print">
     <title>Dashboard Mandor - PT DJL</title>
     

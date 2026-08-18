@@ -1,8 +1,9 @@
 <?php
 require '../config/config.php';
 include 'templates/header.php';
+?>
 <style type="text/css" media="print">@page { size: landscape; }</style>
-
+<?php
 
 $bulan = isset($_GET['bulan']) ? $_GET['bulan'] : date('m');
 $tahun = isset($_GET['tahun']) ? $_GET['tahun'] : date('Y');

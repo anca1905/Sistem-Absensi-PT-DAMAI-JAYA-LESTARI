@@ -21,17 +21,25 @@ $query_mandor = mysqli_query($conn, "SELECT id, name FROM users WHERE role='mand
 $list_mandor = [];
 while($m = mysqli_fetch_assoc($query_mandor)) { $list_mandor[] = $m; }
 
-// --- Data Master (blok & objek masih statis karena belum ada tabel khusus) ---
+// --- Data Master (blok & objek — data real PT DJL) ---
 $list_objek = [
-    'Langsir manual', 'Membabat gawangan', 'Kutip brondolan', 
-    'Rawat jalan', 'Korek janjangan', 'Potong buah / panen', 
-    'Muat TBS ke truk', 'Muat TBS ke jonder', 'Jaga genset', 
-    'Jaga cuaca berat', 'Jaga buah'
+    'Langsir manual',
+    'Membabat gawangan',
+    'Semprot pingan',
+    'Rawat jalan',
+    'Kotrek anyangan',
+    'Panen',
+    'Potong buah',
+    'Kutip brondolan',
+    'Muat TBS ke truk',
+    'Muat TBS ke jondol'
 ];
 $list_blok = [
-    'H.39' => '8.66', 'H.40' => '0.41', 'I.39' => '29.96', 
-    'I.40' => '26.18', 'J.39' => '31.01', 'J.40' => '27.05', 
-    'K.39' => '30.98', 'L.39' => '31.17', 'L.40' => '30.22'
+    'H.39' => '8.66',  'H.40' => '0.91',
+    'I.39' => '29.26', 'I.40' => '26.18',
+    'J.39' => '31.01', 'J.40' => '27.05',
+    'K.39' => '20.98', 'K.40' => '28.52',
+    'L.39' => '31.17', 'L.40' => '17.74'
 ];
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['rows'])) {

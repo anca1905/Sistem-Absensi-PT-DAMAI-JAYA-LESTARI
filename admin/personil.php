@@ -12,6 +12,7 @@ if (isset($_POST['simpan_data'])) {
     $no_hp = isset($_POST['no_hp']) ? mysqli_real_escape_string($conn, $_POST['no_hp']) : '';
     $afdeling = mysqli_real_escape_string($conn, $_POST['afdeling']);
     $role = mysqli_real_escape_string($conn, $_POST['role']);
+    $jenis_kelamin = isset($_POST['jenis_kelamin']) ? mysqli_real_escape_string($conn, $_POST['jenis_kelamin']) : '';
 
     // Password opsional (hanya diupdate jika diisi)
     $password_sql = "";
@@ -32,8 +33,8 @@ if (isset($_POST['simpan_data'])) {
             exit;
         }
 
-        $query = "INSERT INTO users (nik, name, email, no_hp, password, role, afdeling) 
-                  VALUES ('$nik', '$nama', '$email', '$no_hp', '" . $_POST['password'] . "', '$role', '$afdeling')";
+        $query = "INSERT INTO users (nik, name, email, no_hp, password, role, afdeling, jenis_kelamin) 
+                  VALUES ('$nik', '$nama', '$email', '$no_hp', '" . $_POST['password'] . "', '$role', '$afdeling', '$jenis_kelamin')";
     } else {
         // --- LOGIKA UPDATE ---
         $query = "UPDATE users SET 
@@ -42,7 +43,8 @@ if (isset($_POST['simpan_data'])) {
                   email='$email', 
                   no_hp='$no_hp',
                   afdeling='$afdeling',
-                  role='$role'
+                  role='$role',
+                  jenis_kelamin='$jenis_kelamin'
                   $password_sql
                   WHERE id='$id'";
     }
@@ -347,12 +349,14 @@ include 'templates/header.php';
             <h1 class="page-title">Data Personil</h1>
             <p style="color: #64748b; font-size: 13px; margin-top: 4px;">Kelola data pegawai dan akses sistem.</p>
         </div>
+        <?php if ($_SESSION['role'] === 'admin'): ?>
         <button onclick="openModal('add')" class="btn btn-primary">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M12 5v14M5 12h14" />
             </svg>
             Tambah Personil
         </button>
+        <?php endif; ?>
     </div>
 
     <!-- Filter & Aksi -->
@@ -373,6 +377,7 @@ include 'templates/header.php';
                 <option value="karyawan" <?= (isset($_GET['role_filter']) && $_GET['role_filter'] == 'karyawan') ? 'selected' : '' ?>>Karyawan</option>
                 <option value="pengawas" <?= (isset($_GET['role_filter']) && $_GET['role_filter'] == 'pengawas') ? 'selected' : '' ?>>Pengawas</option>
                 <option value="kerani" <?= (isset($_GET['role_filter']) && $_GET['role_filter'] == 'kerani') ? 'selected' : '' ?>>Kerani</option>
+                <option value="keuangan" <?= (isset($_GET['role_filter']) && $_GET['role_filter'] == 'keuangan') ? 'selected' : '' ?>>Keuangan</option>
             </select>
             <button type="submit" class="btn btn-primary" style="padding: 8px 15px; height: 38px;">Filter</button>
         </form>
@@ -416,6 +421,7 @@ include 'templates/header.php';
                                 ID Card
                             </a>
 
+                            <?php if ($_SESSION['role'] === 'admin'): ?>
                             <button onclick='editData(<?= htmlspecialchars(json_encode($row), ENT_QUOTES, "UTF-8") ?>)' class="btn btn-warning" style="padding: 6px 10px; font-size: 11px;">
                                 Edit
                             </button>
@@ -423,6 +429,7 @@ include 'templates/header.php';
                             <button onclick='konfirmasiHapus(<?= $row['id'] ?>)' class="btn btn-danger" style="padding: 6px 10px; font-size: 11px;">
                                 Hapus
                             </button>
+                            <?php endif; ?>
                         </td>
                     </tr>
                 <?php endwhile; ?>
@@ -465,11 +472,13 @@ include 'templates/header.php';
                             <option value="mandor">Mandor</option>
                             <option value="pengawas">Pengawas</option>
                             <option value="kerani">Kerani</option>
+                            <option value="keuangan">Keuangan</option>
                         </select>
                     </div>
                 </div>
 
-                <div class="form-group">
+                <div class="row" style="display: flex; gap: 15px;">
+                    <div class="form-group" style="flex: 1;">
                         <label class="form-label">Afdeling</label>
                         <select name="afdeling" id="afdeling" class="form-input" required>
                             <option value="">Pilih Afdeling</option>
@@ -480,6 +489,15 @@ include 'templates/header.php';
                                 <option value="<?= htmlspecialchars($afd['nama_afdeling']) ?>"><?= htmlspecialchars($afd['nama_afdeling']) ?></option>
                             <?php endwhile; ?>
                         </select>
+                    </div>
+                    <div class="form-group" style="flex: 1;">
+                        <label class="form-label">Jenis Kelamin</label>
+                        <select name="jenis_kelamin" id="jenis_kelamin" class="form-input" required>
+                            <option value="">Pilih Jenis Kelamin</option>
+                            <option value="Laki-laki">Laki-laki</option>
+                            <option value="Perempuan">Perempuan</option>
+                        </select>
+                    </div>
                 </div>
 
                 <div class="row" style="display: flex; gap: 15px;">
@@ -531,6 +549,7 @@ include 'templates/header.php';
 
         if (data.role) document.getElementById('role').value = data.role;
         if (data.afdeling) document.getElementById('afdeling').value = data.afdeling;
+        if (data.jenis_kelamin) document.getElementById('jenis_kelamin').value = data.jenis_kelamin;
 
         document.getElementById('modalForm').classList.add('show');
     }
@@ -545,6 +564,7 @@ include 'templates/header.php';
             document.getElementById('no_hp').value = '';
             document.getElementById('role').value = 'karyawan';
             document.getElementById('afdeling').value = '';
+            document.getElementById('jenis_kelamin').value = '';
         }
         document.getElementById('modalForm').classList.add('show');
     }

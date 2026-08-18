@@ -246,6 +246,26 @@ $current_page = basename($_SERVER['PHP_SELF']);
                 Data Personil
             </a>
 
+            <a href="objek_kerja.php" class="nav-item <?= $current_page == 'objek_kerja.php' ? 'active' : '' ?>">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"></path>
+                    <rect x="9" y="3" width="6" height="4" rx="1" ry="1"></rect>
+                    <line x1="9" y1="12" x2="15" y2="12"></line>
+                    <line x1="9" y1="16" x2="13" y2="16"></line>
+                </svg>
+                Objek Kerja
+            </a>
+
+            <a href="laporan_keseluruhan.php" class="nav-item <?= $current_page == 'laporan_keseluruhan.php' ? 'active' : '' ?>">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+                    <line x1="3" y1="9" x2="21" y2="9"></line>
+                    <line x1="3" y1="15" x2="21" y2="15"></line>
+                    <line x1="9" y1="9" x2="9" y2="21"></line>
+                </svg>
+                Lap. Keseluruhan
+            </a>
+
             <a href="scanner.php" class="nav-item <?= $current_page == 'scanner.php' ? 'active' : '' ?>">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
@@ -308,7 +328,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
         <header class="topbar">
             <div class="page-title-top">
                 <?=
-                $current_page == 'index.php' ? 'Dashboard' : ($current_page == 'data_personil.php' ? 'Data Personil' : ($current_page == 'scanner.php' ? 'Sistem Absensi Scanner' : ($current_page == 'laporan_absensi.php' ? 'Laporan Absensi' : ($current_page == 'validasi_izin.php' ? 'Validasi Izin / Sakit / Cuti' : ($current_page == 'laporan_kinerja.php' ? 'Laporan Kinerja' : ($current_page == 'slip_gaji.php' ? 'Slip Gaji' : ''))))))
+                $current_page == 'index.php' ? 'Dashboard' : ($current_page == 'data_personil.php' ? 'Data Personil' : ($current_page == 'objek_kerja.php' ? 'Laporan Objek Kerja' : ($current_page == 'laporan_keseluruhan.php' ? 'Laporan Keseluruhan' : ($current_page == 'scanner.php' ? 'Sistem Absensi Scanner' : ($current_page == 'laporan_absensi.php' ? 'Laporan Absensi' : ($current_page == 'validasi_izin.php' ? 'Validasi Izin / Sakit / Cuti' : ($current_page == 'laporan_kinerja.php' ? 'Laporan Kinerja' : ($current_page == 'slip_gaji.php' ? 'Slip Gaji' : 'Kerani'))))))))
                 ?>
             </div>
 

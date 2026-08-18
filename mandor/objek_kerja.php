@@ -4,16 +4,102 @@ include 'templates/header.php';
 
 $mandor_id = $_SESSION['user_id'];
 $tanggal = isset($_GET['tanggal']) ? $_GET['tanggal'] : date('Y-m-d');
-
-// Ambil data logbook kinerja karyawan berdasarkan afdeling mandor (verifikasi oleh mandor)
 $afdeling_mandor = isset($_SESSION['afdeling']) ? mysqli_real_escape_string($conn, $_SESSION['afdeling']) : '';
+$tgl_safe = mysqli_real_escape_string($conn, $tanggal);
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && isset($_POST['log_id'])) {
-    $log_id = (int)$_POST['log_id'];
-    $action = mysqli_real_escape_string($conn, $_POST['action']);
-    mysqli_query($conn, "UPDATE logbook_kinerja SET status='$action' WHERE id=$log_id");
-    swalRedirect('Verifikasi berhasil disimpan!', "objek_kerja.php?tanggal=$tanggal", 'success');
+// 1. Handle Simpan Data & Verifikasi
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['simpan_semua'])) {
+    
+    foreach ($_POST as $key => $val) {
+        if (strpos($key, 'status_') === 0) {
+            $id = (int) str_replace('status_', '', $key);
+            $status = mysqli_real_escape_string($conn, $val);
+            
+            $update_sql = "UPDATE logbook_kinerja SET status='$status'";
+            
+            // Format 1: Langsir / Membabat
+            if (isset($_POST["hasil_ton_$id"])) {
+                $hasil_ton = (float)$_POST["hasil_ton_$id"];
+                $update_sql .= ", hasil_ton=$hasil_ton";
+            }
+            if (isset($_POST["hasil_kg_$id"])) {
+                $hasil_kg = (float)$_POST["hasil_kg_$id"];
+                $update_sql .= ", hasil_kg=$hasil_kg";
+            }
+            
+            // Format 3: Potong Buah / Panen
+            if (isset($_POST["tbs_$id"])) {
+                $update_sql .= ", tbs=" . (int)$_POST["tbs_$id"];
+            }
+            if (isset($_POST["kosong_$id"])) {
+                $update_sql .= ", tandan_kosong=" . (int)$_POST["kosong_$id"];
+            }
+            if (isset($_POST["brondol_$id"])) {
+                $update_sql .= ", tandan_brondol=" . (int)$_POST["brondol_$id"];
+            }
+            if (isset($_POST["total_$id"])) {
+                $update_sql .= ", total_tandan=" . (int)$_POST["total_$id"];
+            }
+            
+            // Format 4: Muat TBS
+            if (isset($_POST["hasil_langsir_$id"])) {
+                $update_sql .= ", hasil_langsir_kg=" . (float)$_POST["hasil_langsir_$id"];
+            }
+            
+            $update_sql .= " WHERE id=$id AND mandor_id=$mandor_id";
+            mysqli_query($conn, $update_sql);
+        }
+    }
+    swalRedirect('Data objek kerja berhasil disimpan dan diverifikasi!', "objek_kerja.php?tanggal=$tgl_safe", 'success');
     exit;
+}
+
+// 2. Ambil Data
+if (!empty($afdeling_mandor)) {
+    $query_logbook = mysqli_query($conn, "
+        SELECT lk.*, u.nik, u.name as karyawan_name
+        FROM logbook_kinerja lk
+        JOIN users u ON lk.user_id = u.id
+        WHERE lk.tanggal = '$tgl_safe' AND u.afdeling = '$afdeling_mandor' AND lk.mandor_id = $mandor_id
+        ORDER BY u.name ASC
+    ");
+} else {
+    $query_logbook = mysqli_query($conn, "
+        SELECT lk.*, u.nik, u.name as karyawan_name
+        FROM logbook_kinerja lk
+        JOIN users u ON lk.user_id = u.id
+        WHERE lk.tanggal = '$tgl_safe' AND lk.mandor_id = $mandor_id
+        ORDER BY u.name ASC
+    ");
+}
+
+$all_tasks = [];
+if ($query_logbook) {
+    while($row = mysqli_fetch_assoc($query_logbook)) {
+        $all_tasks[] = $row;
+    }
+}
+
+// 3. Grouping Berdasarkan Objek Kerja
+$format1 = []; // Langsir, Membabat gawangan
+$format2 = []; // Perawatan lain
+$format3 = []; // Potong buah
+$format4 = []; // Muat TBS
+$format5 = []; // Jaga
+
+foreach($all_tasks as $t) {
+    $ok = strtolower($t['objek_kerja']);
+    if ($t['kategori_task'] == 'langsir' || strpos($ok, 'membabat') !== false || strpos($ok, 'langsir') !== false) {
+        $format1[] = $t;
+    } elseif ($t['kategori_task'] == 'potong_buah' || strpos($ok, 'potong') !== false || strpos($ok, 'panen') !== false) {
+        $format3[] = $t;
+    } elseif ($t['kategori_task'] == 'muat_tbs' || strpos($ok, 'muat') !== false) {
+        $format4[] = $t;
+    } elseif ($t['kategori_task'] == 'jaga' || strpos($ok, 'jaga') !== false) {
+        $format5[] = $t;
+    } else {
+        $format2[] = $t; // fallback
+    }
 }
 ?>
 
@@ -21,10 +107,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && isset($_P
     .card-container {
         background: #ffffff;
         border-radius: 16px;
-        padding: 20px 16px;
+        padding: 24px;
         box-shadow: 0 4px 20px rgba(54, 72, 217, 0.05);
         border: 1px solid #f1f5f9;
-        margin-bottom: 20px;
+        margin-bottom: 24px;
     }
 
     .form-input {
@@ -55,121 +141,83 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && isset($_P
         border: 1px solid #e2e8f0;
         -webkit-overflow-scrolling: touch;
         background: white;
+        margin-bottom: 20px;
     }
 
-    .table-objek {
+    .table-logbook {
         border-collapse: collapse;
         white-space: nowrap;
-        font-size: 12px;
-        min-width: 900px; /* Lebar lebih besar karena banyak kolom */
+        font-size: 13px;
+        width: 100%;
     }
 
-    .table-objek th, .table-objek td {
-        padding: 12px 10px;
+    .table-logbook th, .table-logbook td {
+        padding: 14px 10px;
         border: 1px solid #e2e8f0;
         vertical-align: middle;
         text-align: center;
     }
 
-    .table-objek th {
+    .table-logbook th {
         background-color: var(--primary-light);
         color: var(--primary-end);
         font-weight: 800;
         font-size: 11px;
         text-transform: uppercase;
-        letter-spacing: 0.5px;
     }
 
-    .table-objek td:nth-child(5) { text-align: left; font-weight: 700; color: var(--text-dark); }
-    .table-objek tbody tr:nth-child(even) { background: #f8fafc; }
-
-    .btn-file {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        background: #f1f5f9;
-        color: #3b82f6;
+    .input-mini {
+        width: 70px;
+        padding: 10px;
         border: 1px solid #cbd5e1;
-        padding: 6px 12px;
         border-radius: 8px;
+        text-align: center;
+        font-size: 13px;
         font-weight: 700;
-        font-size: 11px;
-        cursor: pointer;
-        transition: all 0.2s;
-        box-sizing: border-box;
+        background: #fff;
+        color: var(--primary-end);
     }
-    .btn-file:hover { background: #e0f2fe; border-color: #7dd3fc; }
+    .input-mini:focus { border-color: var(--primary-start); outline: none; }
 
-    /* Verifikasi Buttons */
-    .btn-verif {
-        border: none;
-        padding: 6px 12px;
+    .select-status {
+        padding: 10px;
+        border: 1px solid #cbd5e1;
         border-radius: 8px;
+        font-size: 12px;
         font-weight: 700;
-        font-size: 11px;
+        background: #fff;
+        color: #1e293b;
         cursor: pointer;
-        transition: transform 0.1s;
-    }
-    .btn-verif:active { transform: scale(0.9); }
-    
-    .btn-terima { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; margin-left: 5px; }
-    .btn-tolak { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
-
-    /* MODAL CSS */
-    .modal-overlay {
-        display: none;
-        position: fixed;
-        top: 0; left: 0; right: 0; bottom: 0;
-        background: rgba(15, 23, 42, 0.6);
-        backdrop-filter: blur(4px);
-        z-index: 100;
-        align-items: center;
-        justify-content: center;
-        padding: 20px;
     }
 
-    .modal-content {
-        background: white;
-        border-radius: 16px;
-        width: 100%;
-        max-width: 480px;
-        max-height: 90vh;
-        overflow-y: auto;
-        box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-        animation: slideUp 0.3s ease;
-    }
-
-    .modal-header {
-        padding: 16px 20px;
-        border-bottom: 1px solid #f1f5f9;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-    .modal-title {
+    .table-title {
         font-size: 16px;
         font-weight: 800;
         color: var(--text-dark);
-        margin: 0;
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
     }
 
-    .btn-close {
-        background: #f1f5f9;
+    .btn-submit {
+        width: 100%;
+        background: linear-gradient(135deg, var(--primary-start) 0%, var(--primary-end) 100%);
+        color: white;
         border: none;
-        width: 32px; height: 32px;
-        border-radius: 50%;
-        color: #64748b;
-        font-size: 18px;
+        padding: 16px;
+        border-radius: 14px;
+        font-size: 15px;
+        font-weight: 800;
         cursor: pointer;
         display: flex;
         align-items: center;
         justify-content: center;
+        gap: 10px;
+        transition: all 0.2s;
+        box-shadow: 0 4px 15px rgba(66, 88, 255, 0.25);
     }
-
-    .modal-body {
-        padding: 20px;
-    }
+    .btn-submit:active { transform: scale(0.98); box-shadow: none; }
 
     .btn-back {
         display: inline-flex;
@@ -185,6 +233,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && isset($_P
         border-radius: 20px;
         border: 1.5px solid #e2e8f0;
     }
+    
+    .readonly-text {
+        font-weight: 600;
+        color: #64748b;
+    }
 </style>
 
 <div class="animate-up">
@@ -193,191 +246,181 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && isset($_P
         Kembali
     </a>
 
-    <h2 class="page-title" style="text-align: left; margin-bottom: 16px; font-size: 20px;">Objek Kerja Hari Ini</h2>
+    <h2 class="page-title" style="margin: 0 0 20px 0; font-size: 20px;">Objek Kerja & Verifikasi</h2>
 
-    <div class="card-container">
-        
-        <form id="filterForm" method="GET" style="margin-bottom: 16px;">
-            <label style="font-size: 11px; font-weight: 700; color: #64748b; margin-bottom:4px; display:block;">Pilih tahun/bulan/tgl</label>
+    <form id="filterForm" method="GET" style="display:flex; gap:10px; align-items:flex-end; margin-bottom: 24px;">
+        <div style="flex:1;">
+            <label style="font-size: 12px; font-weight: 700; color: #64748b; margin-bottom:6px; display:block;">Pilih tgl, bulan, thn</label>
             <input type="date" name="tanggal" class="form-input" value="<?= $tanggal ?>" onchange="document.getElementById('filterForm').submit()">
-        </form>
+        </div>
+        <div>
+            <button type="button" class="btn-back" style="margin-bottom:0; height:44px; border-radius:10px; background:#f8fafc;" onclick="alert('Fitur komentar akan segera hadir.')">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+                Komentar
+            </button>
+        </div>
+    </form>
 
-        <p style="font-size: 11px; color: var(--text-muted); font-style: italic; margin-bottom: 8px;">* Geser tabel ke kanan untuk melihat verifikasi.</p>
+    <p style="font-size: 11px; color: var(--text-muted); font-style: italic; margin-bottom: 16px;">
+        * Diisi mandor setelah karyawan pulang bekerja lalu melapor hasil kerjanya.<br>
+        * Prestasi, Blok, dan Luas Ha adalah data bawaan (readonly).
+    </p>
 
-        <div class="table-responsive">
-            <table class="table-objek">
-                <thead>
-                    <tr>
-                        <th style="width:30px;">NO</th>
-                        <th>BLOK</th>
-                        <th>LUAS</th>
-                        <th>NIK</th>
-                        <th>NAMA</th>
-                        <th>OBJEK KERJA</th>
-                        <th>LAPORAN KINERJA<br>DARI KARYAWAN</th>
-                        <th>VERIFIKASI</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php 
-                    $no = 1;
-                    // Ambil logbook kinerja karyawan di afdeling yang sama dengan mandor
-                    $tgl_safe = mysqli_real_escape_string($conn, $tanggal);
-                    if (!empty($afdeling_mandor)) {
-                        $query_logbook = mysqli_query($conn, "
-                            SELECT lk.*, u.nik, u.name as karyawan_name, m.name as mandor_name
-                            FROM logbook_kinerja lk
-                            JOIN users u ON lk.user_id = u.id
-                            LEFT JOIN users m ON lk.mandor_id = m.id
-                            WHERE lk.tanggal = '$tgl_safe' AND u.afdeling = '$afdeling_mandor' AND lk.mandor_id = $mandor_id
-                            ORDER BY u.name ASC
-                        ");
-                    } else {
-                        $query_logbook = mysqli_query($conn, "
-                            SELECT lk.*, u.nik, u.name as karyawan_name, m.name as mandor_name
-                            FROM logbook_kinerja lk
-                            JOIN users u ON lk.user_id = u.id
-                            LEFT JOIN users m ON lk.mandor_id = m.id
-                            WHERE lk.tanggal = '$tgl_safe' AND lk.mandor_id = $mandor_id
-                            ORDER BY u.name ASC
-                        ");
-                    }
-
-                    if($query_logbook && mysqli_num_rows($query_logbook) > 0):
-                        while($row = mysqli_fetch_assoc($query_logbook)):
-                            $status_color = '#854d0e'; $status_text = 'Ditinjau';
-                            if($row['status'] == 'diterima') { $status_color = '#166534'; $status_text = 'Diterima'; }
-                            if($row['status'] == 'ditolak') { $status_color = '#991b1b'; $status_text = 'Ditolak'; }
-                    ?>
+    <form method="POST">
+        
+        <?php if(count($all_tasks) > 0): ?>
+        
+        <!-- FORMAT 1: Langsir manual / Membabat gawangan -->
+        <?php if (count($format1) > 0): ?>
+        <div class="card-container">
+            <h3 class="table-title"><span style="color:var(--primary-start)">■</span> Langsir Manual / Membabat Gawangan</h3>
+            <div class="table-responsive">
+                <table class="table-logbook">
+                    <thead>
+                        <tr>
+                            <th rowspan="2">NO</th>
+                            <th rowspan="2">NIK</th>
+                            <th rowspan="2">Nama Karyawan</th>
+                            <th colspan="2">Hasil (Diisi Mandor)</th>
+                            <th colspan="2">Prestasi (Readonly)</th>
+                            <th rowspan="2">Blok</th>
+                            <th rowspan="2">Luas Ha</th>
+                            <th rowspan="2">Verifikasi</th>
+                        </tr>
+                        <tr>
+                            <th>Tandan / Ton</th><th>Kg</th><th>Tandan / Ton</th><th>Kg</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php $no=1; foreach($format1 as $t): $id = $t['id']; ?>
                         <tr>
                             <td><?= $no++ ?></td>
-                            <td><?= htmlspecialchars($row['blok'] ?? '-') ?></td>
-                            <td><?= htmlspecialchars($row['luas_ha'] ?? '-') ?></td>
-                            <td><?= htmlspecialchars($row['nik']) ?></td>
-                            <td><?= htmlspecialchars($row['karyawan_name']) ?></td>
-                            <td><?= htmlspecialchars($row['objek_kerja'] ?? '-') ?></td>
+                            <td class="readonly-text"><?= htmlspecialchars($t['nik']) ?></td>
+                            <td style="text-align:left; font-weight:700; color:var(--text-dark);"><?= htmlspecialchars($t['karyawan_name']) ?></td>
+                            <td><input type="number" step="0.01" name="hasil_ton_<?= $id ?>" class="input-mini" value="<?= $t['hasil_ton'] ?>"></td>
+                            <td><input type="number" step="0.01" name="hasil_kg_<?= $id ?>" class="input-mini" value="<?= $t['hasil_kg'] ?>"></td>
+                            <td class="readonly-text"><?= htmlspecialchars($t['prestasi_ton']) ?></td>
+                            <td class="readonly-text"><?= htmlspecialchars($t['prestasi_kg']) ?></td>
+                            <td class="readonly-text"><?= htmlspecialchars($t['blok'] ?? '-') ?></td>
+                            <td class="readonly-text"><?= htmlspecialchars($t['luas_ha'] ?? '-') ?></td>
                             <td>
-                                <?php 
-                                    $dataJSON = htmlspecialchars(json_encode([
-                                        'kategori' => $row['kategori_task'] ?? 'perawatan',
-                                        'objek' => $row['objek_kerja'] ?? '-',
-                                        'blok' => $row['blok'] ?? '-',
-                                        'luas' => $row['luas_ha'] ?? '-',
-                                        'mandor' => $row['mandor_name'] ?? '-',
-                                        'h_ton' => $row['hasil_ton'] ?? '0',
-                                        'h_kg' => $row['hasil_kg'] ?? '0',
-                                        'p_ton' => $row['prestasi_ton'] ?? '0',
-                                        'p_kg' => $row['prestasi_kg'] ?? '0',
-                                        'tbs' => $row['tbs'] ?? '0',
-                                        'kosong' => $row['tandan_kosong'] ?? '0',
-                                        'brondol' => $row['tandan_brondol'] ?? '0',
-                                        'total' => $row['total_tandan'] ?? '0',
-                                        'langsir_kg' => $row['hasil_langsir_kg'] ?? '0',
-                                        'jam' => $row['jumlah_jam_kerja'] ?? '0',
-                                        'aksi' => ucfirst($row['aksi'] ?? 'Belum'),
-                                        'status' => $status_text,
-                                        'status_color' => $status_color
-                                    ]), ENT_QUOTES, 'UTF-8');
-                                ?>
-                                <button type="button" class="btn-file" onclick="openModal('<?= date('d M Y', strtotime($tanggal)) ?> - <?= htmlspecialchars($row['objek_kerja'] ?? '') ?>', <?= $dataJSON ?>)">
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-                                    Detail
-                                </button>
-                            </td>
-                            <td>
-                                <?php if($row['status'] == 'ditinjau'): ?>
-                                <form method="POST" style="display:inline;">
-                                    <input type="hidden" name="log_id" value="<?= $row['id'] ?>">
-                                    <button type="submit" name="action" value="ditolak" class="btn-verif btn-tolak">Tolak</button>
-                                    <button type="submit" name="action" value="diterima" class="btn-verif btn-terima">Terima</button>
-                                </form>
-                                <?php else: ?>
-                                <span style="font-weight:700; color:<?= $status_color ?>;"><?= $status_text ?></span>
-                                <?php endif; ?>
+                                <select name="status_<?= $id ?>" class="select-status">
+                                    <option value="ditinjau" <?= $t['status'] == 'ditinjau' ? 'selected' : '' ?>>Ditinjau</option>
+                                    <option value="diterima" <?= $t['status'] == 'diterima' ? 'selected' : '' ?>>Diterima</option>
+                                    <option value="ditolak" <?= $t['status'] == 'ditolak' ? 'selected' : '' ?>>Ditolak</option>
+                                </select>
                             </td>
                         </tr>
-                    <?php 
-                        endwhile;
-                    else: 
-                    ?>
-                        <tr>
-                            <td colspan="8" style="text-align:center; padding:30px; color:var(--text-muted);">Belum ada laporan kinerja untuk tanggal ini.</td>
-                        </tr>
-                    <?php endif; ?>
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
-
-<!-- MODAL POPUP -->
-<div class="modal-overlay" id="fileModal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h3 class="modal-title" id="modalTitle">Laporan File</h3>
-            <button class="btn-close" onclick="closeModal()">×</button>
-        </div>
-        <div class="modal-body">
-            
-            <p style="font-size: 11px; color: var(--text-muted); font-style: italic; margin-bottom: 8px;">* Geser tabel ke kanan untuk melihat lengkap.</p>
-            
-            <div class="table-responsive">
-                <!-- Tabel di dalam File (Sesuai Sketsa 3.1) -->
-                <table class="table-objek" style="min-width:600px;">
-                    <thead id="modalThead">
-                        <!-- Otomatis JS -->
-                    </thead>
-                    <tbody id="modalTbody">
-                        <!-- Akan diisi otomatis oleh Javascript -->
+                        <?php endforeach; ?>
                     </tbody>
                 </table>
             </div>
         </div>
-    </div>
-</div>
+        <?php endif; ?>
 
-<script>
-    function openModal(titleInfo, data) {
-        document.getElementById('modalTitle').innerText = titleInfo;
+        <!-- FORMAT 3: Potong Buah / Panen -->
+        <?php if (count($format3) > 0): ?>
+        <div class="card-container">
+            <h3 class="table-title"><span style="color:var(--primary-start)">■</span> Potong Buah / Panen</h3>
+            <div class="table-responsive">
+                <table class="table-logbook">
+                    <thead>
+                        <tr>
+                            <th rowspan="2">NO</th>
+                            <th rowspan="2">NIK</th>
+                            <th rowspan="2">Nama Karyawan</th>
+                            <th colspan="4">Hasil Janjangan (Diisi Mandor)</th>
+                            <th rowspan="2">Blok</th>
+                            <th rowspan="2">Luas Ha</th>
+                            <th rowspan="2">Verifikasi</th>
+                        </tr>
+                        <tr>
+                            <th>TBS</th><th>Kosong</th><th>Brondol</th><th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php $no=1; foreach($format3 as $t): $id = $t['id']; ?>
+                        <tr>
+                            <td><?= $no++ ?></td>
+                            <td class="readonly-text"><?= htmlspecialchars($t['nik']) ?></td>
+                            <td style="text-align:left; font-weight:700; color:var(--text-dark);"><?= htmlspecialchars($t['karyawan_name']) ?></td>
+                            <td><input type="number" name="tbs_<?= $id ?>" class="input-mini" value="<?= $t['tbs'] ?>"></td>
+                            <td><input type="number" name="kosong_<?= $id ?>" class="input-mini" value="<?= $t['tandan_kosong'] ?>"></td>
+                            <td><input type="number" name="brondol_<?= $id ?>" class="input-mini" value="<?= $t['tandan_brondol'] ?>"></td>
+                            <td><input type="number" name="total_<?= $id ?>" class="input-mini" value="<?= $t['total_tandan'] ?>"></td>
+                            <td class="readonly-text"><?= htmlspecialchars($t['blok'] ?? '-') ?></td>
+                            <td class="readonly-text"><?= htmlspecialchars($t['luas_ha'] ?? '-') ?></td>
+                            <td>
+                                <select name="status_<?= $id ?>" class="select-status">
+                                    <option value="ditinjau" <?= $t['status'] == 'ditinjau' ? 'selected' : '' ?>>Ditinjau</option>
+                                    <option value="diterima" <?= $t['status'] == 'diterima' ? 'selected' : '' ?>>Diterima</option>
+                                    <option value="ditolak" <?= $t['status'] == 'ditolak' ? 'selected' : '' ?>>Ditolak</option>
+                                </select>
+                            </td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <?php endif; ?>
+
+        <!-- FORMAT 2: Perawatan Umum -->
+        <?php if (count($format2) > 0): ?>
+        <div class="card-container">
+            <h3 class="table-title"><span style="color:var(--primary-start)">■</span> Perawatan Umum</h3>
+            <div class="table-responsive">
+                <table class="table-logbook">
+                    <thead>
+                        <tr>
+                            <th>NO</th>
+                            <th>NIK</th>
+                            <th>Nama Karyawan</th>
+                            <th>Objek Kerja</th>
+                            <th>Blok</th>
+                            <th>Luas Ha</th>
+                            <th>Verifikasi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php $no=1; foreach($format2 as $t): $id = $t['id']; ?>
+                        <tr>
+                            <td><?= $no++ ?></td>
+                            <td class="readonly-text"><?= htmlspecialchars($t['nik']) ?></td>
+                            <td style="text-align:left; font-weight:700; color:var(--text-dark);"><?= htmlspecialchars($t['karyawan_name']) ?></td>
+                            <td class="readonly-text"><?= htmlspecialchars($t['objek_kerja'] ?? '-') ?></td>
+                            <td class="readonly-text"><?= htmlspecialchars($t['blok'] ?? '-') ?></td>
+                            <td class="readonly-text"><?= htmlspecialchars($t['luas_ha'] ?? '-') ?></td>
+                            <td>
+                                <select name="status_<?= $id ?>" class="select-status">
+                                    <option value="ditinjau" <?= $t['status'] == 'ditinjau' ? 'selected' : '' ?>>Ditinjau</option>
+                                    <option value="diterima" <?= $t['status'] == 'diterima' ? 'selected' : '' ?>>Diterima</option>
+                                    <option value="ditolak" <?= $t['status'] == 'ditolak' ? 'selected' : '' ?>>Ditolak</option>
+                                </select>
+                            </td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <?php endif; ?>
+
+        <!-- FORMAT 4 & 5... (Disembunyikan jika kosong untuk kerapian) -->
+
+        <button type="submit" name="simpan_semua" class="btn-submit">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+            Simpan & Verifikasi Data
+        </button>
         
-        let thead = '';
-        let tbody = '';
-        let cat = data.kategori;
-        let obj = data.objek.toLowerCase();
-
-        if (cat === 'langsir' || obj.includes('membabat') || obj.includes('langsir')) {
-            thead = `<tr><th rowspan="2">Blok</th><th rowspan="2">Luas Ha</th><th rowspan="2">Mandor</th><th colspan="2">Hasil</th><th colspan="2">Prestasi</th><th rowspan="2">Aksi</th><th rowspan="2">Status</th></tr><tr><th>Ton</th><th>Kg</th><th>Ton</th><th>Kg</th></tr>`;
-            tbody = `<tr><td>${data.blok}</td><td>${data.luas}</td><td>${data.mandor}</td><td>${data.h_ton}</td><td>${data.h_kg}</td><td>${data.p_ton}</td><td>${data.p_kg}</td><td>${data.aksi}</td><td><span style="color:${data.status_color}; font-weight:bold;">${data.status}</span></td></tr>`;
-        } else if (cat === 'potong_buah' || obj.includes('potong') || obj.includes('panen')) {
-            thead = `<tr><th rowspan="2">Blok</th><th rowspan="2">Luas Ha</th><th rowspan="2">Mandor</th><th colspan="4">Jumlah Janjangan</th><th rowspan="2">Aksi</th><th rowspan="2">Status</th></tr><tr><th>TBS</th><th>Kosong</th><th>Brondol</th><th>Total</th></tr>`;
-            tbody = `<tr><td>${data.blok}</td><td>${data.luas}</td><td>${data.mandor}</td><td>${data.tbs}</td><td>${data.kosong}</td><td>${data.brondol}</td><td>${data.total}</td><td>${data.aksi}</td><td><span style="color:${data.status_color}; font-weight:bold;">${data.status}</span></td></tr>`;
-        } else if (cat === 'muat_tbs' || obj.includes('muat')) {
-            thead = `<tr><th>Blok</th><th>Luas Ha</th><th>Mandor</th><th>Hasil Langsir (Kg)</th><th>Jam Kerja</th><th>Aksi</th><th>Status</th></tr>`;
-            tbody = `<tr><td>${data.blok}</td><td>${data.luas}</td><td>${data.mandor}</td><td>${data.langsir_kg}</td><td>${data.jam}</td><td>${data.aksi}</td><td><span style="color:${data.status_color}; font-weight:bold;">${data.status}</span></td></tr>`;
-        } else if (cat === 'jaga' || obj.includes('jaga')) {
-            thead = `<tr><th>Blok</th><th>Luas Ha / Mandor</th><th>Jam Kerja</th><th>Aksi</th><th>Status</th></tr>`;
-            tbody = `<tr><td>${data.blok}</td><td>${data.luas} / ${data.mandor}</td><td>${data.jam}</td><td>${data.aksi}</td><td><span style="color:${data.status_color}; font-weight:bold;">${data.status}</span></td></tr>`;
-        } else {
-            thead = `<tr><th>Blok</th><th>Luas Ha</th><th>Mandor</th><th>Aksi</th><th>Status</th></tr>`;
-            tbody = `<tr><td>${data.blok}</td><td>${data.luas}</td><td>${data.mandor}</td><td>${data.aksi}</td><td><span style="color:${data.status_color}; font-weight:bold;">${data.status}</span></td></tr>`;
-        }
-
-        document.getElementById('modalThead').innerHTML = thead;
-        document.getElementById('modalTbody').innerHTML = tbody;
-        document.getElementById('fileModal').style.display = 'flex';
-    }
-
-    function closeModal() {
-        document.getElementById('fileModal').style.display = 'none';
-    }
-
-    // Close when clicking outside
-    window.onclick = function(event) {
-        var modal = document.getElementById('fileModal');
-        if (event.target == modal) {
-            closeModal();
-        }
-    }
-</script>
+        <?php else: ?>
+        <div class="card-container" style="text-align:center; padding:40px;">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5" style="margin-bottom:12px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path></svg>
+            <p style="color:#94a3b8; font-size:14px; font-weight:600;">Belum ada objek kerja untuk tanggal ini.</p>
+        </div>
+        <?php endif; ?>
+        
+    </form>
+</div>
 
 <?php include 'templates/footer.php'; ?>
