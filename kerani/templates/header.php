@@ -294,14 +294,16 @@ $current_page = basename($_SERVER['PHP_SELF']);
                 Validasi Izin
             </a>
 
-            <a href="laporan_kinerja.php" class="nav-item <?= $current_page == 'laporan_kinerja.php' ? 'active' : '' ?>">
+            {{-- DISABLED: Laporan Kinerja --}}
+            <a href="#" class="nav-item" style="display: none;">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
                 </svg>
                 Laporan Kinerja
             </a>
 
-            <a href="slip_gaji.php" class="nav-item <?= $current_page == 'slip_gaji.php' ? 'active' : '' ?>">
+            {{-- DISABLED: Slip Gaji / Penggajian --}}
+            <a href="#" class="nav-item" style="display: none;">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <line x1="12" y1="1" x2="12" y2="23"></line>
                     <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
