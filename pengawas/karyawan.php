@@ -285,9 +285,31 @@ include 'templates/header.php';
         border-top: 1px solid #e2e8f0;
         text-align: right;
     }
+
+    .btn-back {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: #64748b;
+        text-decoration: none;
+        font-weight: 700;
+        font-size: 14px;
+        margin-bottom: 20px;
+        background: white;
+        padding: 8px 16px;
+        border-radius: 20px;
+        border: 1px solid #e2e8f0;
+    }
 </style>
 
 <div>
+    <a href="index.php" class="btn-back">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        Kembali
+    </a>
     <div class="page-header">
         <div>
             <h1 class="page-title">Data Karyawan</h1>

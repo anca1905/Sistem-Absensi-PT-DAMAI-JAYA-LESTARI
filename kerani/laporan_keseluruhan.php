@@ -82,8 +82,14 @@ $periode_label = "01 - {$jumlah_hari} " . $nama_bulan[$bulan] . " {$tahun}";
         .sidebar, .topbar, .no-print { display: none !important; }
         .print-area, .print-area * { visibility: visible; }
         .print-area { position: absolute; left: 0; top: 0; width: 100%; }
-        .lk-card { border: none !important; box-shadow: none !important; }
-        .lk-header-main { border-bottom: 2px solid #000 !important; }
+        .lk-card { border: none !important; box-shadow: none !important; margin:0 !important; }
+        .lk-header-main { border-bottom: 2px solid #000 !important; padding: 10px 0 !important; }
+        
+        /* Mencegah tabel terpotong saat print */
+        .lk-table-wrap { overflow: visible !important; width: 100% !important; }
+        .lk-table { font-size: 10px !important; width: 100% !important; page-break-inside: auto; }
+        .lk-table tr { page-break-inside: avoid; page-break-after: auto; }
+        .lk-table th, .lk-table td { padding: 4px 6px !important; }
     }
 
     .lk-toolbar {
@@ -207,7 +213,7 @@ $periode_label = "01 - {$jumlah_hari} " . $nama_bulan[$bulan] . " {$tahun}";
         <input type="text" name="cari" class="lk-input" placeholder="🔍 Cari nama / NIK..." value="<?= htmlspecialchars($cari) ?>">
         <button type="submit" class="btn-filter-go">Tampilkan</button>
     </form>
-    <button class="btn-print-lk" onclick="window.print()">
+    <button class="btn-print-lk" onclick="cetakLaporan()">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
         Cetak PDF
     </button>
@@ -479,5 +485,79 @@ $periode_label = "01 - {$jumlah_hari} " . $nama_bulan[$bulan] . " {$tahun}";
         <span>Dicetak: <?= date('d/m/Y H:i') ?> &nbsp;|&nbsp; PT Damai Jaya Lestari</span>
     </div>
 </div>
+
+<script>
+function cetakLaporan() {
+    const tableHTML = document.querySelector('.lk-table-wrap').innerHTML;
+    const win = window.open('', '_blank', 'width=1100,height=800');
+    win.document.write(`<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Cetak Laporan Keseluruhan</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: 'Times New Roman', Times, serif; color: #000; padding: 10mm; }
+  .kop { display:flex; align-items:center; border-bottom:3px solid #000; padding-bottom:10px; margin-bottom:15px; }
+  .kop img { width:70px; margin-right:15px; }
+  .kop-text { flex:1; text-align:center; }
+  .kop-text h1 { font-size:18pt; font-weight:bold; text-transform:uppercase; margin:0; }
+  .kop-text p { font-size:11pt; margin:3px 0 0 0; }
+  
+  .info-laporan { text-align: center; margin-bottom: 20px; }
+  .info-laporan h2 { font-size: 14pt; margin-bottom: 5px; text-decoration: underline; text-transform: uppercase; }
+  .info-laporan p { font-size: 11pt; }
+  
+  table { width:100%; border-collapse:collapse; margin-bottom:20px; font-size: 10pt; }
+  th, td { border:1px solid #000; padding:6px 8px; }
+  th { background:#f0f0f0 !important; font-weight:bold; text-align:center; text-transform:uppercase; }
+  .td-date, .td-no, .td-center { text-align: center; }
+  .td-num { text-align: right; }
+  
+  /* Reset badge styling for print to just text */
+  span[class^="badge-"] { font-weight: bold; color: #000 !important; background: transparent !important; padding: 0 !important; }
+  .absent-row td { color: #555; }
+  
+  .footer-ttd { display:flex; justify-content:space-between; margin-top:40px; text-align:center; font-size:11pt; }
+  .ttd-col { flex:1; }
+  .ttd-col p { margin-bottom:60px; }
+  .ttd-line { border-top:1px solid #000; padding-top:5px; font-weight:bold; display:inline-block; min-width:150px; }
+  
+  @page { size: A4 landscape; margin: 10mm; }
+</style>
+</head>
+<body>
+  <div class="kop">
+    <img src="../assets/img/logo.png" onerror="this.style.display='none'" alt="">
+    <div class="kop-text">
+      <h1>PT Damai Jaya Lestari</h1>
+      <p>Perkebunan Kelapa Sawit & Pabrik Minyak Kelapa Sawit</p>
+    </div>
+  </div>
+  
+  <div class="info-laporan">
+    <h2>LAPORAN ABSENSI DAN HASIL KINERJA (<?= htmlspecialchars($objek) ?>)</h2>
+    <p>Periode: <?= $periode_label ?> &nbsp;|&nbsp; Afdeling: <?= htmlspecialchars($afdeling_kerani ?: 'Semua') ?></p>
+  </div>
+
+  ${tableHTML}
+  
+  <div class="footer-ttd">
+    <div class="ttd-col">
+      <p>Dibuat Oleh,</p>
+      <div class="ttd-line">Kerani Afdeling</div>
+    </div>
+    <div class="ttd-col">
+      <p>Disetujui Oleh,</p>
+      <div class="ttd-line">Askep / Manajer</div>
+    </div>
+  </div>
+</body>
+</html>`);
+    win.document.close();
+    win.focus();
+    setTimeout(() => { win.print(); }, 500);
+}
+</script>
 
 <?php include 'templates/footer.php'; ?>

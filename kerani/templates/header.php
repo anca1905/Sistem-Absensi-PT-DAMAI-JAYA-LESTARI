@@ -294,7 +294,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
                 Validasi Izin
             </a>
 
-            {{-- DISABLED: Laporan Kinerja --}}
+            <!-- DISABLED: Laporan Kinerja -->
             <a href="#" class="nav-item" style="display: none;">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
@@ -302,7 +302,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
                 Laporan Kinerja
             </a>
 
-            {{-- DISABLED: Slip Gaji / Penggajian --}}
+            <!-- DISABLED: Slip Gaji / Penggajian -->
             <a href="#" class="nav-item" style="display: none;">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <line x1="12" y1="1" x2="12" y2="23"></line>
