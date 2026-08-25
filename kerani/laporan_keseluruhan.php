@@ -73,6 +73,15 @@ while ($u = mysqli_fetch_assoc($q_users)) $list_karyawan[] = $u;
 
 $jumlah_hari = cal_days_in_month(CAL_GREGORIAN, $bulan_int, $tahun);
 $periode_label = "01 - {$jumlah_hari} " . $nama_bulan[$bulan] . " {$tahun}";
+
+// --- Pagination ---
+$per_page = 10;
+$page     = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
+$total_karyawan = count($list_karyawan);
+$total_pages    = max(1, ceil($total_karyawan / $per_page));
+$page           = min($page, $total_pages);
+$offset         = ($page - 1) * $per_page;
+$list_karyawan_page = array_slice($list_karyawan, $offset, $per_page);
 ?>
 <style>
     @media print {
@@ -145,51 +154,96 @@ $periode_label = "01 - {$jumlah_hari} " . $nama_bulan[$bulan] . " {$tahun}";
     /* Tabel */
     .lk-table-wrap { width: 100%; overflow-x: auto; }
     .lk-table {
-        width: 100%; border-collapse: collapse; font-size: 12.5px; white-space: nowrap;
+        width: 100%; border-collapse: collapse; font-size: 14px; white-space: nowrap;
     }
-    .lk-table th, .lk-table td {
-        padding: 11px 12px; border: 1px solid #e2e8f0; vertical-align: middle;
-    }
-    .lk-table thead tr:first-child th {
-        background: #1e293b; color: white; font-weight: 700;
-        text-transform: uppercase; font-size: 11px; letter-spacing: .5px;
-    }
-    .lk-table thead tr:nth-child(2) th {
-        background: #334155; color: #cbd5e1; font-weight: 700;
-        font-size: 10.5px; text-transform: uppercase;
-    }
-    .lk-table tbody tr:hover { background: #f8fafc; }
-    .lk-table tbody tr.absent-row { background: #fff5f5; }
-    .lk-table tbody tr.absent-row:hover { background: #fee2e2; }
 
-    .th-o1 { background: #0f4c81 !important; }
-    .th-o2 { background: #166534 !important; }
+    /* Header */
+    .lk-table thead th {
+        padding: 16px 20px;
+        background: #1a3a5c;
+        color: rgba(255,255,255,0.90);
+        font-size: 13px; font-weight: 600;
+        text-align: center; border: none;
+        letter-spacing: 0.2px;
+    }
+    .lk-table thead th.th-left { text-align: left; }
 
-    .td-no { color: var(--text-muted); font-weight: 700; text-align: center; }
-    .td-nik { font-weight: 800; color: var(--text-main); }
-    .td-name { font-weight: 600; min-width: 160px; }
+    /* Body rows */
+    .lk-table tbody tr {
+        border-bottom: 1px solid #f0f4f8;
+        transition: background 0.12s;
+    }
+    .lk-table tbody tr:nth-child(even) { background: #f6fdf9; }
+    .lk-table tbody tr:hover { background: #eef4fb !important; cursor: pointer; }
+
+    .lk-table tbody td {
+        padding: 18px 20px;
+        border: none;
+        vertical-align: middle;
+        color: #334155;
+        font-size: 14px;
+    }
+
+    /* Cell helpers */
+    .td-no    { color: #94a3b8; font-weight: 600; text-align: center; width: 50px; }
+    .td-name  { font-weight: 500; color: #334155; }
+    .td-name a { color: #3b82f6; text-decoration: none; font-weight: 600; }
+    .td-name a:hover { text-decoration: underline; color: #2563eb; }
     .td-center { text-align: center; }
-    .td-num { text-align: right; font-weight: 700; color: #1e293b; }
-    .td-empty { color: #cbd5e1; text-align: center; font-style: italic; font-size: 11px; }
+    .td-num   { text-align: center; font-weight: 700; font-size: 14px; color: #22c55e; }
+    .td-num-plain { text-align: center; font-weight: 600; color: #334155; }
+    .td-empty { color: #cbd5e1; text-align: center; font-style: italic; }
 
-    /* Status badge kehadiran */
-    .badge-hadir  { display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:20px;background:#dcfce7;color:#166534;font-weight:800;font-size:11px; }
-    .badge-sakit  { padding:4px 10px;border-radius:20px;background:#ede9fe;color:#5b21b6;font-weight:800;font-size:11px;display:inline-block; }
-    .badge-izin   { padding:4px 10px;border-radius:20px;background:#e0f2fe;color:#075985;font-weight:800;font-size:11px;display:inline-block; }
-    .badge-alpha  { padding:4px 10px;border-radius:20px;background:#fee2e2;color:#991b1b;font-weight:800;font-size:11px;display:inline-block; }
-    .badge-cuti   { padding:4px 10px;border-radius:20px;background:#ffedd5;color:#9a3412;font-weight:800;font-size:11px;display:inline-block; }
-    .badge-none   { padding:4px 10px;border-radius:20px;background:#f1f5f9;color:#94a3b8;font-weight:700;font-size:11px;display:inline-block; }
+    /* Angka alpha: merah jika >0, hijau jika 0 */
+    .num-alpha-pos { color: #ef4444; font-weight: 700; }
+    .num-alpha-zero { color: #22c55e; font-weight: 700; }
+    /* Angka kehadiran */
+    .num-hadir { color: #334155; font-weight: 700; }
 
-    .lk-footer-info {
-        padding: 14px 24px; border-top: 1px solid #e2e8f0;
-        display: flex; justify-content: space-between; align-items: center;
-        background: #f8fafc; font-size: 12px; color: var(--text-muted); font-weight: 600;
-    }
-
-    /* Summary row */
+    /* tfoot */
     .lk-table tfoot td {
-        background: #1e293b; color: white; font-weight: 800; font-size: 12px; border-color: #334155;
+        padding: 14px 20px;
+        background: #f8fafc;
+        font-weight: 700; font-size: 13px;
+        color: #475569; border-top: 2px solid #e2e8f0;
+        text-align: center;
     }
+    .lk-table tfoot td.td-left { text-align: left; }
+
+    /* Tombol Aksi */
+    .btn-detail-aksi {
+        display: inline-flex; align-items: center; justify-content: center;
+        width: 34px; height: 34px; border-radius: 7px;
+        background: #f1f5f9; border: 1px solid #e2e8f0;
+        color: #64748b; cursor: pointer; text-decoration: none;
+        transition: all .2s ease;
+    }
+    .btn-detail-aksi:hover {
+        background: #e0e7ff; border-color: #a5b4fc; color: #4258ff;
+        transform: scale(1.08);
+    }
+
+    /* Pagination */
+    .lk-pagination {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 16px 20px; background: #fff;
+        border-top: 1px solid #e2e8f0;
+        font-size: 13px; color: #64748b;
+    }
+    .pagination-btns { display: flex; gap: 6px; }
+    .pg-btn {
+        display: inline-flex; align-items: center; justify-content: center;
+        width: 34px; height: 34px; border-radius: 7px;
+        border: 1px solid #e2e8f0; background: #fff;
+        color: #475569; font-weight: 600; font-size: 13px;
+        cursor: pointer; text-decoration: none; transition: all .15s;
+    }
+    .pg-btn:hover { background: #f1f5f9; border-color: #cbd5e1; }
+    .pg-btn.active {
+        background: #1a3a5c; border-color: #1a3a5c;
+        color: white;
+    }
+    .pg-btn.disabled { opacity: 0.35; pointer-events: none; }
 </style>
 
 <!-- Toolbar Filter -->
@@ -233,256 +287,146 @@ $periode_label = "01 - {$jumlah_hari} " . $nama_bulan[$bulan] . " {$tahun}";
     <div class="lk-table-wrap">
         <table class="lk-table">
             <thead>
-                <!-- Baris 1: Group header -->
                 <tr>
-                    <th rowspan="2" width="40">NO</th>
-                    <th rowspan="2" width="80">NIK</th>
-                    <th rowspan="2" style="min-width:160px; text-align:left;">NAMA KARYAWAN</th>
-                    <!-- O1 -->
-                    <th colspan="2" class="th-o1">O1 — KEHADIRAN</th>
-                    <!-- O2 — berbeda setiap tipe -->
-                    <?php if ($tipe === 'T1'): ?>
-                        <th colspan="5" class="th-o2">O2 — HASIL KERJA (LANGSIR)</th>
-                    <?php elseif ($tipe === 'T2'): ?>
-                        <th colspan="3" class="th-o2">O2 — DATA KERJA</th>
-                    <?php elseif ($tipe === 'T3'): ?>
-                        <th colspan="7" class="th-o2">O2 — HASIL PANEN</th>
-                    <?php elseif ($tipe === 'T4'): ?>
-                        <th colspan="5" class="th-o2">O2 — HASIL KUTIP BRONDOLAN</th>
-                    <?php elseif ($tipe === 'T5'): ?>
-                        <th colspan="4" class="th-o2">O2 — HASIL MUAT TBS</th>
+                    <?php
+                    $label_hasil = [
+                        'T1' => 'Total Hasil Langsir (Kg)',
+                        'T2' => 'Hari Kerja Objek Ini',
+                        'T3' => 'Total Hasil Panen (Kg)',
+                        'T4' => 'Total Kutip Brondolan (Kg)',
+                        'T5' => 'Total Muat TBS (Kg)',
+                    ];
+                    $has_prestasi = in_array($tipe, ['T1','T4']);
+                    $colspan_empty = $has_prestasi ? 7 : 6;
+                    ?>
+                    <th class="td-no">No</th>
+                    <th class="th-left" style="min-width:200px;">Nama Karyawan</th>
+                    <th>Total Kehadiran (Hari)</th>
+                    <th>Total Alpa</th>
+                    <th><?= $label_hasil[$tipe] ?? 'Total Hasil' ?></th>
+                    <?php if ($has_prestasi): ?>
+                    <th>Total Prestasi</th>
                     <?php endif; ?>
-                </tr>
-                <!-- Baris 2: Detail kolom -->
-                <tr>
-                    <!-- O1 detail -->
-                    <th class="th-o1">STATUS</th>
-                    <th class="th-o1">∑ HADIR</th>
-                    <!-- O2 detail -->
-                    <?php if ($tipe === 'T1'): ?>
-                        <th class="th-o2">NAMA MANDOR</th>
-                        <th class="th-o2">HASIL LANGSIR (kg)</th>
-                        <th class="th-o2">PRESTASI (kg)</th>
-                        <th class="th-o2">BLOK</th>
-                        <th class="th-o2">LUAS (Ha)</th>
-                    <?php elseif ($tipe === 'T2'): ?>
-                        <th class="th-o2">NAMA MANDOR</th>
-                        <th class="th-o2">BLOK</th>
-                        <th class="th-o2">LUAS (Ha)</th>
-                    <?php elseif ($tipe === 'T3'): ?>
-                        <th class="th-o2">NAMA MANDOR</th>
-                        <th class="th-o2">HASIL TBS (kg)</th>
-                        <th class="th-o2">TS</th>
-                        <th class="th-o2">TBS</th>
-                        <th class="th-o2">TOTAL TANDAN</th>
-                        <th class="th-o2">BLOK</th>
-                        <th class="th-o2">LUAS (Ha)</th>
-                    <?php elseif ($tipe === 'T4'): ?>
-                        <th class="th-o2">NAMA MANDOR</th>
-                        <th class="th-o2">HASIL (kg)</th>
-                        <th class="th-o2">PRESTASI (kg)</th>
-                        <th class="th-o2">BLOK</th>
-                        <th class="th-o2">LUAS (Ha)</th>
-                    <?php elseif ($tipe === 'T5'): ?>
-                        <th class="th-o2">NAMA MANDOR</th>
-                        <th class="th-o2">HASIL (kg)</th>
-                        <th class="th-o2">BLOK</th>
-                        <th class="th-o2">LUAS (Ha)</th>
-                    <?php endif; ?>
+                    <th style="width:50px;"></th>
                 </tr>
             </thead>
             <tbody>
             <?php
-            $no = 1;
-            $total_hadir_global = 0;
-            // Totals untuk footer
-            $sum_langsir=0; $sum_prestasi=0; $sum_hasil=0; $sum_tbs_kg=0;
-            $sum_ts=0; $sum_tbs=0; $sum_total_tandan=0;
+            $no_global = $offset + 1;
+            $total_hadir_global  = 0;
+            $total_alpha_global  = 0;
+            $total_hasil_global  = 0;
+            $total_prestasi_global = 0;
 
-            foreach ($list_karyawan as $user):
+            // Hitung total semua halaman (loop semua karyawan)
+            foreach ($list_karyawan as $_u) {
+                $_uid = $_u['id'];
+                $_q = mysqli_query($conn, "SELECT status_kehadiran FROM absensis WHERE user_id=$_uid AND MONTH(tanggal)=$bulan_int AND YEAR(tanggal)=$tahun");
+                while ($_a = mysqli_fetch_assoc($_q)) {
+                    $_s = strtolower($_a['status_kehadiran']);
+                    if (!in_array($_s, ['alpha','izin','sakit','cuti'])) $total_hadir_global++;
+                    if ($_s === 'alpha') $total_alpha_global++;
+                }
+                $_qlb = mysqli_query($conn, "SELECT SUM(hasil_langsir_kg) as sl, SUM(hasil_ton) as st, SUM(hasil_kg) as sk, SUM(prestasi_kg) as sp FROM logbook_kinerja WHERE user_id=$_uid AND objek_kerja='$objek_safe' AND MONTH(tanggal)=$bulan_int AND YEAR(tanggal)=$tahun");
+                $_lb = $_qlb ? mysqli_fetch_assoc($_qlb) : null;
+                if ($_lb) {
+                    if ($tipe==='T1') { $total_hasil_global += (float)($_lb['sl']??0); $total_prestasi_global += (float)($_lb['sp']??0); }
+                    elseif ($tipe==='T3') $total_hasil_global += (float)($_lb['st']??0);
+                    elseif (in_array($tipe,['T4','T5'])) { $total_hasil_global += (float)($_lb['sk']??0); $total_prestasi_global += (float)($_lb['sp']??0); }
+                }
+            }
+
+            foreach ($list_karyawan_page as $user):
                 $uid = $user['id'];
 
-                // --- O1: Kehadiran bulan ini ---
+                // Kehadiran & Alpha
                 $q_abs = mysqli_query($conn, "SELECT status_kehadiran FROM absensis WHERE user_id=$uid AND MONTH(tanggal)=$bulan_int AND YEAR(tanggal)=$tahun");
-                $hadir_count = 0;
-                $status_utama = null;
-                $status_freq = [];
+                $hadir_count = 0; $alpha_count = 0;
                 while ($abs = mysqli_fetch_assoc($q_abs)) {
                     $s = strtolower($abs['status_kehadiran']);
-                    if (!in_array($s, ['alpha','izin','sakit','cuti'])) {
-                        $hadir_count++;
-                    }
-                    $status_freq[$s] = ($status_freq[$s] ?? 0) + 1;
-                }
-                if (!empty($status_freq)) {
-                    arsort($status_freq);
-                    $status_utama = array_key_first($status_freq);
+                    if (!in_array($s, ['alpha','izin','sakit','cuti'])) $hadir_count++;
+                    if ($s === 'alpha') $alpha_count++;
                 }
 
-                // Tentukan badge status
-                if ($hadir_count > 0) {
-                    $badge_class = 'badge-hadir';
-                    $badge_text  = 'Hadir';
-                } elseif ($status_utama == 'sakit') {
-                    $badge_class = 'badge-sakit'; $badge_text = 'Sakit';
-                } elseif ($status_utama == 'izin') {
-                    $badge_class = 'badge-izin'; $badge_text = 'Izin';
-                } elseif ($status_utama == 'cuti') {
-                    $badge_class = 'badge-cuti'; $badge_text = 'Cuti';
-                } elseif ($status_utama == 'alpha') {
-                    $badge_class = 'badge-alpha'; $badge_text = 'Alpha';
-                } else {
-                    $badge_class = 'badge-none'; $badge_text = '—';
-                }
-
-                // --- O2: Logbook kinerja untuk objek ini ---
-                $q_lb = mysqli_query($conn, "
-                    SELECT lk.*, m.name AS nama_mandor
-                    FROM logbook_kinerja lk
-                    LEFT JOIN users m ON lk.mandor_id = m.id
-                    WHERE lk.user_id = $uid
-                      AND lk.objek_kerja = '$objek_safe'
-                      AND MONTH(lk.tanggal) = $bulan_int
-                      AND YEAR(lk.tanggal)  = $tahun
-                    LIMIT 1
-                ");
+                // Logbook
+                $q_lb = mysqli_query($conn, "SELECT COUNT(*) as hk_objek, SUM(hasil_langsir_kg) as sum_langsir, SUM(prestasi_kg) as sum_prestasi, SUM(hasil_kg) as sum_hasil_kg, SUM(hasil_ton) as sum_hasil_tbs_kg FROM logbook_kinerja WHERE user_id=$uid AND objek_kerja='$objek_safe' AND MONTH(tanggal)=$bulan_int AND YEAR(tanggal)=$tahun");
                 $lb = $q_lb ? mysqli_fetch_assoc($q_lb) : null;
-                $has_data = $lb && $hadir_count > 0;
+                $has_data = $lb && $lb['hk_objek'] > 0;
 
-                $total_hadir_global += $hadir_count;
+                if ($tipe==='T1')      { $nilai_hasil = $has_data?(float)($lb['sum_langsir']??0):null; $nilai_prestasi = $has_data?(float)($lb['sum_prestasi']??0):null; }
+                elseif ($tipe==='T2') { $nilai_hasil = $has_data?(int)($lb['hk_objek']??0):null;     $nilai_prestasi = null; }
+                elseif ($tipe==='T3') { $nilai_hasil = $has_data?(float)($lb['sum_hasil_tbs_kg']??0):null; $nilai_prestasi = null; }
+                elseif ($tipe==='T4') { $nilai_hasil = $has_data?(float)($lb['sum_hasil_kg']??0):null;  $nilai_prestasi = $has_data?(float)($lb['sum_prestasi']??0):null; }
+                elseif ($tipe==='T5') { $nilai_hasil = $has_data?(float)($lb['sum_hasil_kg']??0):null;  $nilai_prestasi = null; }
+                else { $nilai_hasil = null; $nilai_prestasi = null; }
 
-                // Akumulasi totals
-                if ($has_data) {
-                    $sum_langsir      += (float)($lb['hasil_langsir_kg'] ?? 0);
-                    $sum_prestasi     += (float)($lb['prestasi_kg'] ?? 0);
-                    $sum_hasil        += (float)($lb['hasil_kg'] ?? 0);
-                    $sum_tbs_kg       += (float)($lb['hasil_ton'] ?? 0);
-                    $sum_ts           += (int)($lb['tandan_kosong'] ?? 0);
-                    $sum_tbs          += (int)($lb['tbs'] ?? 0);
-                    $sum_total_tandan += (int)($lb['total_tandan'] ?? 0);
-                }
-
-                $row_class = ($hadir_count == 0) ? 'absent-row' : '';
+                $row_class = ($hadir_count == 0 && $alpha_count > 0) ? 'absent-row' : '';
             ?>
                 <tr class="<?= $row_class ?>">
-                    <td class="td-no"><?= $no++ ?></td>
-                    <td class="td-nik"><?= htmlspecialchars($user['nik']) ?></td>
-                    <td class="td-name" style="text-align:left;"><?= htmlspecialchars($user['name']) ?></td>
-
-                    <!-- O1 -->
-                    <td class="td-center"><span class="<?= $badge_class ?>"><?= $badge_text ?></span></td>
-                    <td class="td-center" style="font-weight:800;"><?= $hadir_count > 0 ? $hadir_count . ' hr' : '<span style="color:#cbd5e1;">0</span>' ?></td>
-
-                    <!-- O2 — Tipe T1: Langsir -->
-                    <?php if ($tipe === 'T1'): ?>
-                        <?php if ($has_data): ?>
-                            <td><?= htmlspecialchars($lb['nama_mandor'] ?? '—') ?></td>
-                            <td class="td-num"><?= number_format($lb['hasil_langsir_kg'] ?? 0, 2) ?></td>
-                            <td class="td-num"><?= number_format($lb['prestasi_kg'] ?? 0, 2) ?></td>
-                            <td class="td-center"><?= htmlspecialchars($lb['blok'] ?? '—') ?></td>
-                            <td class="td-center"><?= htmlspecialchars($lb['luas_ha'] ?? '—') ?></td>
+                    <td class="td-no"><?= $no_global++ ?></td>
+                    <td class="td-name">
+                        <a href="laporan_individu.php?user_id=<?= $uid ?>&bulan=<?= $bulan ?>&tahun=<?= $tahun ?>&objek=<?= urlencode($objek) ?>">
+                            <?= htmlspecialchars($user['name']) ?>
+                        </a>
+                    </td>
+                    <td class="td-center">
+                        <span class="num-hadir"><?= $hadir_count ?></span>
+                    </td>
+                    <td class="td-center">
+                        <?php if ($alpha_count > 0): ?>
+                            <span class="num-alpha-pos"><?= $alpha_count ?></span>
                         <?php else: ?>
-                            <td class="td-empty" colspan="5">—</td>
+                            <span class="num-alpha-zero">0</span>
                         <?php endif; ?>
-
-                    <!-- O2 — Tipe T2: Perawatan -->
-                    <?php elseif ($tipe === 'T2'): ?>
-                        <?php if ($has_data): ?>
-                            <td><?= htmlspecialchars($lb['nama_mandor'] ?? '—') ?></td>
-                            <td class="td-center"><?= htmlspecialchars($lb['blok'] ?? '—') ?></td>
-                            <td class="td-center"><?= htmlspecialchars($lb['luas_ha'] ?? '—') ?></td>
+                    </td>
+                    <td class="td-center">
+                        <?php if ($nilai_hasil !== null): ?>
+                            <span class="td-num"><?= $tipe==='T2' ? $nilai_hasil.' Hari' : number_format($nilai_hasil,2) ?></span>
                         <?php else: ?>
-                            <td class="td-empty" colspan="3">—</td>
+                            <span class="td-empty">—</span>
                         <?php endif; ?>
-
-                    <!-- O2 — Tipe T3: Panen / Potong Buah -->
-                    <?php elseif ($tipe === 'T3'): ?>
-                        <?php if ($has_data): ?>
-                            <td><?= htmlspecialchars($lb['nama_mandor'] ?? '—') ?></td>
-                            <td class="td-num"><?= number_format($lb['hasil_ton'] ?? 0, 0) ?></td>
-                            <td class="td-num"><?= number_format($lb['tandan_kosong'] ?? 0, 0) ?></td>
-                            <td class="td-num"><?= number_format($lb['tbs'] ?? 0, 0) ?></td>
-                            <td class="td-num"><?= number_format($lb['total_tandan'] ?? 0, 0) ?></td>
-                            <td class="td-center"><?= htmlspecialchars($lb['blok'] ?? '—') ?></td>
-                            <td class="td-center"><?= htmlspecialchars($lb['luas_ha'] ?? '—') ?></td>
-                        <?php else: ?>
-                            <td class="td-empty" colspan="7">—</td>
-                        <?php endif; ?>
-
-                    <!-- O2 — Tipe T4: Kutip Brondolan -->
-                    <?php elseif ($tipe === 'T4'): ?>
-                        <?php if ($has_data): ?>
-                            <td><?= htmlspecialchars($lb['nama_mandor'] ?? '—') ?></td>
-                            <td class="td-num"><?= number_format($lb['hasil_kg'] ?? 0, 2) ?></td>
-                            <td class="td-num"><?= number_format($lb['prestasi_kg'] ?? 0, 2) ?></td>
-                            <td class="td-center"><?= htmlspecialchars($lb['blok'] ?? '—') ?></td>
-                            <td class="td-center"><?= htmlspecialchars($lb['luas_ha'] ?? '—') ?></td>
-                        <?php else: ?>
-                            <td class="td-empty" colspan="5">—</td>
-                        <?php endif; ?>
-
-                    <!-- O2 — Tipe T5: Muat TBS -->
-                    <?php elseif ($tipe === 'T5'): ?>
-                        <?php if ($has_data): ?>
-                            <td><?= htmlspecialchars($lb['nama_mandor'] ?? '—') ?></td>
-                            <td class="td-num"><?= number_format($lb['hasil_kg'] ?? 0, 0) ?></td>
-                            <td class="td-center"><?= htmlspecialchars($lb['blok'] ?? '—') ?></td>
-                            <td class="td-center"><?= htmlspecialchars($lb['luas_ha'] ?? '—') ?></td>
-                        <?php else: ?>
-                            <td class="td-empty" colspan="4">—</td>
-                        <?php endif; ?>
+                    </td>
+                    <?php if ($has_prestasi): ?>
+                    <td class="td-center td-num-plain">
+                        <?= $nilai_prestasi !== null ? number_format($nilai_prestasi,2) : '<span class="td-empty">—</span>' ?>
+                    </td>
                     <?php endif; ?>
+                    <td class="td-center">
+                        <a href="laporan_individu.php?user_id=<?= $uid ?>&bulan=<?= $bulan ?>&tahun=<?= $tahun ?>&objek=<?= urlencode($objek) ?>" class="btn-detail-aksi" title="Detail <?= htmlspecialchars($user['name']) ?>">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+                                <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+                            </svg>
+                        </a>
+                    </td>
                 </tr>
             <?php endforeach; ?>
 
             <?php if (empty($list_karyawan)): ?>
-                <tr>
-                    <td colspan="20" style="text-align:center;padding:40px;color:var(--text-muted);font-size:14px;">
-                        Belum ada data karyawan untuk filter ini.
-                    </td>
-                </tr>
+                <tr><td colspan="<?= $colspan_empty ?>" style="text-align:center;padding:50px;color:#94a3b8;font-size:14px;">Belum ada data karyawan untuk filter ini.</td></tr>
             <?php endif; ?>
             </tbody>
-
-            <!-- Footer / Total -->
-            <?php if (!empty($list_karyawan)): ?>
-            <tfoot>
-                <tr>
-                    <td colspan="4" style="text-align:right;">TOTAL</td>
-                    <td class="td-center"><?= $total_hadir_global ?> hr</td>
-                    <?php if ($tipe === 'T1'): ?>
-                        <td>—</td>
-                        <td style="text-align:right;"><?= number_format($sum_langsir, 2) ?></td>
-                        <td style="text-align:right;"><?= number_format($sum_prestasi, 2) ?></td>
-                        <td>—</td><td>—</td>
-                    <?php elseif ($tipe === 'T2'): ?>
-                        <td>—</td><td>—</td><td>—</td>
-                    <?php elseif ($tipe === 'T3'): ?>
-                        <td>—</td>
-                        <td style="text-align:right;"><?= number_format($sum_tbs_kg, 0) ?></td>
-                        <td style="text-align:right;"><?= number_format($sum_ts, 0) ?></td>
-                        <td style="text-align:right;"><?= number_format($sum_tbs, 0) ?></td>
-                        <td style="text-align:right;"><?= number_format($sum_total_tandan, 0) ?></td>
-                        <td>—</td><td>—</td>
-                    <?php elseif ($tipe === 'T4'): ?>
-                        <td>—</td>
-                        <td style="text-align:right;"><?= number_format($sum_hasil, 2) ?></td>
-                        <td style="text-align:right;"><?= number_format($sum_prestasi, 2) ?></td>
-                        <td>—</td><td>—</td>
-                    <?php elseif ($tipe === 'T5'): ?>
-                        <td>—</td>
-                        <td style="text-align:right;"><?= number_format($sum_hasil, 0) ?></td>
-                        <td>—</td><td>—</td>
-                    <?php endif; ?>
-                </tr>
-            </tfoot>
-            <?php endif; ?>
         </table>
     </div>
 
-    <div class="lk-footer-info">
-        <span>Total Karyawan: <strong><?= count($list_karyawan) ?></strong> orang &nbsp;|&nbsp; Total Hadir: <strong><?= $total_hadir_global ?></strong> hari-orang</span>
-        <span>Dicetak: <?= date('d/m/Y H:i') ?> &nbsp;|&nbsp; PT Damai Jaya Lestari</span>
+    <!-- Pagination -->
+    <div class="lk-pagination">
+        <span>Menampilkan <strong><?= $offset+1 ?> - <?= min($offset+$per_page, $total_karyawan) ?></strong> dari <strong><?= $total_karyawan ?></strong> karyawan</span>
+        <?php
+        $q_params = $_GET;
+        $q_params['bulan']  = $bulan;
+        $q_params['tahun']  = $tahun;
+        $q_params['objek']  = $objek;
+        if (isset($q_params['page'])) unset($q_params['page']);
+        $base_url = 'laporan_keseluruhan.php?' . http_build_query($q_params) . '&page=';
+        ?>
+        <div class="pagination-btns">
+            <a class="pg-btn <?= $page<=1?'disabled':'' ?>" href="<?= $base_url.max(1,$page-1) ?>">&lsaquo;</a>
+            <?php for($p=1;$p<=$total_pages;$p++): ?>
+                <a class="pg-btn <?= $p==$page?'active':'' ?>" href="<?= $base_url.$p ?>"><?= $p ?></a>
+            <?php endfor; ?>
+            <a class="pg-btn <?= $page>=$total_pages?'disabled':'' ?>" href="<?= $base_url.min($total_pages,$page+1) ?>">&rsaquo;</a>
+        </div>
     </div>
 </div>
 
