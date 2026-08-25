@@ -264,11 +264,14 @@ $list_karyawan_page = array_slice($list_karyawan, $offset, $per_page);
             <option value="<?= htmlspecialchars($obj) ?>" <?= $objek == $obj ? 'selected' : '' ?>><?= htmlspecialchars($obj) ?></option>
             <?php endforeach; ?>
         </select>
-        <input type="text" name="cari" class="lk-input" placeholder="🔍 Cari nama / NIK..." value="<?= htmlspecialchars($cari) ?>">
+        <div class="lk-input-wrap" style="position:relative; display:inline-flex; align-items:center;">
+            <i class="fa-solid fa-magnifying-glass" style="position:absolute; left:12px; color:#94a3b8; font-size:13px; pointer-events:none;"></i>
+            <input type="text" name="cari" class="lk-input" placeholder="Cari nama / NIK..." value="<?= htmlspecialchars($cari) ?>" style="padding-left:34px;">
+        </div>
         <button type="submit" class="btn-filter-go">Tampilkan</button>
     </form>
     <button class="btn-print-lk" onclick="cetakLaporan()">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+        <i class="fa-solid fa-print"></i>
         Cetak PDF
     </button>
 </div>
@@ -393,10 +396,7 @@ $list_karyawan_page = array_slice($list_karyawan, $offset, $per_page);
                     <?php endif; ?>
                     <td class="td-center">
                         <a href="laporan_individu.php?user_id=<?= $uid ?>&bulan=<?= $bulan ?>&tahun=<?= $tahun ?>&objek=<?= urlencode($objek) ?>" class="btn-detail-aksi" title="Detail <?= htmlspecialchars($user['name']) ?>">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
-                                <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
-                            </svg>
+                            <i class="fa-solid fa-table-cells" style="font-size:14px;"></i>
                         </a>
                     </td>
                 </tr>
@@ -421,11 +421,11 @@ $list_karyawan_page = array_slice($list_karyawan, $offset, $per_page);
         $base_url = 'laporan_keseluruhan.php?' . http_build_query($q_params) . '&page=';
         ?>
         <div class="pagination-btns">
-            <a class="pg-btn <?= $page<=1?'disabled':'' ?>" href="<?= $base_url.max(1,$page-1) ?>">&lsaquo;</a>
+            <a class="pg-btn <?= $page<=1?'disabled':'' ?>" href="<?= $base_url.max(1,$page-1) ?>"><i class="fa-solid fa-chevron-left" style="font-size:11px;"></i></a>
             <?php for($p=1;$p<=$total_pages;$p++): ?>
                 <a class="pg-btn <?= $p==$page?'active':'' ?>" href="<?= $base_url.$p ?>"><?= $p ?></a>
             <?php endfor; ?>
-            <a class="pg-btn <?= $page>=$total_pages?'disabled':'' ?>" href="<?= $base_url.min($total_pages,$page+1) ?>">&rsaquo;</a>
+            <a class="pg-btn <?= $page>=$total_pages?'disabled':'' ?>" href="<?= $base_url.min($total_pages,$page+1) ?>"><i class="fa-solid fa-chevron-right" style="font-size:11px;"></i></a>
         </div>
     </div>
 </div>
