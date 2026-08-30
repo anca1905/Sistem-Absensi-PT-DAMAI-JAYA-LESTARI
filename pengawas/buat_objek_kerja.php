@@ -6,21 +6,42 @@ $pengawas_id = $_SESSION['user_id'];
 $tanggal = isset($_GET['tanggal']) ? $_GET['tanggal'] : date('Y-m-d');
 $tgl_safe = mysqli_real_escape_string($conn, $tanggal);
 
-// Ambil daftar mandor
-$query_mandor = mysqli_query($conn, "SELECT id, name FROM users WHERE role='mandor' ORDER BY name ASC");
+// Ambil afdeling milik pengawas yang login
+$q_pengawas = mysqli_query($conn, "SELECT afdeling FROM users WHERE id=$pengawas_id LIMIT 1");
+$pengawas_data = mysqli_fetch_assoc($q_pengawas);
+$afdeling_pengawas = $pengawas_data ? mysqli_real_escape_string($conn, $pengawas_data['afdeling']) : '';
+
+// Ambil daftar mandor yang seafdeling dengan pengawas
+$query_mandor = mysqli_query($conn, "SELECT id, name FROM users WHERE role='mandor' AND afdeling='$afdeling_pengawas' ORDER BY name ASC");
 $list_mandor = [];
-while($m = mysqli_fetch_assoc($query_mandor)) { $list_mandor[] = $m; }
+while ($m = mysqli_fetch_assoc($query_mandor)) {
+    $list_mandor[] = $m;
+}
 
 // Data Master (Ditanam di code seperti permintaan client)
 $list_objek = [
-    'Langsir manual', 'Membabat gawangan', 'Semprot pingan', 'Rawat jalan',
-    'Kotrek anyangan', 'Panen', 'Potong buah', 'Kutip brondolan',
-    'Muat TBS ke truk', 'Muat TBS ke jondol'
+    'Langsir manual',
+    'Membabat gawangan',
+    'Rawat jalan',
+    'Panen',
+    'Potong buah',
+    'Kutip brondolan',
+    'Muat TBS ke truk',
+    'Muat TBS ke jondol'
 ];
 $list_blok = [
-    'H.39' => '8.66',  'H.40' => '0.91', 'I.39' => '29.26', 'I.40' => '26.18',
-    'J.39' => '31.01', 'J.40' => '27.05', 'K.39' => '20.98', 'K.40' => '28.52',
-    'L.39' => '31.17', 'L.40' => '17.74', 'O.44' => '20.44', 'J.30' => '15.00'
+    'H.39' => '8.66',
+    'H.40' => '0.91',
+    'I.39' => '29.26',
+    'I.40' => '26.18',
+    'J.39' => '31.01',
+    'J.40' => '27.05',
+    'K.39' => '20.98',
+    'K.40' => '28.52',
+    'L.39' => '31.17',
+    'L.40' => '17.74',
+    'O.44' => '20.44',
+    'J.30' => '15.00'
 ];
 
 // Handle Simpan Data
@@ -66,7 +87,8 @@ $query_rencana = mysqli_query($conn, "
         margin-bottom: 24px;
     }
 
-    .form-input, .form-select {
+    .form-input,
+    .form-select {
         width: 100%;
         padding: 10px 14px;
         border-radius: 10px;
@@ -80,7 +102,9 @@ $query_rencana = mysqli_query($conn, "
         transition: all 0.2s;
         box-sizing: border-box;
     }
-    .form-input:focus, .form-select:focus {
+
+    .form-input:focus,
+    .form-select:focus {
         border-color: var(--primary-start);
         box-shadow: 0 0 0 4px rgba(66, 88, 255, 0.1);
         background: white;
@@ -104,7 +128,8 @@ $query_rencana = mysqli_query($conn, "
         min-width: 800px;
     }
 
-    .table-rencana th, .table-rencana td {
+    .table-rencana th,
+    .table-rencana td {
         padding: 12px 10px;
         border: 1px solid #e2e8f0;
         vertical-align: middle;
@@ -118,7 +143,10 @@ $query_rencana = mysqli_query($conn, "
         font-size: 11px;
         text-transform: uppercase;
     }
-    .table-rencana td.left { text-align: left; }
+
+    .table-rencana td.left {
+        text-align: left;
+    }
 
     .input-mini {
         width: 60px;
@@ -142,7 +170,11 @@ $query_rencana = mysqli_query($conn, "
         transition: all 0.2s;
         box-shadow: 0 4px 15px rgba(66, 88, 255, 0.25);
     }
-    .btn-submit:active { transform: scale(0.98); box-shadow: none; }
+
+    .btn-submit:active {
+        transform: scale(0.98);
+        box-shadow: none;
+    }
 
     .btn-add {
         background: #f1f5f9;
@@ -157,7 +189,11 @@ $query_rencana = mysqli_query($conn, "
         margin-bottom: 24px;
         transition: all 0.2s;
     }
-    .btn-add:hover { background: #e2e8f0; border-style: solid; }
+
+    .btn-add:hover {
+        background: #e2e8f0;
+        border-style: solid;
+    }
 
     .btn-back {
         display: inline-flex;
@@ -186,12 +222,19 @@ $query_rencana = mysqli_query($conn, "
         align-items: center;
         justify-content: center;
     }
-    .btn-delete:hover { background: #fca5a5; color: white; }
+
+    .btn-delete:hover {
+        background: #fca5a5;
+        color: white;
+    }
 </style>
 
 <div class="animate-up">
     <a href="index.php" class="btn-back">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
         Kembali
     </a>
 
@@ -203,45 +246,46 @@ $query_rencana = mysqli_query($conn, "
     </form>
 
     <div class="card-container">
-        
+
         <?php if (mysqli_num_rows($query_rencana) > 0): ?>
-        <h3 style="font-size:14px; margin-bottom:12px; color:var(--text-dark);">Rencana Kerja Hari Ini</h3>
-        <div class="table-responsive" style="margin-bottom:32px;">
-            <table class="table-rencana">
-                <thead>
-                    <tr>
-                        <th rowspan="2">NO</th>
-                        <th rowspan="2">NAMA MANDOR</th>
-                        <th rowspan="2">OBJEK KERJA</th>
-                        <th colspan="2">TENAGA</th>
-                        <th rowspan="2">BLOK</th>
-                        <th rowspan="2">LUAS HA</th>
-                    </tr>
-                    <tr>
-                        <th>LAKI-LAKI</th>
-                        <th>WANITA</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php $no = 1; while ($r = mysqli_fetch_assoc($query_rencana)): ?>
-                    <tr>
-                        <td><?= $no++ ?></td>
-                        <td class="left" style="font-weight:700;"><?= htmlspecialchars($r['mandor_name']) ?></td>
-                        <td><?= htmlspecialchars($r['objek_kerja']) ?></td>
-                        <td style="font-weight:700; color:#3b82f6;"><?= $r['tenaga_l'] ?></td>
-                        <td style="font-weight:700; color:#ec4899;"><?= $r['tenaga_w'] ?></td>
-                        <td style="font-weight:700;"><?= htmlspecialchars($r['blok']) ?></td>
-                        <td><?= htmlspecialchars($r['luas_ha']) ?></td>
-                    </tr>
-                    <?php endwhile; ?>
-                </tbody>
-            </table>
-        </div>
-        <hr style="border:none; border-top:1px dashed #cbd5e1; margin-bottom:24px;">
+            <h3 style="font-size:14px; margin-bottom:12px; color:var(--text-dark);">Rencana Kerja Hari Ini</h3>
+            <div class="table-responsive" style="margin-bottom:32px;">
+                <table class="table-rencana">
+                    <thead>
+                        <tr>
+                            <th rowspan="2">NO</th>
+                            <th rowspan="2">NAMA MANDOR</th>
+                            <th rowspan="2">OBJEK KERJA</th>
+                            <th colspan="2">TENAGA</th>
+                            <th rowspan="2">BLOK</th>
+                            <th rowspan="2">LUAS HA</th>
+                        </tr>
+                        <tr>
+                            <th>LAKI-LAKI</th>
+                            <th>WANITA</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php $no = 1;
+                        while ($r = mysqli_fetch_assoc($query_rencana)): ?>
+                            <tr>
+                                <td><?= $no++ ?></td>
+                                <td class="left" style="font-weight:700;"><?= htmlspecialchars($r['mandor_name']) ?></td>
+                                <td><?= htmlspecialchars($r['objek_kerja']) ?></td>
+                                <td style="font-weight:700; color:#3b82f6;"><?= $r['tenaga_l'] ?></td>
+                                <td style="font-weight:700; color:#ec4899;"><?= $r['tenaga_w'] ?></td>
+                                <td style="font-weight:700;"><?= htmlspecialchars($r['blok']) ?></td>
+                                <td><?= htmlspecialchars($r['luas_ha']) ?></td>
+                            </tr>
+                        <?php endwhile; ?>
+                    </tbody>
+                </table>
+            </div>
+            <hr style="border:none; border-top:1px dashed #cbd5e1; margin-bottom:24px;">
         <?php endif; ?>
 
         <h3 style="font-size:14px; margin-bottom:12px; color:var(--text-dark);">Tambah Objek Kerja Baru</h3>
-        
+
         <form method="POST">
             <div class="table-responsive">
                 <table class="table-rencana" id="tableForm">
@@ -269,7 +313,11 @@ $query_rencana = mysqli_query($conn, "
             <button type="button" class="btn-add" onclick="tambahBaris()">+ Tambah Baris Kosong</button>
 
             <button type="submit" class="btn-submit">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                    <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                    <polyline points="7 3 7 8 15 8"></polyline>
+                </svg>
                 Simpan Rencana Objek Kerja
             </button>
         </form>
@@ -284,14 +332,18 @@ $query_rencana = mysqli_query($conn, "
 
     function tambahBaris() {
         const tbody = document.getElementById('tbodyForm');
-        
+
         // Options for Mandor
         let optMandor = '<option value="">Pilih Mandor</option>';
-        listMandor.forEach(m => { optMandor += `<option value="${m.id}">${m.name}</option>`; });
+        listMandor.forEach(m => {
+            optMandor += `<option value="${m.id}">${m.name}</option>`;
+        });
 
         // Options for Objek
         let optObjek = '<option value="">Pilih Objek</option>';
-        listObjek.forEach(o => { optObjek += `<option value="${o}">${o}</option>`; });
+        listObjek.forEach(o => {
+            optObjek += `<option value="${o}">${o}</option>`;
+        });
 
         // Options for Blok
         let optBlok = '<option value="" data-luas="">Pilih Blok</option>';

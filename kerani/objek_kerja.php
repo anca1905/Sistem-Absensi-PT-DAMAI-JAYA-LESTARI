@@ -6,13 +6,52 @@ if (isset($_POST['simpan_tenaga'])) {
     $tanggal = mysqli_real_escape_string($conn, $_POST['tanggal_tugas']);
     $rows = isset($_POST['rows']) ? $_POST['rows'] : [];
     $updated = 0;
+
     foreach ($rows as $id => $val) {
         $id = (int)$id;
-        $tenaga_l = (int)($val['tenaga_l'] ?? 0);
-        $tenaga_w = (int)($val['tenaga_w'] ?? 0);
         if (!$id) continue;
-        mysqli_query($conn, "UPDATE rencana_kerja_pengawas SET tenaga_l=$tenaga_l, tenaga_w=$tenaga_w WHERE id=$id");
-        $updated++;
+
+        // Dapatkan detail rencana pengawas
+        $r_query = mysqli_query($conn, "SELECT mandor_id, objek_kerja, blok, luas_ha FROM rencana_kerja_pengawas WHERE id=$id");
+        $rencana = mysqli_fetch_assoc($r_query);
+        if (!$rencana) continue;
+
+        $kategori_task = 'perawatan';
+        $ok_lower = strtolower($rencana['objek_kerja']);
+        if (strpos($ok_lower, 'langsir') !== false) $kategori_task = 'langsir';
+        elseif (strpos($ok_lower, 'potong buah') !== false || strpos($ok_lower, 'panen') !== false) $kategori_task = 'potong_buah';
+        elseif (strpos($ok_lower, 'muat') !== false) $kategori_task = 'muat_tbs';
+        elseif (strpos($ok_lower, 'jaga') !== false) $kategori_task = 'jaga';
+
+        // Hapus penugasan lama untuk rencana_id ini yang masih berstatus 'ditinjau'
+        mysqli_query($conn, "DELETE FROM logbook_kinerja WHERE rencana_id = $id AND status = 'ditinjau'");
+
+        // Kumpulkan semua tenaga yang dipilih (L & W)
+        $tenaga_l = isset($val['tenaga_l']) && is_array($val['tenaga_l']) ? $val['tenaga_l'] : [];
+        $tenaga_w = isset($val['tenaga_w']) && is_array($val['tenaga_w']) ? $val['tenaga_w'] : [];
+        $all_tenaga = array_merge($tenaga_l, $tenaga_w);
+
+        foreach ($all_tenaga as $uid) {
+            $uid = (int)$uid;
+            if ($uid > 0) {
+                // Cek apakah karyawan ini sudah punya logbook di tanggal yang sama (mencegah double input di hari sama)
+                $cek = mysqli_query($conn, "SELECT id FROM logbook_kinerja WHERE user_id=$uid AND tanggal='$tanggal'");
+                if (mysqli_num_rows($cek) == 0) {
+                    mysqli_query($conn, "INSERT INTO logbook_kinerja 
+                        (user_id, mandor_id, tanggal, blok, luas_ha, objek_kerja, kategori_task, status, rencana_id) 
+                        VALUES 
+                        ($uid, {$rencana['mandor_id']}, '$tanggal', '{$rencana['blok']}', '{$rencana['luas_ha']}', '{$rencana['objek_kerja']}', '$kategori_task', 'ditinjau', $id)");
+                    $updated++;
+                } else {
+                    // Update jika sudah ada (karyawan dipindah tugas ke rencana ini)
+                    mysqli_query($conn, "UPDATE logbook_kinerja 
+                        SET mandor_id={$rencana['mandor_id']}, blok='{$rencana['blok']}', luas_ha='{$rencana['luas_ha']}', 
+                            objek_kerja='{$rencana['objek_kerja']}', kategori_task='$kategori_task', rencana_id=$id 
+                        WHERE user_id=$uid AND tanggal='$tanggal'");
+                    $updated++;
+                }
+            }
+        }
     }
     echo json_encode(['success' => true, 'updated' => $updated]);
     exit;
@@ -64,6 +103,31 @@ $q_rencana = mysqli_query($conn, "
     ORDER BY m.name ASC, r.objek_kerja ASC
 ");
 
+// Ambil daftar karyawan L dan W (berdasarkan afdeling)
+$q_karyawan = mysqli_query($conn, "SELECT id, name, jenis_kelamin FROM users WHERE role='karyawan' AND afdeling='$afdeling_kerani' ORDER BY name ASC");
+$karyawan_l = [];
+$karyawan_w = [];
+while ($k = mysqli_fetch_assoc($q_karyawan)) {
+    if ($k['jenis_kelamin'] === 'Perempuan') {
+        $karyawan_w[] = $k;
+    } else { // Jika null atau Laki-laki, masuk ke Laki-laki
+        $karyawan_l[] = $k;
+    }
+}
+
+// Ambil assignment yang sudah ada di logbook_kinerja berdasarkan rencana_id
+$q_logbook = mysqli_query($conn, "
+    SELECT l.id, l.rencana_id, l.user_id, u.jenis_kelamin 
+    FROM logbook_kinerja l
+    JOIN users u ON l.user_id = u.id
+    WHERE l.tanggal = '$tgl_safe' AND l.rencana_id IS NOT NULL
+");
+$logbook_assignments = [];
+while ($lb = mysqli_fetch_assoc($q_logbook)) {
+    $jk = ($lb['jenis_kelamin'] === 'Perempuan') ? 'W' : 'L';
+    $logbook_assignments[$lb['rencana_id']][$jk][] = $lb['user_id'];
+}
+
 $rows_rencana = [];
 while ($row = mysqli_fetch_assoc($q_rencana)) $rows_rencana[] = $row;
 
@@ -81,7 +145,13 @@ $total_tenaga   = $total_tenaga_l + $total_tenaga_w;
         margin-bottom: 24px;
         flex-wrap: wrap;
     }
-    .ok-toolbar-left { display: flex; align-items: center; gap: 10px; }
+
+    .ok-toolbar-left {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
     .ok-date-input {
         padding: 10px 16px;
         border: 1.5px solid #cbd5e1;
@@ -94,7 +164,12 @@ $total_tenaga   = $total_tenaga_l + $total_tenaga_w;
         cursor: pointer;
         transition: border-color 0.2s;
     }
-    .ok-date-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(59,130,246,0.15); }
+
+    .ok-date-input:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+    }
+
     .btn-filter {
         padding: 10px 18px;
         background: var(--accent);
@@ -106,7 +181,11 @@ $total_tenaga   = $total_tenaga_l + $total_tenaga_w;
         cursor: pointer;
         transition: background 0.2s;
     }
-    .btn-filter:hover { background: #2563eb; }
+
+    .btn-filter:hover {
+        background: #2563eb;
+    }
+
     .btn-wa {
         display: flex;
         align-items: center;
@@ -122,8 +201,18 @@ $total_tenaga   = $total_tenaga_l + $total_tenaga_w;
         transition: opacity 0.2s, transform 0.15s;
         box-shadow: 0 4px 12px rgba(37, 211, 102, 0.3);
     }
-    .btn-wa:hover { opacity: 0.92; transform: translateY(-1px); }
-    .btn-wa:disabled { background: #94a3b8; box-shadow: none; cursor: not-allowed; transform: none; }
+
+    .btn-wa:hover {
+        opacity: 0.92;
+        transform: translateY(-1px);
+    }
+
+    .btn-wa:disabled {
+        background: #94a3b8;
+        box-shadow: none;
+        cursor: not-allowed;
+        transform: none;
+    }
 
     .stat-row {
         display: grid;
@@ -131,6 +220,7 @@ $total_tenaga   = $total_tenaga_l + $total_tenaga_w;
         gap: 16px;
         margin-bottom: 24px;
     }
+
     .stat-mini {
         background: white;
         border-radius: 12px;
@@ -140,22 +230,39 @@ $total_tenaga   = $total_tenaga_l + $total_tenaga_w;
         align-items: center;
         gap: 12px;
     }
+
     .stat-mini-icon {
-        width: 44px; height: 44px;
+        width: 44px;
+        height: 44px;
         border-radius: 10px;
-        display: flex; align-items: center; justify-content: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         font-size: 20px;
     }
-    .stat-mini-val { font-size: 22px; font-weight: 800; color: var(--text-main); }
-    .stat-mini-label { font-size: 11px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    .stat-mini-val {
+        font-size: 22px;
+        font-weight: 800;
+        color: var(--text-main);
+    }
+
+    .stat-mini-label {
+        font-size: 11px;
+        color: var(--text-muted);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
 
     .card {
         background: white;
         border-radius: 14px;
         border: 1px solid #e2e8f0;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
         overflow: hidden;
     }
+
     .card-header {
         padding: 18px 24px;
         border-bottom: 1px solid #e2e8f0;
@@ -164,7 +271,13 @@ $total_tenaga   = $total_tenaga_l + $total_tenaga_w;
         align-items: center;
         justify-content: space-between;
     }
-    .card-title { font-size: 16px; font-weight: 700; color: var(--text-main); }
+
+    .card-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--text-main);
+    }
+
     .card-badge {
         padding: 4px 12px;
         background: #eff6ff;
@@ -174,7 +287,12 @@ $total_tenaga   = $total_tenaga_l + $total_tenaga_w;
         font-weight: 700;
     }
 
-    .table-ok { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .table-ok {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+    }
+
     .table-ok th {
         background: white;
         color: var(--text-muted);
@@ -187,13 +305,20 @@ $total_tenaga   = $total_tenaga_l + $total_tenaga_w;
         text-align: left;
         white-space: nowrap;
     }
+
     .table-ok td {
         padding: 12px 16px;
         border-bottom: 1px solid #f1f5f9;
         vertical-align: middle;
     }
-    .table-ok tbody tr:last-child td { border-bottom: none; }
-    .table-ok tbody tr:hover { background: #f8fafc; }
+
+    .table-ok tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .table-ok tbody tr:hover {
+        background: #f8fafc;
+    }
 
     .input-tenaga {
         width: 70px;
@@ -208,13 +333,35 @@ $total_tenaga   = $total_tenaga_l + $total_tenaga_w;
         outline: none;
         transition: border-color 0.2s;
     }
-    .input-tenaga:focus { border-color: var(--accent); background: white; }
-    .input-tenaga.laki { border-color: #bfdbfe; }
-    .input-tenaga.laki:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.15); }
-    .input-tenaga.wanita { border-color: #fbcfe8; }
-    .input-tenaga.wanita:focus { border-color: #ec4899; box-shadow: 0 0 0 3px rgba(236,72,153,0.15); }
 
-    .row-no { font-weight: 700; color: var(--text-muted); }
+    .input-tenaga:focus {
+        border-color: var(--accent);
+        background: white;
+    }
+
+    .input-tenaga.laki {
+        border-color: #bfdbfe;
+    }
+
+    .input-tenaga.laki:focus {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+    }
+
+    .input-tenaga.wanita {
+        border-color: #fbcfe8;
+    }
+
+    .input-tenaga.wanita:focus {
+        border-color: #ec4899;
+        box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.15);
+    }
+
+    .row-no {
+        font-weight: 700;
+        color: var(--text-muted);
+    }
+
     .mandor-badge {
         display: inline-block;
         padding: 4px 10px;
@@ -224,6 +371,7 @@ $total_tenaga   = $total_tenaga_l + $total_tenaga_w;
         font-weight: 700;
         font-size: 12px;
     }
+
     .blok-badge {
         display: inline-block;
         padding: 4px 10px;
@@ -233,7 +381,12 @@ $total_tenaga   = $total_tenaga_l + $total_tenaga_w;
         font-weight: 700;
         font-size: 12px;
     }
-    .luas-val { font-weight: 700; color: var(--text-main); }
+
+    .luas-val {
+        font-weight: 700;
+        color: var(--text-main);
+    }
+
     .objek-badge {
         display: inline-block;
         padding: 4px 10px;
@@ -249,23 +402,43 @@ $total_tenaga   = $total_tenaga_l + $total_tenaga_w;
         align-items: center;
         gap: 6px;
     }
+
     .tenaga-label {
         font-size: 10px;
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.5px;
     }
-    .tenaga-label.l { color: #3b82f6; }
-    .tenaga-label.w { color: #ec4899; }
+
+    .tenaga-label.l {
+        color: #3b82f6;
+    }
+
+    .tenaga-label.w {
+        color: #ec4899;
+    }
 
     .empty-state {
         text-align: center;
         padding: 60px 20px;
         color: var(--text-muted);
     }
-    .empty-state i { font-size: 40px; color: #cbd5e1; margin-bottom: 12px; display: block; }
-    .empty-state p { font-size: 15px; font-weight: 600; }
-    .empty-state small { font-size: 13px; }
+
+    .empty-state i {
+        font-size: 40px;
+        color: #cbd5e1;
+        margin-bottom: 12px;
+        display: block;
+    }
+
+    .empty-state p {
+        font-size: 15px;
+        font-weight: 600;
+    }
+
+    .empty-state small {
+        font-size: 13px;
+    }
 
     .notice-banner {
         background: #eff6ff;
@@ -368,45 +541,66 @@ $total_tenaga   = $total_tenaga_l + $total_tenaga_w;
             </thead>
             <tbody id="tbodyOK">
                 <?php if (count($rows_rencana) > 0): ?>
-                    <?php $no = 1; foreach ($rows_rencana as $row): ?>
-                    <tr class="row-ok" data-id="<?= $row['id'] ?>">
-                        <td class="row-no"><?= $no++ ?></td>
-                        <td>
-                            <span class="mandor-badge">
-                                <i class="fa-solid fa-user-tie" style="margin-right:4px;"></i>
-                                <?= htmlspecialchars($row['nama_mandor'] ?? '-') ?>
-                            </span>
-                        </td>
-                        <td>
-                            <span class="objek-badge"><?= htmlspecialchars($row['objek_kerja']) ?></span>
-                        </td>
-                        <td>
-                            <span class="blok-badge"><?= htmlspecialchars($row['blok']) ?></span>
-                        </td>
-                        <td>
-                            <span class="luas-val"><?= htmlspecialchars($row['luas_ha']) ?> Ha</span>
-                        </td>
-                        <td>
-                            <div class="tenaga-wrap" style="justify-content:center;">
-                                <span class="tenaga-label l">L</span>
-                                <input type="number" 
-                                       min="0"
-                                       class="input-tenaga laki" 
-                                       name="rows[<?= $row['id'] ?>][tenaga_l]"
-                                       value="<?= (int)$row['tenaga_l'] ?>"
-                                       placeholder="0"
-                                       onchange="hitungTotal()">
-                                <span class="tenaga-label w" style="margin-left:8px;">W</span>
-                                <input type="number" 
-                                       min="0"
-                                       class="input-tenaga wanita" 
-                                       name="rows[<?= $row['id'] ?>][tenaga_w]"
-                                       value="<?= (int)$row['tenaga_w'] ?>"
-                                       placeholder="0"
-                                       onchange="hitungTotal()">
-                            </div>
-                        </td>
-                    </tr>
+                    <?php $no = 1;
+                    foreach ($rows_rencana as $row): ?>
+                        <tr class="row-ok" data-id="<?= $row['id'] ?>">
+                            <td class="row-no"><?= $no++ ?></td>
+                            <td>
+                                <span class="mandor-badge">
+                                    <i class="fa-solid fa-user-tie" style="margin-right:4px;"></i>
+                                    <?= htmlspecialchars($row['nama_mandor'] ?? '-') ?>
+                                </span>
+                            </td>
+                            <td>
+                                <span class="objek-badge"><?= htmlspecialchars($row['objek_kerja']) ?></span>
+                            </td>
+                            <td>
+                                <span class="blok-badge"><?= htmlspecialchars($row['blok']) ?></span>
+                            </td>
+                            <td>
+                                <span class="luas-val"><?= htmlspecialchars($row['luas_ha']) ?> Ha</span>
+                            </td>
+                            <td>
+                                <div class="tenaga-wrap" style="justify-content:center; flex-direction:column; gap:8px;">
+                                    <?php
+                                    $assigned_l = isset($logbook_assignments[$row['id']]['L']) ? $logbook_assignments[$row['id']]['L'] : [];
+                                    $assigned_w = isset($logbook_assignments[$row['id']]['W']) ? $logbook_assignments[$row['id']]['W'] : [];
+
+                                    // Generate selects for Laki-laki
+                                    for ($i = 0; $i < (int)$row['tenaga_l']; $i++) {
+                                        $sel_val = isset($assigned_l[$i]) ? $assigned_l[$i] : '';
+                                        echo '<div style="display:flex; align-items:center; gap:6px;">';
+                                        echo '<span class="tenaga-label l">L</span>';
+                                        echo '<select class="select-tenaga select-laki" style="padding:6px; border-radius:6px; border:1.5px solid #bfdbfe; font-size:12px; width:150px; outline:none; background:#f8fafc; font-weight:600;">';
+                                        echo '<option value="">-- Pilih Karyawan --</option>';
+                                        foreach ($karyawan_l as $kw) {
+                                            $sel = ($sel_val == $kw['id']) ? 'selected' : '';
+                                            echo "<option value=\"{$kw['id']}\" $sel>" . htmlspecialchars($kw['name']) . "</option>";
+                                        }
+                                        echo '</select></div>';
+                                    }
+
+                                    // Generate selects for Wanita
+                                    for ($i = 0; $i < (int)$row['tenaga_w']; $i++) {
+                                        $sel_val = isset($assigned_w[$i]) ? $assigned_w[$i] : '';
+                                        echo '<div style="display:flex; align-items:center; gap:6px;">';
+                                        echo '<span class="tenaga-label w">W</span>';
+                                        echo '<select class="select-tenaga select-wanita" style="padding:6px; border-radius:6px; border:1.5px solid #fbcfe8; font-size:12px; width:150px; outline:none; background:#f8fafc; font-weight:600;">';
+                                        echo '<option value="">-- Pilih Karyawan --</option>';
+                                        foreach ($karyawan_w as $kw) {
+                                            $sel = ($sel_val == $kw['id']) ? 'selected' : '';
+                                            echo "<option value=\"{$kw['id']}\" $sel>" . htmlspecialchars($kw['name']) . "</option>";
+                                        }
+                                        echo '</select></div>';
+                                    }
+
+                                    if ((int)$row['tenaga_l'] == 0 && (int)$row['tenaga_w'] == 0) {
+                                        echo '<span style="color:#94a3b8; font-size:12px; font-style:italic;">Tidak ada kuota</span>';
+                                    }
+                                    ?>
+                                </div>
+                            </td>
+                        </tr>
                     <?php endforeach; ?>
                 <?php else: ?>
                     <tr id="emptyRow">
@@ -424,86 +618,118 @@ $total_tenaga   = $total_tenaga_l + $total_tenaga_w;
     </div>
 
     <?php if (count($rows_rencana) > 0): ?>
-    <div style="padding: 14px 24px; border-top: 1px solid #e2e8f0; display:flex; justify-content:flex-end; gap:10px; background:#f8fafc;">
-        <button type="button" class="btn-filter" style="background:#64748b;" onclick="window.location.reload()">Reset</button>
-        <button type="button" class="btn-filter" onclick="simpanTenaga()">
-            <i class="fa-solid fa-floppy-disk"></i> Simpan Tenaga
-        </button>
-    </div>
+        <div style="padding: 14px 24px; border-top: 1px solid #e2e8f0; display:flex; justify-content:flex-end; gap:10px; background:#f8fafc;">
+            <button type="button" class="btn-filter" style="background:#64748b;" onclick="window.location.reload()">Reset</button>
+            <button type="button" class="btn-filter" onclick="simpanTenaga()">
+                <i class="fa-solid fa-floppy-disk"></i> Simpan Tenaga
+            </button>
+        </div>
     <?php endif; ?>
 </div>
 
 <script>
-const tanggalTugas = '<?= $tanggal ?>';
+    const tanggalTugas = '<?= $tanggal ?>';
 
-function hitungTotal() {
-    // recalculate totals live
-    let totalL = 0, totalW = 0;
-    document.querySelectorAll('.input-tenaga.laki').forEach(inp => totalL += parseInt(inp.value || 0));
-    document.querySelectorAll('.input-tenaga.wanita').forEach(inp => totalW += parseInt(inp.value || 0));
-}
+    function hitungTotal() {
+        // recalculate totals live
+        let totalL = 0,
+            totalW = 0;
+        document.querySelectorAll('.input-tenaga.laki').forEach(inp => totalL += parseInt(inp.value || 0));
+        document.querySelectorAll('.input-tenaga.wanita').forEach(inp => totalW += parseInt(inp.value || 0));
+    }
 
-// ============= SIMPAN TENAGA =============
-function simpanTenaga() {
-    const rows = document.querySelectorAll('tr.row-ok');
-    if (rows.length === 0) return;
-
-    const fd = new FormData();
-    fd.append('simpan_tenaga', 1);
-    fd.append('tanggal_tugas', tanggalTugas);
-
-    rows.forEach(row => {
-        const id = row.dataset.id;
-        const tenagaL = row.querySelector('.input-tenaga.laki')?.value || 0;
-        const tenagaW = row.querySelector('.input-tenaga.wanita')?.value || 0;
-        fd.append(`rows[${id}][tenaga_l]`, tenagaL);
-        fd.append(`rows[${id}][tenaga_w]`, tenagaW);
-    });
-
-    Swal.fire({ title: 'Menyimpan...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
-
-    fetch('objek_kerja.php', { method: 'POST', body: fd })
-        .then(r => r.json())
-        .then(data => {
-            Swal.fire({
-                icon: 'success',
-                title: 'Berhasil Disimpan!',
-                text: `${data.updated} rencana kerja telah diperbarui.`,
-                confirmButtonText: 'OK'
-            }).then(() => window.location.reload());
-        }).catch(() => {
-            Swal.fire({ icon: 'error', title: 'Gagal', text: 'Terjadi kesalahan saat menyimpan data.' });
-        });
-}
-
-// ============= KIRIM WA =============
-function kirimPesanWA() {
-    Swal.fire({
-        icon: 'question',
-        title: 'Kirim Pesan WhatsApp?',
-        html: `Pesan rencana kerja akan dikirim ke semua <b>mandor</b> untuk tanggal <b>${new Date(tanggalTugas + 'T00:00:00').toLocaleDateString('id-ID', {day:'2-digit',month:'long',year:'numeric'})}</b>.`,
-        showCancelButton: true,
-        confirmButtonText: '✅ Ya, Kirim',
-        cancelButtonText: 'Batal',
-        confirmButtonColor: '#25d366'
-    }).then(result => {
-        if (!result.isConfirmed) return;
+    // ============= SIMPAN TENAGA =============
+    function simpanTenaga() {
+        const rows = document.querySelectorAll('tr.row-ok');
+        if (rows.length === 0) return;
 
         const fd = new FormData();
-        fd.append('kirim_pesan', 1);
+        fd.append('simpan_tenaga', 1);
         fd.append('tanggal_tugas', tanggalTugas);
 
-        Swal.fire({ title: 'Mengirim...', text: 'Harap tunggu sebentar.', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+        rows.forEach(row => {
+            const id = row.dataset.id;
+            const selectsL = row.querySelectorAll('.select-laki');
+            selectsL.forEach(s => {
+                if (s.value) fd.append(`rows[${id}][tenaga_l][]`, s.value);
+            });
+            const selectsW = row.querySelectorAll('.select-wanita');
+            selectsW.forEach(s => {
+                if (s.value) fd.append(`rows[${id}][tenaga_w][]`, s.value);
+            });
+        });
 
-        fetch('objek_kerja.php', { method: 'POST', body: fd })
+        Swal.fire({
+            title: 'Menyimpan...',
+            allowOutsideClick: false,
+            didOpen: () => Swal.showLoading()
+        });
+
+        fetch('objek_kerja.php', {
+                method: 'POST',
+                body: fd
+            })
             .then(r => r.json())
             .then(data => {
-                Swal.fire({ icon: 'success', title: 'Pesan Terkirim!', text: `${data.sent} pesan WhatsApp berhasil dikirim ke mandor.` });
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Berhasil Disimpan!',
+                    text: `${data.updated} rencana kerja telah diperbarui.`,
+                    confirmButtonText: 'OK'
+                }).then(() => window.location.reload());
             }).catch(() => {
-                Swal.fire({ icon: 'error', title: 'Gagal', text: 'Terjadi kesalahan saat mengirim pesan.' });
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal',
+                    text: 'Terjadi kesalahan saat menyimpan data.'
+                });
             });
-    });
-}
+    }
+
+    // ============= KIRIM WA =============
+    function kirimPesanWA() {
+        Swal.fire({
+            icon: 'question',
+            title: 'Kirim Pesan WhatsApp?',
+            html: `Pesan rencana kerja akan dikirim ke semua <b>mandor</b> untuk tanggal <b>${new Date(tanggalTugas + 'T00:00:00').toLocaleDateString('id-ID', {day:'2-digit',month:'long',year:'numeric'})}</b>.`,
+            showCancelButton: true,
+            confirmButtonText: '✅ Ya, Kirim',
+            cancelButtonText: 'Batal',
+            confirmButtonColor: '#25d366'
+        }).then(result => {
+            if (!result.isConfirmed) return;
+
+            const fd = new FormData();
+            fd.append('kirim_pesan', 1);
+            fd.append('tanggal_tugas', tanggalTugas);
+
+            Swal.fire({
+                title: 'Mengirim...',
+                text: 'Harap tunggu sebentar.',
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading()
+            });
+
+            fetch('objek_kerja.php', {
+                    method: 'POST',
+                    body: fd
+                })
+                .then(r => r.json())
+                .then(data => {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Pesan Terkirim!',
+                        text: `${data.sent} pesan WhatsApp berhasil dikirim ke mandor.`
+                    });
+                }).catch(() => {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Gagal',
+                        text: 'Terjadi kesalahan saat mengirim pesan.'
+                    });
+                });
+        });
+    }
 </script>
 
 <?php include 'templates/footer.php'; ?>

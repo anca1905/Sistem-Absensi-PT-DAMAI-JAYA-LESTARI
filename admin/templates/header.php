@@ -29,7 +29,7 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'admin') {
 <body>
 
     <div class="wrapper">
-    
+
         <!-- Hidden Print Header (Kop Surat) -->
         <div id="print-header" style="display: none;">
             <!-- Asumsikan ada logo di assets/img/logo.png, jika tidak ada, alt text akan tampil -->
@@ -102,6 +102,7 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'admin') {
                     </svg>
                     Laporan Kinerja
                 </a>
+                <!-- DISABLED: Menu Penggajian
                 <a href="<?= BASE_URL ?>admin/penggajian.php" class="nav-link <?= is_active('penggajian.php') ?>">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <line x1="12" y1="1" x2="12" y2="23"></line>
@@ -109,6 +110,7 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'admin') {
                     </svg>
                     Penggajian
                 </a>
+                -->
 
 
                 <div class="menu-label" style="margin-top: 20px;">PENGATURAN</div>
