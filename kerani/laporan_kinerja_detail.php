@@ -34,7 +34,10 @@ $query_log = mysqli_query($conn, "SELECT l.*, u.name as mandor_name FROM logbook
         border: 1px solid #cbd5e1;
         transition: all 0.2s;
     }
-    .btn-back:hover { background: #f8fafc; }
+
+    .btn-back:hover {
+        background: #f8fafc;
+    }
 
     .btn-print {
         background: var(--accent);
@@ -50,13 +53,16 @@ $query_log = mysqli_query($conn, "SELECT l.*, u.name as mandor_name FROM logbook
         gap: 8px;
         transition: all 0.2s;
     }
-    .btn-print:hover { background: #2563eb; }
+
+    .btn-print:hover {
+        background: #2563eb;
+    }
 
     .card {
         background: white;
         border-radius: 12px;
         border: 1px solid #e2e8f0;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
         overflow: hidden;
     }
 
@@ -66,7 +72,7 @@ $query_log = mysqli_query($conn, "SELECT l.*, u.name as mandor_name FROM logbook
         background: #f8fafc;
         text-align: center;
     }
-    
+
     .card-title {
         font-size: 20px;
         font-weight: 800;
@@ -93,7 +99,8 @@ $query_log = mysqli_query($conn, "SELECT l.*, u.name as mandor_name FROM logbook
         text-align: center;
     }
 
-    .table-data th, .table-data td {
+    .table-data th,
+    .table-data td {
         padding: 16px;
         border: 1px solid #e2e8f0;
     }
@@ -112,22 +119,51 @@ $query_log = mysqli_query($conn, "SELECT l.*, u.name as mandor_name FROM logbook
     }
 
     @media print {
-        body * { visibility: hidden; }
-        .main-content { margin-left: 0; }
-        .sidebar, .topbar, .header-actions { display: none !important; }
-        .card, .card * { visibility: visible; }
-        .card { position: absolute; left: 0; top: 0; border: none; box-shadow: none; width: 100%; }
+        body * {
+            visibility: hidden;
+        }
+
+        .main-content {
+            margin-left: 0;
+        }
+
+        .sidebar,
+        .topbar,
+        .header-actions {
+            display: none !important;
+        }
+
+        .card,
+        .card * {
+            visibility: visible;
+        }
+
+        .card {
+            position: absolute;
+            left: 0;
+            top: 0;
+            border: none;
+            box-shadow: none;
+            width: 100%;
+        }
     }
 </style>
 
 <div class="header-actions">
     <a href="laporan_kinerja.php" class="btn-back">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
         Kembali
     </a>
-    
+
     <button class="btn-print" onclick="window.print()">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="6 9 6 2 18 2 18 9"></polyline>
+            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+            <rect x="6" y="14" width="12" height="8"></rect>
+        </svg>
         Cetak PDF
     </button>
 </div>
@@ -137,7 +173,7 @@ $query_log = mysqli_query($conn, "SELECT l.*, u.name as mandor_name FROM logbook
         <h3 class="card-title"><?= date('d F Y', strtotime($tanggal)) ?></h3>
         <p class="card-subtitle">Karyawan: <?= htmlspecialchars($user_name) ?></p>
     </div>
-    
+
     <div class="table-container">
         <table class="table-data">
             <thead>
@@ -151,39 +187,40 @@ $query_log = mysqli_query($conn, "SELECT l.*, u.name as mandor_name FROM logbook
                 </tr>
             </thead>
             <tbody>
-                <?php while($row = mysqli_fetch_assoc($query_log)): ?>
-                <tr>
-                    <td style="font-weight: 700; text-transform: uppercase; color: var(--text-muted);"><?= str_replace('_', ' ', $row['kategori_task']) ?></td>
-                    <td style="font-weight: 700; color: var(--text-main);"><?= htmlspecialchars($row['objek_kerja']) ?></td>
-                    <td style="font-weight: 600; color: var(--text-muted);"><?= htmlspecialchars($row['blok']) ?></td>
-                    <td style="font-weight: 600; color: var(--text-muted);"><?= htmlspecialchars($row['luas_ha']) ?></td>
-                    <td style="text-align: left; font-size: 13px;">
-                        <?php if($row['kategori_task'] == 'perawatan' || $row['kategori_task'] == 'jaga'): ?>
-                            Aksi: <b><?= strtoupper($row['aksi']) ?></b> <br>
-                            <?= $row['jumlah_jam_kerja'] > 0 ? "Jam Kerja: <b>{$row['jumlah_jam_kerja']} Jam</b>" : "" ?>
-                        <?php elseif($row['kategori_task'] == 'potong_buah'): ?>
-                            TBS: <b><?= $row['tbs'] ?></b>, Kosong: <b><?= $row['tandan_kosong'] ?></b><br>
-                            Brondol: <b><?= $row['tandan_brondol'] ?></b>, Total: <b><?= $row['total_tandan'] ?></b>
-                        <?php elseif($row['kategori_task'] == 'langsir'): ?>
-                            Hasil: <b><?= $row['hasil_ton'] ?> Ton / <?= $row['hasil_kg'] ?> Kg</b><br>
-                            Prestasi: <b><?= $row['prestasi_ton'] ?> Ton / <?= $row['prestasi_kg'] ?> Kg</b>
-                        <?php elseif($row['kategori_task'] == 'muat_tbs'): ?>
-                            Langsiran: <b><?= $row['hasil_langsir_kg'] ?> Kg</b><br>
-                            Jam Kerja: <b><?= $row['jumlah_jam_kerja'] ?> Jam</b>
-                        <?php endif; ?>
-                    </td>
-                    <td>
-                        <span style="font-weight: 800; color: <?= $row['status']=='diterima'?'#166534':'#d97706' ?>; background: <?= $row['status']=='diterima'?'#dcfce7':'#fef3c7' ?>; padding: 6px 12px; border-radius: 6px;">
-                            <?= strtoupper($row['status']) ?>
-                        </span>
-                    </td>
-                </tr>
+                <?php while ($row = mysqli_fetch_assoc($query_log)): ?>
+                    <tr>
+                        <td style="font-weight: 700; text-transform: uppercase; color: var(--text-muted);"><?= str_replace('_', ' ', $row['kategori_task']) ?></td>
+                        <td style="font-weight: 700; color: var(--text-main);"><?= htmlspecialchars($row['objek_kerja']) ?></td>
+                        <td style="font-weight: 600; color: var(--text-muted);"><?= htmlspecialchars($row['blok']) ?></td>
+                        <td style="font-weight: 600; color: var(--text-muted);"><?= htmlspecialchars($row['luas_ha']) ?></td>
+                        <td style="text-align: left; font-size: 13px;">
+                            <?php if ($row['kategori_task'] == 'perawatan' || $row['kategori_task'] == 'jaga'): ?>
+                                Aksi: <b><?= strtoupper($row['aksi']) ?></b> <br>
+                                <?= $row['jumlah_jam_kerja'] > 0 ? "Jam Kerja: <b>{$row['jumlah_jam_kerja']} Jam</b>" : "" ?>
+                            <?php elseif ($row['kategori_task'] == 'potong_buah'): ?>
+                                TBS: <b><?= $row['tbs'] ?></b>, Kosong: <b><?= $row['tandan_kosong'] ?></b><br>
+                                Brondol: <b><?= $row['tandan_brondol'] ?></b>, Total: <b><?= $row['total_tandan'] ?></b>
+                            <?php elseif ($row['kategori_task'] == 'langsir'): ?>
+                                Hasil: <b><?= $row['hasil_ton'] ?> Ton / <?= $row['hasil_kg'] ?> Kg</b>
+                                <!-- <br>Prestasi: <b><?= $row['prestasi_ton'] ?> Ton / <?= $row['prestasi_kg'] ?> Kg</b> -->
+
+                            <?php elseif ($row['kategori_task'] == 'muat_tbs'): ?>
+                                Langsiran: <b><?= $row['hasil_langsir_kg'] ?> Kg</b><br>
+                                Jam Kerja: <b><?= $row['jumlah_jam_kerja'] ?> Jam</b>
+                            <?php endif; ?>
+                        </td>
+                        <td>
+                            <span style="font-weight: 800; color: <?= $row['status'] == 'diterima' ? '#166534' : '#d97706' ?>; background: <?= $row['status'] == 'diterima' ? '#dcfce7' : '#fef3c7' ?>; padding: 6px 12px; border-radius: 6px;">
+                                <?= strtoupper($row['status']) ?>
+                            </span>
+                        </td>
+                    </tr>
                 <?php endwhile; ?>
-                
-                <?php if(mysqli_num_rows($query_log) == 0): ?>
-                <tr>
-                    <td colspan="6" style="padding: 20px;">Tidak ada logbook.</td>
-                </tr>
+
+                <?php if (mysqli_num_rows($query_log) == 0): ?>
+                    <tr>
+                        <td colspan="6" style="padding: 20px;">Tidak ada logbook.</td>
+                    </tr>
                 <?php endif; ?>
             </tbody>
         </table>

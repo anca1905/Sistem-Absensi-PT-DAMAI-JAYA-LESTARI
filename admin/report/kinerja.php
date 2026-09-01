@@ -7,10 +7,18 @@ $tanggal  = isset($_GET['tanggal'])  ? $_GET['tanggal']  : date('Y-m-d');
 $afdeling = isset($_GET['afdeling']) ? $_GET['afdeling'] : '';
 
 $nama_bulan = [
-    '01'=>'Januari','02'=>'Februari','03'=>'Maret',
-    '04'=>'April',  '05'=>'Mei',     '06'=>'Juni',
-    '07'=>'Juli',   '08'=>'Agustus', '09'=>'September',
-    '10'=>'Oktober','11'=>'November','12'=>'Desember'
+    '01' => 'Januari',
+    '02' => 'Februari',
+    '03' => 'Maret',
+    '04' => 'April',
+    '05' => 'Mei',
+    '06' => 'Juni',
+    '07' => 'Juli',
+    '08' => 'Agustus',
+    '09' => 'September',
+    '10' => 'Oktober',
+    '11' => 'November',
+    '12' => 'Desember'
 ];
 $tgl_pecah      = explode('-', $tanggal);
 $format_tanggal = $tgl_pecah[2] . ' ' . $nama_bulan[$tgl_pecah[1]] . ' ' . $tgl_pecah[0];
@@ -43,13 +51,13 @@ while ($user = mysqli_fetch_assoc($query_users)) {
     $cat = $user['kategori_task'] ?? '';
     $obj = strtolower($user['objek_kerja'] ?? '');
     $detail = '-';
-    if ($cat==='langsir' || strpos($obj,'langsir')!==false || strpos($obj,'membabat')!==false) {
-        $detail = "Hasil: {$user['hasil_ton']} Ton {$user['hasil_kg']} Kg | Prestasi: {$user['prestasi_ton']} Ton {$user['prestasi_kg']} Kg";
-    } elseif ($cat==='potong_buah' || strpos($obj,'potong')!==false || strpos($obj,'panen')!==false) {
+    if ($cat === 'langsir' || strpos($obj, 'langsir') !== false || strpos($obj, 'membabat') !== false) {
+        $detail = "Hasil: {$user['hasil_ton']} Ton {$user['hasil_kg']} Kg"; // Prestasi: {$user['prestasi_ton']} Ton {$user['prestasi_kg']} Kg
+    } elseif ($cat === 'potong_buah' || strpos($obj, 'potong') !== false || strpos($obj, 'panen') !== false) {
         $detail = "TBS: {$user['tbs']} | Kosong: {$user['tandan_kosong']} | Brondol: {$user['tandan_brondol']} | Total: {$user['total_tandan']}";
-    } elseif ($cat==='muat_tbs' || strpos($obj,'muat')!==false) {
+    } elseif ($cat === 'muat_tbs' || strpos($obj, 'muat') !== false) {
         $detail = "Langsir: {$user['hasil_langsir_kg']} Kg | Jam: {$user['jumlah_jam_kerja']}";
-    } elseif ($cat==='jaga' || strpos($obj,'jaga')!==false) {
+    } elseif ($cat === 'jaga' || strpos($obj, 'jaga') !== false) {
         $detail = "Jam Kerja: {$user['jumlah_jam_kerja']}";
     } elseif (!empty($user['objek_kerja'])) {
         $detail = "Aksi: " . ($user['aksi'] ?? '-');
@@ -61,23 +69,72 @@ while ($user = mysqli_fetch_assoc($query_users)) {
 
 <style>
     /* Tombol file di tabel kinerja */
-    .kinerja-tbl { width: 100%; border-collapse: collapse; }
+    .kinerja-tbl {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
     .kinerja-tbl th {
-        background-color: #f8fafc; color: #475569; font-weight: 700; text-transform: uppercase;
-        font-size: 11px; letter-spacing: 0.5px; padding: 14px 16px; text-align: left; border-bottom: 2px solid #e2e8f0;
+        background-color: #f8fafc;
+        color: #475569;
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 11px;
+        letter-spacing: 0.5px;
+        padding: 14px 16px;
+        text-align: left;
+        border-bottom: 2px solid #e2e8f0;
     }
+
     .kinerja-tbl td {
-        padding: 14px 16px; border-bottom: 1px solid #f1f5f9; color: #334155; font-size: 14px; vertical-align: middle;
+        padding: 14px 16px;
+        border-bottom: 1px solid #f1f5f9;
+        color: #334155;
+        font-size: 14px;
+        vertical-align: middle;
     }
-    .kinerja-tbl tbody tr:last-child td { border-bottom: none; }
-    .kinerja-tbl tbody tr:hover td { background-color: #f8fafc; }
+
+    .kinerja-tbl tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .kinerja-tbl tbody tr:hover td {
+        background-color: #f8fafc;
+    }
 
     /* Modal (UI only) */
-    #fileModal.show { display: flex; opacity: 1; }
-    .modal-table { width: 100%; border-collapse: collapse; }
-    .modal-table th { background: #f8fafc; color: #475569; font-size: 12px; font-weight: 700; text-transform: uppercase; padding: 10px 12px; border-bottom: 2px solid #e2e8f0; text-align: center; }
-    .modal-table td { padding: 12px; border-bottom: 1px solid #f1f5f9; color: #334155; font-size: 13px; text-align: center; }
-    .modal-table tbody tr:last-child td { border-bottom: none; }
+    #fileModal.show {
+        display: flex;
+        opacity: 1;
+    }
+
+    .modal-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .modal-table th {
+        background: #f8fafc;
+        color: #475569;
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        padding: 10px 12px;
+        border-bottom: 2px solid #e2e8f0;
+        text-align: center;
+    }
+
+    .modal-table td {
+        padding: 12px;
+        border-bottom: 1px solid #f1f5f9;
+        color: #334155;
+        font-size: 13px;
+        text-align: center;
+    }
+
+    .modal-table tbody tr:last-child td {
+        border-bottom: none;
+    }
 </style>
 
 <!-- ========== WEB UI ========== -->
@@ -95,7 +152,7 @@ while ($user = mysqli_fetch_assoc($query_users)) {
                     $afd_q = mysqli_query($conn, "SELECT nama_afdeling FROM afdelings ORDER BY nama_afdeling ASC");
                     while ($afd = mysqli_fetch_assoc($afd_q)):
                     ?>
-                        <option value="<?= htmlspecialchars($afd['nama_afdeling']) ?>" <?= $afdeling==$afd['nama_afdeling'] ? 'selected':'' ?>>
+                        <option value="<?= htmlspecialchars($afd['nama_afdeling']) ?>" <?= $afdeling == $afd['nama_afdeling'] ? 'selected' : '' ?>>
                             <?= htmlspecialchars($afd['nama_afdeling']) ?>
                         </option>
                     <?php endwhile; ?>
@@ -105,7 +162,7 @@ while ($user = mysqli_fetch_assoc($query_users)) {
             <div class="report-title-center">
                 <h2>Laporan Kinerja Harian</h2>
                 <p>Tanggal: <strong><?= $format_tanggal ?></strong>
-                    <?= !empty($afdeling) ? ' &mdash; '.htmlspecialchars($afdeling) : '' ?>
+                    <?= !empty($afdeling) ? ' &mdash; ' . htmlspecialchars($afdeling) : '' ?>
                 </p>
             </div>
 
@@ -133,49 +190,53 @@ while ($user = mysqli_fetch_assoc($query_users)) {
                 </tr>
             </thead>
             <tbody>
-                <?php if (count($print_data) > 0): $no = 1; foreach ($print_data as $user):
-                    $status = $user['lk_status'] ? ucfirst($user['lk_status']) : 'Belum';
-                    $badge  = (strtolower($status)=='diterima'||strtolower($status)=='selesai') ? 'badge-success' : 'badge-warning';
+                <?php if (count($print_data) > 0): $no = 1;
+                    foreach ($print_data as $user):
+                        $status = $user['lk_status'] ? ucfirst($user['lk_status']) : 'Belum';
+                        $badge  = (strtolower($status) == 'diterima' || strtolower($status) == 'selesai') ? 'badge-success' : 'badge-warning';
 
-                    $dataJSON = htmlspecialchars(json_encode([
-                        'kategori'  => $user['kategori_task'] ?? 'perawatan',
-                        'objek'     => $user['objek_kerja'] ?? '-',
-                        'blok'      => $user['blok'] ?? '-',
-                        'luas'      => $user['luas_ha'] ?? '-',
-                        'mandor'    => $user['mandor_name'] ?? '-',
-                        'h_ton'     => $user['hasil_ton'] ?? '0',
-                        'h_kg'      => $user['hasil_kg'] ?? '0',
-                        'p_ton'     => $user['prestasi_ton'] ?? '0',
-                        'p_kg'      => $user['prestasi_kg'] ?? '0',
-                        'tbs'       => $user['tbs'] ?? '0',
-                        'kosong'    => $user['tandan_kosong'] ?? '0',
-                        'brondol'   => $user['tandan_brondol'] ?? '0',
-                        'total'     => $user['total_tandan'] ?? '0',
-                        'langsir'   => $user['hasil_langsir_kg'] ?? '0',
-                        'jam'       => $user['jumlah_jam_kerja'] ?? '0',
-                        'aksi'      => ucfirst($user['aksi'] ?? '-'),
-                        'status'    => $status,
-                        'badge'     => $badge,
-                    ]), ENT_QUOTES, 'UTF-8');
+                        $dataJSON = htmlspecialchars(json_encode([
+                            'kategori'  => $user['kategori_task'] ?? 'perawatan',
+                            'objek'     => $user['objek_kerja'] ?? '-',
+                            'blok'      => $user['blok'] ?? '-',
+                            'luas'      => $user['luas_ha'] ?? '-',
+                            'mandor'    => $user['mandor_name'] ?? '-',
+                            'h_ton'     => $user['hasil_ton'] ?? '0',
+                            'h_kg'      => $user['hasil_kg'] ?? '0',
+                            'p_ton'     => $user['prestasi_ton'] ?? '0',
+                            'p_kg'      => $user['prestasi_kg'] ?? '0',
+                            'tbs'       => $user['tbs'] ?? '0',
+                            'kosong'    => $user['tandan_kosong'] ?? '0',
+                            'brondol'   => $user['tandan_brondol'] ?? '0',
+                            'total'     => $user['total_tandan'] ?? '0',
+                            'langsir'   => $user['hasil_langsir_kg'] ?? '0',
+                            'jam'       => $user['jumlah_jam_kerja'] ?? '0',
+                            'aksi'      => ucfirst($user['aksi'] ?? '-'),
+                            'status'    => $status,
+                            'badge'     => $badge,
+                        ]), ENT_QUOTES, 'UTF-8');
                 ?>
+                        <tr>
+                            <td class="text-center"><?= $no++ ?></td>
+                            <td><?= htmlspecialchars($user['nik']) ?></td>
+                            <td style="font-weight:600;"><?= htmlspecialchars($user['name']) ?></td>
+                            <td><?= htmlspecialchars($user['afdeling'] ?? '-') ?></td>
+                            <td class="text-center">
+                                <?php if ($user['lk_status']): ?>
+                                    <button onclick="openModal('<?= htmlspecialchars($user['name'], ENT_QUOTES) ?>', '<?= htmlspecialchars($user['nik'], ENT_QUOTES) ?>', '<?= htmlspecialchars($user['afdeling'] ?? '-', ENT_QUOTES) ?>', <?= $dataJSON ?>)" class="btn-file">
+                                        Lihat File
+                                    </button>
+                                <?php else: ?>
+                                    <span class="text-muted" style="font-style:italic;">Belum lapor</span>
+                                <?php endif; ?>
+                            </td>
+                            <td class="text-center"><span class="badge <?= $badge ?>"><?= $status ?></span></td>
+                        </tr>
+                    <?php endforeach;
+                else: ?>
                     <tr>
-                        <td class="text-center"><?= $no++ ?></td>
-                        <td><?= htmlspecialchars($user['nik']) ?></td>
-                        <td style="font-weight:600;"><?= htmlspecialchars($user['name']) ?></td>
-                        <td><?= htmlspecialchars($user['afdeling'] ?? '-') ?></td>
-                        <td class="text-center">
-                            <?php if ($user['lk_status']): ?>
-                                <button onclick="openModal('<?= htmlspecialchars($user['name'], ENT_QUOTES) ?>', '<?= htmlspecialchars($user['nik'], ENT_QUOTES) ?>', '<?= htmlspecialchars($user['afdeling'] ?? '-', ENT_QUOTES) ?>', <?= $dataJSON ?>)" class="btn-file">
-                                    Lihat File
-                                </button>
-                            <?php else: ?>
-                                <span class="text-muted" style="font-style:italic;">Belum lapor</span>
-                            <?php endif; ?>
-                        </td>
-                        <td class="text-center"><span class="badge <?= $badge ?>"><?= $status ?></span></td>
+                        <td colspan="6" style="padding:30px; text-align:center; color:#94a3b8;">Tidak ada data karyawan.</td>
                     </tr>
-                <?php endforeach; else: ?>
-                    <tr><td colspan="6" style="padding:30px; text-align:center; color:#94a3b8;">Tidak ada data karyawan.</td></tr>
                 <?php endif; ?>
             </tbody>
         </table>
@@ -270,7 +331,14 @@ while ($user = mysqli_fetch_assoc($query_users)) {
 
 <!-- ========== DOKUMEN CETAK SEMUA (Cetak Dokumen tombol utama) ========== -->
 <div id="official-print-doc">
-    <style>@media print { @page { size: landscape; margin: 12mm; } }</style>
+    <style>
+        @media print {
+            @page {
+                size: landscape;
+                margin: 12mm;
+            }
+        }
+    </style>
 
     <!-- Kop Surat -->
     <div class="doc-header">
@@ -306,20 +374,24 @@ while ($user = mysqli_fetch_assoc($query_users)) {
             </tr>
         </thead>
         <tbody>
-            <?php if(count($print_data) > 0): $pno=1; foreach($print_data as $p): ?>
-            <tr>
-                <td class="text-center"><?= $pno++ ?></td>
-                <td><?= htmlspecialchars($p['nik']) ?></td>
-                <td><?= htmlspecialchars($p['name']) ?></td>
-                <td><?= htmlspecialchars($p['afdeling'] ?? '-') ?></td>
-                <td><?= htmlspecialchars($p['objek_kerja'] ?? '-') ?></td>
-                <td class="text-center"><?= htmlspecialchars($p['blok']??'-') ?> / <?= htmlspecialchars($p['luas_ha']??'-') ?></td>
-                <td><?= htmlspecialchars($p['_detail']) ?></td>
-                <td><?= htmlspecialchars($p['mandor_name']??'-') ?></td>
-                <td class="text-center"><?= $p['lk_status'] ? ucfirst($p['lk_status']) : 'Belum' ?></td>
-            </tr>
-            <?php endforeach; else: ?>
-            <tr><td colspan="9" class="text-center" style="padding:16px;">Tidak ada data kinerja karyawan pada tanggal ini.</td></tr>
+            <?php if (count($print_data) > 0): $pno = 1;
+                foreach ($print_data as $p): ?>
+                    <tr>
+                        <td class="text-center"><?= $pno++ ?></td>
+                        <td><?= htmlspecialchars($p['nik']) ?></td>
+                        <td><?= htmlspecialchars($p['name']) ?></td>
+                        <td><?= htmlspecialchars($p['afdeling'] ?? '-') ?></td>
+                        <td><?= htmlspecialchars($p['objek_kerja'] ?? '-') ?></td>
+                        <td class="text-center"><?= htmlspecialchars($p['blok'] ?? '-') ?> / <?= htmlspecialchars($p['luas_ha'] ?? '-') ?></td>
+                        <td><?= htmlspecialchars($p['_detail']) ?></td>
+                        <td><?= htmlspecialchars($p['mandor_name'] ?? '-') ?></td>
+                        <td class="text-center"><?= $p['lk_status'] ? ucfirst($p['lk_status']) : 'Belum' ?></td>
+                    </tr>
+                <?php endforeach;
+            else: ?>
+                <tr>
+                    <td colspan="9" class="text-center" style="padding:16px;">Tidak ada data kinerja karyawan pada tanggal ini.</td>
+                </tr>
             <?php endif; ?>
         </tbody>
     </table>
@@ -344,45 +416,48 @@ while ($user = mysqli_fetch_assoc($query_users)) {
 </div>
 
 <script>
-const modal = document.getElementById('fileModal');
+    const modal = document.getElementById('fileModal');
 
-// Data per karyawan diisi saat openModal dipanggil
-let currentDocName = '';
+    // Data per karyawan diisi saat openModal dipanggil
+    let currentDocName = '';
 
-function openModal(name, nik, afdeling, data) {
-    currentDocName = name;
+    function openModal(name, nik, afdeling, data) {
+        currentDocName = name;
 
-    // Isi info karyawan di modal
-    document.getElementById('docNama').textContent     = name;
-    document.getElementById('docNIK').textContent      = nik;
-    document.getElementById('docAfdeling').textContent = afdeling;
-    document.getElementById('docMandor').textContent   = data.mandor;
-    document.getElementById('docJudul').textContent    = 'LAPORAN KINERJA HARIAN — ' + name.toUpperCase();
+        // Isi info karyawan di modal
+        document.getElementById('docNama').textContent = name;
+        document.getElementById('docNIK').textContent = nik;
+        document.getElementById('docAfdeling').textContent = afdeling;
+        document.getElementById('docMandor').textContent = data.mandor;
+        document.getElementById('docJudul').textContent = 'LAPORAN KINERJA HARIAN — ' + name.toUpperCase();
 
-    const cat = data.kategori, obj = (data.objek||'').toLowerCase();
-    let thead = '', tbody = '', info = '';
+        const cat = data.kategori,
+            obj = (data.objek || '').toLowerCase();
+        let thead = '',
+            tbody = '',
+            info = '';
 
-    const tdStyle = 'border:1px solid #cbd5e1; padding:9px 12px; font-size:13px;';
-    const thStyle = 'border:1px solid #cbd5e1; padding:9px 12px; background:#f1f5f9; font-weight:700; font-size:12px; text-transform:uppercase; color:#475569;';
+        const tdStyle = 'border:1px solid #cbd5e1; padding:9px 12px; font-size:13px;';
+        const thStyle = 'border:1px solid #cbd5e1; padding:9px 12px; background:#f1f5f9; font-weight:700; font-size:12px; text-transform:uppercase; color:#475569;';
 
-    if (cat === 'langsir' || obj.includes('langsir') || obj.includes('membabat')) {
-        thead = `<tr>
+        if (cat === 'langsir' || obj.includes('langsir') || obj.includes('membabat')) {
+            thead = `<tr>
             <th style="${thStyle}">Blok</th><th style="${thStyle}">Luas (Ha)</th><th style="${thStyle}">Objek Kerja</th>
-            <th style="${thStyle}" colspan="2">Hasil Kerja</th><th style="${thStyle}" colspan="2">Prestasi</th><th style="${thStyle}">Status</th>
+            <th style="${thStyle}" colspan="2">Hasil Kerja</th><!-- <th style="${thStyle}" colspan="2">Prestasi</th> --><th style="${thStyle}">Status</th>
         </tr><tr>
             <th style="${thStyle}"></th><th style="${thStyle}"></th><th style="${thStyle}"></th>
-            <th style="${thStyle}">Ton</th><th style="${thStyle}">Kg</th><th style="${thStyle}">Ton</th><th style="${thStyle}">Kg</th>
+            <th style="${thStyle}">Ton</th><th style="${thStyle}">Kg</th><!-- <th style="${thStyle}">Ton</th><th style="${thStyle}">Kg</th> -->
             <th style="${thStyle}"></th>
         </tr>`;
-        tbody = `<tr>
+            tbody = `<tr>
             <td style="${tdStyle}">${data.blok}</td><td style="${tdStyle}">${data.luas}</td><td style="${tdStyle}">${data.objek}</td>
             <td style="${tdStyle}; text-align:center;">${data.h_ton}</td><td style="${tdStyle}; text-align:center;">${data.h_kg}</td>
-            <td style="${tdStyle}; text-align:center;">${data.p_ton}</td><td style="${tdStyle}; text-align:center;">${data.p_kg}</td>
+            <!-- <td style="${tdStyle}; text-align:center;">${data.p_ton}</td><td style="${tdStyle}; text-align:center;">${data.p_kg}</td> -->
             <td style="${tdStyle}; text-align:center; font-weight:700;">${data.status}</td>
         </tr>`;
-        info = `<strong>Aksi:</strong> ${data.aksi}`;
-    } else if (cat === 'potong_buah' || obj.includes('potong') || obj.includes('panen')) {
-        thead = `<tr>
+            info = `<strong>Aksi:</strong> ${data.aksi}`;
+        } else if (cat === 'potong_buah' || obj.includes('potong') || obj.includes('panen')) {
+            thead = `<tr>
             <th style="${thStyle}">Blok</th><th style="${thStyle}">Luas (Ha)</th><th style="${thStyle}">Objek Kerja</th>
             <th style="${thStyle}" colspan="4">Data Janjangan</th><th style="${thStyle}">Status</th>
         </tr><tr>
@@ -390,63 +465,63 @@ function openModal(name, nik, afdeling, data) {
             <th style="${thStyle}">TBS</th><th style="${thStyle}">Kosong</th><th style="${thStyle}">Brondol</th><th style="${thStyle}">Total</th>
             <th style="${thStyle}"></th>
         </tr>`;
-        tbody = `<tr>
+            tbody = `<tr>
             <td style="${tdStyle}">${data.blok}</td><td style="${tdStyle}">${data.luas}</td><td style="${tdStyle}">${data.objek}</td>
             <td style="${tdStyle}; text-align:center;">${data.tbs}</td><td style="${tdStyle}; text-align:center;">${data.kosong}</td>
             <td style="${tdStyle}; text-align:center;">${data.brondol}</td><td style="${tdStyle}; text-align:center; font-weight:700;">${data.total}</td>
             <td style="${tdStyle}; text-align:center; font-weight:700;">${data.status}</td>
         </tr>`;
-        info = `<strong>Aksi:</strong> ${data.aksi}`;
-    } else if (cat === 'muat_tbs' || obj.includes('muat')) {
-        thead = `<tr>
+            info = `<strong>Aksi:</strong> ${data.aksi}`;
+        } else if (cat === 'muat_tbs' || obj.includes('muat')) {
+            thead = `<tr>
             <th style="${thStyle}">Blok</th><th style="${thStyle}">Objek Kerja</th>
             <th style="${thStyle}">Hasil Langsir (Kg)</th><th style="${thStyle}">Jam Kerja</th><th style="${thStyle}">Status</th>
         </tr>`;
-        tbody = `<tr>
+            tbody = `<tr>
             <td style="${tdStyle}">${data.blok}</td><td style="${tdStyle}">${data.objek}</td>
             <td style="${tdStyle}; text-align:center; font-weight:700;">${data.langsir} Kg</td>
             <td style="${tdStyle}; text-align:center;">${data.jam}</td>
             <td style="${tdStyle}; text-align:center; font-weight:700;">${data.status}</td>
         </tr>`;
-        info = `<strong>Aksi:</strong> ${data.aksi}`;
-    } else if (cat === 'jaga' || obj.includes('jaga')) {
-        thead = `<tr>
+            info = `<strong>Aksi:</strong> ${data.aksi}`;
+        } else if (cat === 'jaga' || obj.includes('jaga')) {
+            thead = `<tr>
             <th style="${thStyle}">Blok</th><th style="${thStyle}">Objek Kerja</th>
             <th style="${thStyle}">Jam Kerja</th><th style="${thStyle}">Status</th>
         </tr>`;
-        tbody = `<tr>
+            tbody = `<tr>
             <td style="${tdStyle}">${data.blok}</td><td style="${tdStyle}">${data.objek}</td>
             <td style="${tdStyle}; text-align:center;">${data.jam}</td>
             <td style="${tdStyle}; text-align:center; font-weight:700;">${data.status}</td>
         </tr>`;
-        info = `<strong>Aksi:</strong> ${data.aksi}`;
-    } else {
-        thead = `<tr>
+            info = `<strong>Aksi:</strong> ${data.aksi}`;
+        } else {
+            thead = `<tr>
             <th style="${thStyle}">Blok</th><th style="${thStyle}">Luas (Ha)</th>
             <th style="${thStyle}">Objek Kerja</th><th style="${thStyle}">Aksi</th><th style="${thStyle}">Status</th>
         </tr>`;
-        tbody = `<tr>
+            tbody = `<tr>
             <td style="${tdStyle}">${data.blok}</td><td style="${tdStyle}">${data.luas}</td>
             <td style="${tdStyle}">${data.objek}</td><td style="${tdStyle}">${data.aksi}</td>
             <td style="${tdStyle}; text-align:center; font-weight:700;">${data.status}</td>
         </tr>`;
+        }
+
+        document.getElementById('docThead').innerHTML = thead;
+        document.getElementById('docTbody').innerHTML = tbody;
+        document.getElementById('docInfo').innerHTML = info || '<em style="color:#94a3b8;">Tidak ada keterangan tambahan.</em>';
+        modal.classList.add('show');
     }
 
-    document.getElementById('docThead').innerHTML = thead;
-    document.getElementById('docTbody').innerHTML = tbody;
-    document.getElementById('docInfo').innerHTML  = info || '<em style="color:#94a3b8;">Tidak ada keterangan tambahan.</em>';
-    modal.classList.add('show');
-}
+    function tutupModal() {
+        modal.classList.remove('show');
+    }
 
-function tutupModal() {
-    modal.classList.remove('show');
-}
-
-// Cetak dokumen individual per karyawan menggunakan window baru
-function cetakDokumenModal() {
-    const content = document.getElementById('docModalContent').innerHTML;
-    const win = window.open('', '_blank', 'width=900,height=700');
-    win.document.write(`<!DOCTYPE html>
+    // Cetak dokumen individual per karyawan menggunakan window baru
+    function cetakDokumenModal() {
+        const content = document.getElementById('docModalContent').innerHTML;
+        const win = window.open('', '_blank', 'width=900,height=700');
+        win.document.write(`<!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
@@ -461,13 +536,16 @@ function cetakDokumenModal() {
 </head>
 <body>${content}</body>
 </html>`);
-    win.document.close();
-    win.focus();
-    setTimeout(() => { win.print(); }, 400);
-}
+        win.document.close();
+        win.focus();
+        setTimeout(() => {
+            win.print();
+        }, 400);
+    }
 
-modal.addEventListener('click', e => { if (e.target === modal) tutupModal(); });
+    modal.addEventListener('click', e => {
+        if (e.target === modal) tutupModal();
+    });
 </script>
 
 <?php include '../templates/footer.php'; ?>
-

@@ -277,7 +277,7 @@ foreach ($all_tasks as $t) {
 
     <p style="font-size: 11px; color: var(--text-muted); font-style: italic; margin-bottom: 16px;">
         * Diisi mandor setelah karyawan pulang bekerja lalu melapor hasil kerjanya.<br>
-        * Prestasi, Blok, dan Luas Ha adalah data bawaan (readonly).
+        * Blok, dan Luas Ha adalah data bawaan (readonly).
     </p>
 
     <form method="POST">
@@ -296,7 +296,7 @@ foreach ($all_tasks as $t) {
                                     <th rowspan="2">NIK</th>
                                     <th rowspan="2">Nama Karyawan</th>
                                     <th colspan="2">Hasil (Diisi Mandor)</th>
-                                    <th colspan="2">Prestasi (Readonly)</th>
+                                    <!-- <th colspan="2">Prestasi (Readonly)</th> -->
                                     <th rowspan="2">Blok</th>
                                     <th rowspan="2">Luas Ha</th>
                                     <th rowspan="2">Verifikasi</th>
@@ -304,8 +304,8 @@ foreach ($all_tasks as $t) {
                                 <tr>
                                     <th>Tandan / Ton</th>
                                     <th>Kg</th>
-                                    <th>Tandan / Ton</th>
-                                    <th>Kg</th>
+                                    <!-- <th>Tandan / Ton</th>
+                                    <th>Kg</th> -->
                                 </tr>
                             </thead>
                             <tbody>
@@ -317,8 +317,8 @@ foreach ($all_tasks as $t) {
                                         <td style="text-align:left; font-weight:700; color:var(--text-dark);"><?= htmlspecialchars($t['karyawan_name']) ?></td>
                                         <td><input type="number" step="0.01" name="hasil_ton_<?= $id ?>" class="input-mini" value="<?= $t['hasil_ton'] ?>"></td>
                                         <td><input type="number" step="0.01" name="hasil_kg_<?= $id ?>" class="input-mini" value="<?= $t['hasil_kg'] ?>"></td>
-                                        <td class="readonly-text"><?= htmlspecialchars($t['prestasi_ton']) ?></td>
-                                        <td class="readonly-text"><?= htmlspecialchars($t['prestasi_kg']) ?></td>
+                                        <!-- <td class="readonly-text"><?= htmlspecialchars($t['prestasi_ton']) ?></td>
+                                        <td class="readonly-text"><?= htmlspecialchars($t['prestasi_kg']) ?></td> -->
                                         <td class="readonly-text"><?= htmlspecialchars($t['blok'] ?? '-') ?></td>
                                         <td class="readonly-text"><?= htmlspecialchars($t['luas_ha'] ?? '-') ?></td>
                                         <td>

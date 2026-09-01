@@ -551,7 +551,7 @@ $periode_label = str_pad($start_day, 2, '0', STR_PAD_LEFT) . " - " . str_pad($en
                         <?php if ($tipe === 'T1'): ?>
                             <th class="th-o2">NAMA MANDOR</th>
                             <th class="th-o2">HASIL LANGSIR (kg)</th>
-                            <th class="th-o2">PRESTASI (kg)</th>
+                            <!-- <th class="th-o2">PRESTASI (kg)</th> -->
                             <th class="th-o2">BLOK</th>
                             <th class="th-o2">LUAS (Ha)</th>
                         <?php elseif ($tipe === 'T2'): ?>
@@ -569,7 +569,7 @@ $periode_label = str_pad($start_day, 2, '0', STR_PAD_LEFT) . " - " . str_pad($en
                         <?php elseif ($tipe === 'T4'): ?>
                             <th class="th-o2">NAMA MANDOR</th>
                             <th class="th-o2">HASIL (kg)</th>
-                            <th class="th-o2">PRESTASI (kg)</th>
+                            <!-- <th class="th-o2">PRESTASI (kg)</th> -->
                             <th class="th-o2">BLOK</th>
                             <th class="th-o2">LUAS (Ha)</th>
                         <?php elseif ($tipe === 'T5'): ?>
@@ -665,7 +665,7 @@ $periode_label = str_pad($start_day, 2, '0', STR_PAD_LEFT) . " - " . str_pad($en
                                 <?php if ($has_data): ?>
                                     <td><?= htmlspecialchars($lb['nama_mandor'] ?? '—') ?></td>
                                     <td class="td-num"><?= number_format($lb['hasil_langsir_kg'] ?? 0, 2) ?></td>
-                                    <td class="td-num"><?= number_format($lb['prestasi_kg'] ?? 0, 2) ?></td>
+                                    <!-- <td class="td-num"><?= number_format($lb['prestasi_kg'] ?? 0, 2) ?></td> -->
                                     <td class="td-center"><?= htmlspecialchars($lb['blok'] ?? '—') ?></td>
                                     <td class="td-center"><?= htmlspecialchars($lb['luas_ha'] ?? '—') ?></td>
                                 <?php else: ?>
@@ -701,7 +701,7 @@ $periode_label = str_pad($start_day, 2, '0', STR_PAD_LEFT) . " - " . str_pad($en
                                 <?php if ($has_data): ?>
                                     <td><?= htmlspecialchars($lb['nama_mandor'] ?? '—') ?></td>
                                     <td class="td-num"><?= number_format($lb['hasil_kg'] ?? 0, 2) ?></td>
-                                    <td class="td-num"><?= number_format($lb['prestasi_kg'] ?? 0, 2) ?></td>
+                                    <!-- <td class="td-num"><?= number_format($lb['prestasi_kg'] ?? 0, 2) ?></td> -->
                                     <td class="td-center"><?= htmlspecialchars($lb['blok'] ?? '—') ?></td>
                                     <td class="td-center"><?= htmlspecialchars($lb['luas_ha'] ?? '—') ?></td>
                                 <?php else: ?>
@@ -731,7 +731,7 @@ $periode_label = str_pad($start_day, 2, '0', STR_PAD_LEFT) . " - " . str_pad($en
                         <?php if ($tipe === 'T1'): ?>
                             <td>—</td>
                             <td style="text-align:right;"><?= number_format($sum_langsir, 2) ?></td>
-                            <td style="text-align:right;"><?= number_format($sum_prestasi, 2) ?></td>
+                            <!-- <td style="text-align:right;"><?= number_format($sum_prestasi, 2) ?></td> -->
                             <td>—</td>
                             <td>—</td>
                         <?php elseif ($tipe === 'T2'): ?>
@@ -749,7 +749,7 @@ $periode_label = str_pad($start_day, 2, '0', STR_PAD_LEFT) . " - " . str_pad($en
                         <?php elseif ($tipe === 'T4'): ?>
                             <td>—</td>
                             <td style="text-align:right;"><?= number_format($sum_hasil, 2) ?></td>
-                            <td style="text-align:right;"><?= number_format($sum_prestasi, 2) ?></td>
+                            <!-- <td style="text-align:right;"><?= number_format($sum_prestasi, 2) ?></td> -->
                             <td>—</td>
                             <td>—</td>
                         <?php elseif ($tipe === 'T5'): ?>

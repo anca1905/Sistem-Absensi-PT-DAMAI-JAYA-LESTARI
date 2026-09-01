@@ -1,0 +1,13 @@
+admin\report\kinerja.php
+karyawan\laporan_keseluruhan.php
+karyawan\logbook.php
+karyawan\objek_kerja.php
+kerani\laporan_individu.php
+kerani\laporan_keseluruhan.php
+kerani\laporan_kinerja_detail.php
+keuangan\lap_keseluruhan.php
+mandor\laporan_keseluruhan.php
+mandor\objek_kerja.php
+pengawas\laporan_keseluruhan.php
+pengawas\laporan_kinerja.php
+pengawas\laporan_mingguan.php

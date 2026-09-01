@@ -7,10 +7,18 @@ $pengawas_id      = $_SESSION['user_id'];
 $afdeling_pengawas = isset($_SESSION['afdeling']) ? mysqli_real_escape_string($conn, $_SESSION['afdeling']) : '';
 
 $nama_bulan_id = [
-    '01'=>'Januari','02'=>'Februari','03'=>'Maret',
-    '04'=>'April',  '05'=>'Mei',     '06'=>'Juni',
-    '07'=>'Juli',   '08'=>'Agustus', '09'=>'September',
-    '10'=>'Oktober','11'=>'November','12'=>'Desember'
+    '01' => 'Januari',
+    '02' => 'Februari',
+    '03' => 'Maret',
+    '04' => 'April',
+    '05' => 'Mei',
+    '06' => 'Juni',
+    '07' => 'Juli',
+    '08' => 'Agustus',
+    '09' => 'September',
+    '10' => 'Oktober',
+    '11' => 'November',
+    '12' => 'Desember'
 ];
 $tgl_pecah      = explode('-', $tanggal);
 $format_tanggal = $tgl_pecah[2] . ' ' . $nama_bulan_id[$tgl_pecah[1]] . ' ' . $tgl_pecah[0];
@@ -55,155 +63,398 @@ while ($row = mysqli_fetch_assoc($query_logbook)) {
     }
 
     .btn-back {
-        display: inline-flex; align-items: center; gap: 6px;
-        color: var(--text-muted); text-decoration: none; font-weight: 700;
-        font-size: 13px; margin-bottom: 16px; background: white;
-        padding: 8px 14px; border-radius: 20px; border: 1.5px solid #e2e8f0;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: var(--text-muted);
+        text-decoration: none;
+        font-weight: 700;
+        font-size: 13px;
+        margin-bottom: 16px;
+        background: white;
+        padding: 8px 14px;
+        border-radius: 20px;
+        border: 1.5px solid #e2e8f0;
     }
 
     .filter-row {
-        display: flex; flex-wrap: wrap; justify-content: space-between;
-        align-items: flex-end; margin-bottom: 16px; gap: 10px;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: flex-end;
+        margin-bottom: 16px;
+        gap: 10px;
     }
 
     .form-input {
-        padding: 10px 14px; border-radius: 10px; border: 1.5px solid #e2e8f0;
-        background-color: #f8fafc; font-size: 13px; font-weight: 600;
-        color: var(--text-dark); font-family: inherit; outline: none; transition: all 0.2s;
+        padding: 10px 14px;
+        border-radius: 10px;
+        border: 1.5px solid #e2e8f0;
+        background-color: #f8fafc;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-dark);
+        font-family: inherit;
+        outline: none;
+        transition: all 0.2s;
     }
-    .form-input:focus { border-color: var(--primary-start); background: white; }
+
+    .form-input:focus {
+        border-color: var(--primary-start);
+        background: white;
+    }
 
     .btn-print {
         background: linear-gradient(135deg, var(--primary-start) 0%, var(--primary-end) 100%);
-        color: white; border: none; padding: 10px 16px; border-radius: 10px;
-        font-size: 13px; font-weight: 800; cursor: pointer; display: flex;
-        align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(66, 88, 255, 0.25);
-        transition: all 0.2s; white-space: nowrap;
+        color: white;
+        border: none;
+        padding: 10px 16px;
+        border-radius: 10px;
+        font-size: 13px;
+        font-weight: 800;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        box-shadow: 0 4px 12px rgba(66, 88, 255, 0.25);
+        transition: all 0.2s;
+        white-space: nowrap;
     }
-    .btn-print:active { transform: scale(0.95); }
+
+    .btn-print:active {
+        transform: scale(0.95);
+    }
 
     /* ===== TABEL ===== */
     .table-responsive {
-        width: 100%; overflow-x: auto; border-radius: 10px;
-        border: 1px solid #e2e8f0; background: white;
+        width: 100%;
+        overflow-x: auto;
+        border-radius: 10px;
+        border: 1px solid #e2e8f0;
+        background: white;
     }
+
     .table-kinerja {
-        border-collapse: collapse; white-space: nowrap;
-        font-size: 12px; min-width: 560px; width: 100%;
+        border-collapse: collapse;
+        white-space: nowrap;
+        font-size: 12px;
+        min-width: 560px;
+        width: 100%;
     }
+
     .table-kinerja th {
-        background-color: var(--primary-light); color: var(--primary-end);
-        font-weight: 800; font-size: 11px; text-transform: uppercase;
-        letter-spacing: 0.5px; padding: 12px 10px; border-bottom: 2px solid #c7d2fe;
+        background-color: var(--primary-light);
+        color: var(--primary-end);
+        font-weight: 800;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 12px 10px;
+        border-bottom: 2px solid #c7d2fe;
         text-align: center;
     }
+
     .table-kinerja td {
-        padding: 12px 10px; border-bottom: 1px solid #f1f5f9;
-        vertical-align: middle; text-align: center; color: var(--text-dark);
+        padding: 12px 10px;
+        border-bottom: 1px solid #f1f5f9;
+        vertical-align: middle;
+        text-align: center;
+        color: var(--text-dark);
     }
-    .table-kinerja td:nth-child(3) { text-align: left; font-weight: 700; }
-    .table-kinerja tbody tr:last-child td { border-bottom: none; }
-    .table-kinerja tbody tr:hover td { background: #f8fafc; }
+
+    .table-kinerja td:nth-child(3) {
+        text-align: left;
+        font-weight: 700;
+    }
+
+    .table-kinerja tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .table-kinerja tbody tr:hover td {
+        background: #f8fafc;
+    }
 
     .btn-detail {
-        display: inline-flex; align-items: center; gap: 5px;
-        background: #f1f5f9; color: #3b82f6; border: 1px solid #cbd5e1;
-        padding: 6px 12px; border-radius: 8px; font-weight: 700; font-size: 11px;
-        cursor: pointer; transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        background: #f1f5f9;
+        color: #3b82f6;
+        border: 1px solid #cbd5e1;
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-weight: 700;
+        font-size: 11px;
+        cursor: pointer;
+        transition: all 0.2s;
     }
-    .btn-detail:hover { background: #eff6ff; border-color: #93c5fd; }
+
+    .btn-detail:hover {
+        background: #eff6ff;
+        border-color: #93c5fd;
+    }
 
     /* ===== MODAL DOKUMEN ===== */
     .modal-overlay {
-        display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-        background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px);
-        z-index: 1000; align-items: center; justify-content: center; padding: 16px;
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(15, 23, 42, 0.6);
+        backdrop-filter: blur(4px);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+        padding: 16px;
     }
-    .modal-overlay.open { display: flex; }
+
+    .modal-overlay.open {
+        display: flex;
+    }
+
     .modal-doc {
-        background: white; border-radius: 16px; width: 100%; max-width: 680px;
-        max-height: 92vh; overflow-y: auto;
-        box-shadow: 0 20px 50px rgba(0,0,0,0.25);
+        background: white;
+        border-radius: 16px;
+        width: 100%;
+        max-width: 680px;
+        max-height: 92vh;
+        overflow-y: auto;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
         animation: slideUp 0.3s ease;
     }
+
     .modal-doc-header {
-        padding: 14px 18px; border-bottom: 1px solid #e2e8f0;
-        display: flex; justify-content: space-between; align-items: center;
-        position: sticky; top: 0; background: white; z-index: 10;
+        padding: 14px 18px;
+        border-bottom: 1px solid #e2e8f0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        position: sticky;
+        top: 0;
+        background: white;
+        z-index: 10;
     }
-    .modal-doc-title { font-size: 15px; font-weight: 800; color: var(--text-dark); }
-    .modal-doc-actions { display: flex; align-items: center; gap: 8px; }
+
+    .modal-doc-title {
+        font-size: 15px;
+        font-weight: 800;
+        color: var(--text-dark);
+    }
+
+    .modal-doc-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
     .btn-cetak-doc {
         background: linear-gradient(135deg, var(--primary-start) 0%, var(--primary-end) 100%);
-        color: white; border: none; padding: 8px 14px; border-radius: 8px;
-        font-size: 12px; font-weight: 700; cursor: pointer; display: flex;
-        align-items: center; gap: 6px;
+        color: white;
+        border: none;
+        padding: 8px 14px;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 700;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 6px;
     }
+
     .btn-tutup-doc {
-        background: #f1f5f9; border: none; width: 30px; height: 30px;
-        border-radius: 50%; color: #64748b; font-size: 18px; cursor: pointer;
-        display: flex; align-items: center; justify-content: center;
+        background: #f1f5f9;
+        border: none;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        color: #64748b;
+        font-size: 18px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
-    .modal-doc-body { padding: 20px 18px; }
+
+    .modal-doc-body {
+        padding: 20px 18px;
+    }
 
     /* Dokumen gaya resmi di dalam modal */
     .doc-kop {
-        display: flex; align-items: center; border-bottom: 2px solid #1e293b;
-        padding-bottom: 12px; margin-bottom: 14px;
+        display: flex;
+        align-items: center;
+        border-bottom: 2px solid #1e293b;
+        padding-bottom: 12px;
+        margin-bottom: 14px;
     }
-    .doc-kop-logo { width: 50px; height: auto; margin-right: 12px; }
-    .doc-kop-text { flex: 1; text-align: center; }
-    .doc-kop-text .nama-perusahaan { font-size: 15px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; color: #1e293b; }
-    .doc-kop-text .sub-perusahaan { font-size: 11px; color: #475569; margin-top: 2px; }
-    .doc-kop-text .alamat-perusahaan { font-size: 10px; color: #64748b; margin-top: 1px; }
 
-    .doc-judul { text-align: center; margin-bottom: 12px; }
-    .doc-judul h3 { font-size: 13px; font-weight: 800; text-transform: uppercase; text-decoration: underline; color: #1e293b; margin: 0 0 3px 0; }
-    .doc-judul p { font-size: 11px; color: #475569; margin: 0; }
+    .doc-kop-logo {
+        width: 50px;
+        height: auto;
+        margin-right: 12px;
+    }
+
+    .doc-kop-text {
+        flex: 1;
+        text-align: center;
+    }
+
+    .doc-kop-text .nama-perusahaan {
+        font-size: 15px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #1e293b;
+    }
+
+    .doc-kop-text .sub-perusahaan {
+        font-size: 11px;
+        color: #475569;
+        margin-top: 2px;
+    }
+
+    .doc-kop-text .alamat-perusahaan {
+        font-size: 10px;
+        color: #64748b;
+        margin-top: 1px;
+    }
+
+    .doc-judul {
+        text-align: center;
+        margin-bottom: 12px;
+    }
+
+    .doc-judul h3 {
+        font-size: 13px;
+        font-weight: 800;
+        text-transform: uppercase;
+        text-decoration: underline;
+        color: #1e293b;
+        margin: 0 0 3px 0;
+    }
+
+    .doc-judul p {
+        font-size: 11px;
+        color: #475569;
+        margin: 0;
+    }
 
     .doc-info-karyawan {
-        display: grid; grid-template-columns: 1fr 1fr; gap: 4px 20px;
-        margin-bottom: 14px; font-size: 12px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 4px 20px;
+        margin-bottom: 14px;
+        font-size: 12px;
     }
-    .doc-info-karyawan .info-item { display: flex; gap: 6px; }
-    .doc-info-karyawan .info-label { color: #64748b; white-space: nowrap; }
-    .doc-info-karyawan .info-value { font-weight: 700; color: #1e293b; }
 
-    .doc-table { width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: 11px; }
+    .doc-info-karyawan .info-item {
+        display: flex;
+        gap: 6px;
+    }
+
+    .doc-info-karyawan .info-label {
+        color: #64748b;
+        white-space: nowrap;
+    }
+
+    .doc-info-karyawan .info-value {
+        font-weight: 700;
+        color: #1e293b;
+    }
+
+    .doc-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 16px;
+        font-size: 11px;
+    }
+
     .doc-table th {
-        background: #e8ecff; color: var(--primary-end); font-weight: 800;
-        font-size: 10px; text-transform: uppercase; border: 1px solid #c7d2fe;
-        padding: 7px 8px; text-align: center;
+        background: #e8ecff;
+        color: var(--primary-end);
+        font-weight: 800;
+        font-size: 10px;
+        text-transform: uppercase;
+        border: 1px solid #c7d2fe;
+        padding: 7px 8px;
+        text-align: center;
     }
+
     .doc-table td {
-        border: 1px solid #e2e8f0; padding: 7px 8px;
-        color: #334155; text-align: center; font-size: 11px;
+        border: 1px solid #e2e8f0;
+        padding: 7px 8px;
+        color: #334155;
+        text-align: center;
+        font-size: 11px;
     }
-    .doc-table td.text-left { text-align: left; }
+
+    .doc-table td.text-left {
+        text-align: left;
+    }
 
     .doc-ttd {
-        display: flex; justify-content: space-between; margin-top: 20px;
-        text-align: center; font-size: 11px; flex-wrap: wrap; gap: 10px;
+        display: flex;
+        justify-content: space-between;
+        margin-top: 20px;
+        text-align: center;
+        font-size: 11px;
+        flex-wrap: wrap;
+        gap: 10px;
     }
-    .doc-ttd-col { flex: 1; min-width: 120px; }
-    .doc-ttd-col .ttd-label { color: #64748b; margin-bottom: 2px; }
-    .doc-ttd-col .ttd-jabatan { font-size: 10px; color: #94a3b8; margin-bottom: 50px; }
-    .doc-ttd-col .ttd-line { border-top: 1px solid #334155; padding-top: 4px; font-weight: 700; }
+
+    .doc-ttd-col {
+        flex: 1;
+        min-width: 120px;
+    }
+
+    .doc-ttd-col .ttd-label {
+        color: #64748b;
+        margin-bottom: 2px;
+    }
+
+    .doc-ttd-col .ttd-jabatan {
+        font-size: 10px;
+        color: #94a3b8;
+        margin-bottom: 50px;
+    }
+
+    .doc-ttd-col .ttd-line {
+        border-top: 1px solid #334155;
+        padding-top: 4px;
+        font-weight: 700;
+    }
 
     .doc-footer-note {
-        margin-top: 14px; font-size: 9px; color: #94a3b8;
-        border-top: 1px solid #e2e8f0; padding-top: 8px; text-align: center;
+        margin-top: 14px;
+        font-size: 9px;
+        color: #94a3b8;
+        border-top: 1px solid #e2e8f0;
+        padding-top: 8px;
+        text-align: center;
     }
 
     @keyframes slideUp {
-        from { transform: translateY(30px); opacity: 0; }
-        to   { transform: translateY(0);    opacity: 1; }
+        from {
+            transform: translateY(30px);
+            opacity: 0;
+        }
+
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
     }
 </style>
 
 <div class="animate-up">
     <a href="index.php" class="btn-back">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
         Kembali
     </a>
 
@@ -216,7 +467,11 @@ while ($row = mysqli_fetch_assoc($query_logbook)) {
                 <input type="date" name="tanggal" class="form-input" value="<?= $tanggal ?>" onchange="document.getElementById('filterForm').submit()">
             </form>
             <button class="btn-print" onclick="cetakSemuaDokumen()">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="6 9 6 2 18 2 18 9"></polyline>
+                    <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                    <rect x="6" y="14" width="12" height="8"></rect>
+                </svg>
                 Cetak PDF
             </button>
         </div>
@@ -269,25 +524,28 @@ while ($row = mysqli_fetch_assoc($query_logbook)) {
                                 'status_color' => $status_color,
                             ]), ENT_QUOTES, 'UTF-8');
                     ?>
-                        <tr>
-                            <td><?= $no++ ?></td>
-                            <td><?= htmlspecialchars($row['nik']) ?></td>
-                            <td><?= htmlspecialchars($row['karyawan_name']) ?></td>
-                            <td><?= htmlspecialchars($row['objek_kerja'] ?? '-') ?></td>
-                            <td><?= htmlspecialchars($row['blok'] ?? '-') ?></td>
-                            <td><?= htmlspecialchars($row['jumlah_jam_kerja'] ?? '-') ?></td>
-                            <td><span style="font-weight:700; color:<?= $status_color ?>"><?= $status_label ?></span></td>
-                            <td>
-                                <button type="button" class="btn-detail" onclick="bukaModalDokumen(<?= $dataJSON ?>)">
-                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
-                                    Detail
-                                </button>
-                            </td>
-                        </tr>
-                    <?php
+                            <tr>
+                                <td><?= $no++ ?></td>
+                                <td><?= htmlspecialchars($row['nik']) ?></td>
+                                <td><?= htmlspecialchars($row['karyawan_name']) ?></td>
+                                <td><?= htmlspecialchars($row['objek_kerja'] ?? '-') ?></td>
+                                <td><?= htmlspecialchars($row['blok'] ?? '-') ?></td>
+                                <td><?= htmlspecialchars($row['jumlah_jam_kerja'] ?? '-') ?></td>
+                                <td><span style="font-weight:700; color:<?= $status_color ?>"><?= $status_label ?></span></td>
+                                <td>
+                                    <button type="button" class="btn-detail" onclick="bukaModalDokumen(<?= $dataJSON ?>)">
+                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                            <polyline points="14 2 14 8 20 8"></polyline>
+                                        </svg>
+                                        Detail
+                                    </button>
+                                </td>
+                            </tr>
+                        <?php
                         endforeach;
                     else:
-                    ?>
+                        ?>
                         <tr>
                             <td colspan="8" style="text-align:center; padding:30px; color:var(--text-muted);">Belum ada laporan kinerja untuk tanggal ini.</td>
                         </tr>
@@ -307,7 +565,11 @@ while ($row = mysqli_fetch_assoc($query_logbook)) {
             <span class="modal-doc-title">📄 Dokumen Kinerja</span>
             <div class="modal-doc-actions">
                 <button class="btn-cetak-doc" onclick="cetakDokumenIni()">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="6 9 6 2 18 2 18 9"></polyline>
+                        <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                        <rect x="6" y="14" width="12" height="8"></rect>
+                    </svg>
                     Cetak
                 </button>
                 <button class="btn-tutup-doc" onclick="tutupModal()">×</button>
@@ -376,44 +638,46 @@ while ($row = mysqli_fetch_assoc($query_logbook)) {
 </div>
 
 <script>
-let currentKaryawan = '';
+    let currentKaryawan = '';
 
-function bukaModalDokumen(data) {
-    currentKaryawan = data.nama;
+    function bukaModalDokumen(data) {
+        currentKaryawan = data.nama;
 
-    // Isi info karyawan
-    document.getElementById('docJudulNama').textContent = 'LAPORAN KINERJA — ' + data.nama.toUpperCase();
-    document.getElementById('docNama').textContent     = data.nama;
-    document.getElementById('docNIK').textContent      = data.nik;
-    document.getElementById('docAfdeling').textContent = data.afdeling;
-    document.getElementById('docMandor').textContent   = data.mandor;
+        // Isi info karyawan
+        document.getElementById('docJudulNama').textContent = 'LAPORAN KINERJA — ' + data.nama.toUpperCase();
+        document.getElementById('docNama').textContent = data.nama;
+        document.getElementById('docNIK').textContent = data.nik;
+        document.getElementById('docAfdeling').textContent = data.afdeling;
+        document.getElementById('docMandor').textContent = data.mandor;
 
-    // Build tabel berdasarkan kategori
-    const cat = data.kategori;
-    const obj = (data.objek || '').toLowerCase();
-    const ts  = 'border:1px solid #c7d2fe; padding:7px 8px; font-size:11px;';
-    const ths = 'background:#e8ecff; color:#3648d9; font-weight:800; font-size:10px; text-transform:uppercase; border:1px solid #c7d2fe; padding:7px 8px; text-align:center;';
+        // Build tabel berdasarkan kategori
+        const cat = data.kategori;
+        const obj = (data.objek || '').toLowerCase();
+        const ts = 'border:1px solid #c7d2fe; padding:7px 8px; font-size:11px;';
+        const ths = 'background:#e8ecff; color:#3648d9; font-weight:800; font-size:10px; text-transform:uppercase; border:1px solid #c7d2fe; padding:7px 8px; text-align:center;';
 
-    let thead = '', tbody = '', aksiInfo = '';
+        let thead = '',
+            tbody = '',
+            aksiInfo = '';
 
-    if (cat === 'langsir' || obj.includes('langsir') || obj.includes('membabat')) {
-        thead = `<tr>
+        if (cat === 'langsir' || obj.includes('langsir') || obj.includes('membabat')) {
+            thead = `<tr>
             <th style="${ths}">Blok</th><th style="${ths}">Luas (Ha)</th><th style="${ths}">Objek Kerja</th>
-            <th style="${ths}" colspan="2">Hasil Kerja</th><th style="${ths}" colspan="2">Prestasi</th><th style="${ths}">Status</th>
+            <th style="${ths}" colspan="2">Hasil Kerja</th><!-- <th style="${ths}" colspan="2">Prestasi</th> --><th style="${ths}">Status</th>
         </tr><tr>
             <th style="${ths}"></th><th style="${ths}"></th><th style="${ths}"></th>
-            <th style="${ths}">Ton</th><th style="${ths}">Kg</th><th style="${ths}">Ton</th><th style="${ths}">Kg</th>
+            <th style="${ths}">Ton</th><th style="${ths}">Kg</th><!-- <th style="${ths}">Ton</th><th style="${ths}">Kg</th> -->
             <th style="${ths}"></th>
         </tr>`;
-        tbody = `<tr>
+            tbody = `<tr>
             <td style="${ts}">${data.blok}</td><td style="${ts}">${data.luas}</td><td style="${ts}">${data.objek}</td>
             <td style="${ts}; text-align:center;">${data.h_ton}</td><td style="${ts}; text-align:center;">${data.h_kg}</td>
-            <td style="${ts}; text-align:center;">${data.p_ton}</td><td style="${ts}; text-align:center;">${data.p_kg}</td>
+            <!-- <td style="${ts}; text-align:center;">${data.p_ton}</td><td style="${ts}; text-align:center;">${data.p_kg}</td> -->
             <td style="${ts}; text-align:center; font-weight:700; color:${data.status_color};">${data.status}</td>
         </tr>`;
-        aksiInfo = `<strong>Aksi:</strong> ${data.aksi}`;
-    } else if (cat === 'potong_buah' || obj.includes('potong') || obj.includes('panen')) {
-        thead = `<tr>
+            aksiInfo = `<strong>Aksi:</strong> ${data.aksi}`;
+        } else if (cat === 'potong_buah' || obj.includes('potong') || obj.includes('panen')) {
+            thead = `<tr>
             <th style="${ths}">Blok</th><th style="${ths}">Luas (Ha)</th><th style="${ths}">Objek Kerja</th>
             <th style="${ths}" colspan="4">Janjangan</th><th style="${ths}">Status</th>
         </tr><tr>
@@ -421,65 +685,65 @@ function bukaModalDokumen(data) {
             <th style="${ths}">TBS</th><th style="${ths}">Kosong</th><th style="${ths}">Brondol</th><th style="${ths}">Total</th>
             <th style="${ths}"></th>
         </tr>`;
-        tbody = `<tr>
+            tbody = `<tr>
             <td style="${ts}">${data.blok}</td><td style="${ts}">${data.luas}</td><td style="${ts}">${data.objek}</td>
             <td style="${ts}; text-align:center;">${data.tbs}</td><td style="${ts}; text-align:center;">${data.kosong}</td>
             <td style="${ts}; text-align:center;">${data.brondol}</td><td style="${ts}; text-align:center; font-weight:700;">${data.total}</td>
             <td style="${ts}; text-align:center; font-weight:700; color:${data.status_color};">${data.status}</td>
         </tr>`;
-        aksiInfo = `<strong>Aksi:</strong> ${data.aksi}`;
-    } else if (cat === 'muat_tbs' || obj.includes('muat')) {
-        thead = `<tr>
+            aksiInfo = `<strong>Aksi:</strong> ${data.aksi}`;
+        } else if (cat === 'muat_tbs' || obj.includes('muat')) {
+            thead = `<tr>
             <th style="${ths}">Blok</th><th style="${ths}">Objek Kerja</th>
             <th style="${ths}">Langsir (Kg)</th><th style="${ths}">Jam Kerja</th><th style="${ths}">Status</th>
         </tr>`;
-        tbody = `<tr>
+            tbody = `<tr>
             <td style="${ts}">${data.blok}</td><td style="${ts}">${data.objek}</td>
             <td style="${ts}; text-align:center; font-weight:700;">${data.langsir_kg} Kg</td>
             <td style="${ts}; text-align:center;">${data.jam}</td>
             <td style="${ts}; text-align:center; font-weight:700; color:${data.status_color};">${data.status}</td>
         </tr>`;
-        aksiInfo = `<strong>Aksi:</strong> ${data.aksi}`;
-    } else if (cat === 'jaga' || obj.includes('jaga')) {
-        thead = `<tr>
+            aksiInfo = `<strong>Aksi:</strong> ${data.aksi}`;
+        } else if (cat === 'jaga' || obj.includes('jaga')) {
+            thead = `<tr>
             <th style="${ths}">Blok</th><th style="${ths}">Objek Kerja</th>
             <th style="${ths}">Jam Kerja</th><th style="${ths}">Status</th>
         </tr>`;
-        tbody = `<tr>
+            tbody = `<tr>
             <td style="${ts}">${data.blok}</td><td style="${ts}">${data.objek}</td>
             <td style="${ts}; text-align:center;">${data.jam}</td>
             <td style="${ts}; text-align:center; font-weight:700; color:${data.status_color};">${data.status}</td>
         </tr>`;
-        aksiInfo = `<strong>Aksi:</strong> ${data.aksi}`;
-    } else {
-        thead = `<tr>
+            aksiInfo = `<strong>Aksi:</strong> ${data.aksi}`;
+        } else {
+            thead = `<tr>
             <th style="${ths}">Blok</th><th style="${ths}">Luas (Ha)</th>
             <th style="${ths}">Objek Kerja</th><th style="${ths}">Jam Kerja</th><th style="${ths}">Status</th>
         </tr>`;
-        tbody = `<tr>
+            tbody = `<tr>
             <td style="${ts}">${data.blok}</td><td style="${ts}">${data.luas}</td>
             <td style="${ts}">${data.objek}</td><td style="${ts}; text-align:center;">${data.jam}</td>
             <td style="${ts}; text-align:center; font-weight:700; color:${data.status_color};">${data.status}</td>
         </tr>`;
-        aksiInfo = `<strong>Aksi:</strong> ${data.aksi}`;
+            aksiInfo = `<strong>Aksi:</strong> ${data.aksi}`;
+        }
+
+        document.getElementById('docThead').innerHTML = thead;
+        document.getElementById('docTbody').innerHTML = tbody;
+        document.getElementById('docInfoAksi').innerHTML = aksiInfo || '<em style="color:#94a3b8;">Tidak ada keterangan tambahan.</em>';
+
+        document.getElementById('modalDokumen').classList.add('open');
     }
 
-    document.getElementById('docThead').innerHTML = thead;
-    document.getElementById('docTbody').innerHTML = tbody;
-    document.getElementById('docInfoAksi').innerHTML = aksiInfo || '<em style="color:#94a3b8;">Tidak ada keterangan tambahan.</em>';
+    function tutupModal() {
+        document.getElementById('modalDokumen').classList.remove('open');
+    }
 
-    document.getElementById('modalDokumen').classList.add('open');
-}
-
-function tutupModal() {
-    document.getElementById('modalDokumen').classList.remove('open');
-}
-
-// Cetak dokumen individual (buka window baru)
-function cetakDokumenIni() {
-    const content = document.getElementById('isiDokumen').innerHTML;
-    const win = window.open('', '_blank', 'width=800,height=640');
-    win.document.write(`<!DOCTYPE html>
+    // Cetak dokumen individual (buka window baru)
+    function cetakDokumenIni() {
+        const content = document.getElementById('isiDokumen').innerHTML;
+        const win = window.open('', '_blank', 'width=800,height=640');
+        win.document.write(`<!DOCTYPE html>
 <html lang="id">
 <head>
 <meta charset="UTF-8">
@@ -512,31 +776,33 @@ function cetakDokumenIni() {
 </head>
 <body>${content}</body>
 </html>`);
-    win.document.close();
-    win.focus();
-    setTimeout(() => { win.print(); }, 400);
-}
+        win.document.close();
+        win.focus();
+        setTimeout(() => {
+            win.print();
+        }, 400);
+    }
 
-// Cetak semua laporan (tombol Cetak PDF di halaman utama)
-function cetakSemuaDokumen() {
-    const rows = <?= json_encode(array_map(function($r) {
-        return [
-            'nama'       => $r['karyawan_name'],
-            'nik'        => $r['nik'],
-            'afdeling'   => $r['afdeling'] ?? '-',
-            'objek'      => $r['objek_kerja'] ?? '-',
-            'blok'       => $r['blok'] ?? '-',
-            'luas'       => $r['luas_ha'] ?? '-',
-            'mandor'     => $r['mandor_name'] ?? '-',
-            'jam'        => $r['jumlah_jam_kerja'] ?? '-',
-            'status'     => ucfirst($r['status'] ?? 'ditinjau'),
-        ];
-    }, $all_rows)) ?>;
+    // Cetak semua laporan (tombol Cetak PDF di halaman utama)
+    function cetakSemuaDokumen() {
+        const rows = <?= json_encode(array_map(function ($r) {
+                            return [
+                                'nama'       => $r['karyawan_name'],
+                                'nik'        => $r['nik'],
+                                'afdeling'   => $r['afdeling'] ?? '-',
+                                'objek'      => $r['objek_kerja'] ?? '-',
+                                'blok'       => $r['blok'] ?? '-',
+                                'luas'       => $r['luas_ha'] ?? '-',
+                                'mandor'     => $r['mandor_name'] ?? '-',
+                                'jam'        => $r['jumlah_jam_kerja'] ?? '-',
+                                'status'     => ucfirst($r['status'] ?? 'ditinjau'),
+                            ];
+                        }, $all_rows)) ?>;
 
-    const tanggal = '<?= $format_tanggal ?>';
-    const afdeling = '<?= htmlspecialchars($afdeling_pengawas) ?>';
+        const tanggal = '<?= $format_tanggal ?>';
+        const afdeling = '<?= htmlspecialchars($afdeling_pengawas) ?>';
 
-    let tableRows = rows.map((r, i) => `
+        let tableRows = rows.map((r, i) => `
         <tr>
             <td style="text-align:center;">${i+1}</td>
             <td>${r.nik}</td>
@@ -550,8 +816,8 @@ function cetakSemuaDokumen() {
         </tr>
     `).join('');
 
-    const win = window.open('', '_blank', 'width=1000,height=720');
-    win.document.write(`<!DOCTYPE html>
+        const win = window.open('', '_blank', 'width=1000,height=720');
+        win.document.write(`<!DOCTYPE html>
 <html lang="id">
 <head>
 <meta charset="UTF-8">
@@ -613,15 +879,17 @@ function cetakSemuaDokumen() {
   <div class="catatan">Dokumen ini dicetak secara otomatis oleh Sistem Informasi PT Damai Jaya Lestari.</div>
 </body>
 </html>`);
-    win.document.close();
-    win.focus();
-    setTimeout(() => { win.print(); }, 400);
-}
+        win.document.close();
+        win.focus();
+        setTimeout(() => {
+            win.print();
+        }, 400);
+    }
 
-// Tutup modal saat klik di luar
-document.getElementById('modalDokumen').addEventListener('click', function(e) {
-    if (e.target === this) tutupModal();
-});
+    // Tutup modal saat klik di luar
+    document.getElementById('modalDokumen').addEventListener('click', function(e) {
+        if (e.target === this) tutupModal();
+    });
 </script>
 
 <?php include 'templates/footer.php'; ?>
