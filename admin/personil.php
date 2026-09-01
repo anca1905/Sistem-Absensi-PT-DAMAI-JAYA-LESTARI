@@ -350,28 +350,28 @@ include 'templates/header.php';
             <p style="color: #64748b; font-size: 13px; margin-top: 4px;">Kelola data pegawai dan akses sistem.</p>
         </div>
         <?php if ($_SESSION['role'] === 'admin'): ?>
-        <button onclick="openModal('add')" class="btn btn-primary">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M12 5v14M5 12h14" />
-            </svg>
-            Tambah Personil
-        </button>
+            <button onclick="openModal('add')" class="btn btn-primary">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 5v14M5 12h14" />
+                </svg>
+                Tambah Personil
+            </button>
         <?php endif; ?>
     </div>
 
     <!-- Filter & Aksi -->
     <div class="print-hide" style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
         <form method="GET" style="display: flex; gap: 10px; align-items: center;">
-            <select name="afdeling_filter" class="form-input" style="width: auto; padding: 8px 12px;">
+            <select name="afdeling_filter" class="form-input" style="width: auto; padding: 8px 12px;" onchange="this.form.submit()">
                 <option value="">Semua Afdeling</option>
-                <?php 
+                <?php
                 $afd_query1 = mysqli_query($conn, "SELECT nama_afdeling FROM afdelings ORDER BY nama_afdeling ASC");
-                while ($afd = mysqli_fetch_assoc($afd_query1)): 
+                while ($afd = mysqli_fetch_assoc($afd_query1)):
                 ?>
                     <option value="<?= htmlspecialchars($afd['nama_afdeling']) ?>" <?= (isset($_GET['afdeling_filter']) && $_GET['afdeling_filter'] == $afd['nama_afdeling']) ? 'selected' : '' ?>><?= htmlspecialchars($afd['nama_afdeling']) ?></option>
                 <?php endwhile; ?>
             </select>
-            <select name="role_filter" class="form-input" style="width: auto; padding: 8px 12px;">
+            <select name="role_filter" class="form-input" style="width: auto; padding: 8px 12px;" onchange="this.form.submit()">
                 <option value="">Semua Jabatan</option>
                 <option value="mandor" <?= (isset($_GET['role_filter']) && $_GET['role_filter'] == 'mandor') ? 'selected' : '' ?>>Mandor</option>
                 <option value="karyawan" <?= (isset($_GET['role_filter']) && $_GET['role_filter'] == 'karyawan') ? 'selected' : '' ?>>Karyawan</option>
@@ -379,7 +379,6 @@ include 'templates/header.php';
                 <option value="kerani" <?= (isset($_GET['role_filter']) && $_GET['role_filter'] == 'kerani') ? 'selected' : '' ?>>Kerani</option>
                 <option value="keuangan" <?= (isset($_GET['role_filter']) && $_GET['role_filter'] == 'keuangan') ? 'selected' : '' ?>>Keuangan</option>
             </select>
-            <button type="submit" class="btn btn-primary" style="padding: 8px 15px; height: 38px;">Filter</button>
         </form>
         <button onclick="window.print()" class="btn" style="border: 1px solid #e2e8f0; background: #fff; color: #475569; height: 38px;">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -422,13 +421,13 @@ include 'templates/header.php';
                             </a>
 
                             <?php if ($_SESSION['role'] === 'admin'): ?>
-                            <button onclick='editData(<?= htmlspecialchars(json_encode($row), ENT_QUOTES, "UTF-8") ?>)' class="btn btn-warning" style="padding: 6px 10px; font-size: 11px;">
-                                Edit
-                            </button>
+                                <button onclick='editData(<?= htmlspecialchars(json_encode($row), ENT_QUOTES, "UTF-8") ?>)' class="btn btn-warning" style="padding: 6px 10px; font-size: 11px;">
+                                    Edit
+                                </button>
 
-                            <button onclick='konfirmasiHapus(<?= $row['id'] ?>)' class="btn btn-danger" style="padding: 6px 10px; font-size: 11px;">
-                                Hapus
-                            </button>
+                                <button onclick='konfirmasiHapus(<?= $row['id'] ?>)' class="btn btn-danger" style="padding: 6px 10px; font-size: 11px;">
+                                    Hapus
+                                </button>
                             <?php endif; ?>
                         </td>
                     </tr>
@@ -482,9 +481,9 @@ include 'templates/header.php';
                         <label class="form-label">Afdeling</label>
                         <select name="afdeling" id="afdeling" class="form-input" required>
                             <option value="">Pilih Afdeling</option>
-                            <?php 
+                            <?php
                             $afd_query2 = mysqli_query($conn, "SELECT nama_afdeling FROM afdelings ORDER BY nama_afdeling ASC");
-                            while ($afd = mysqli_fetch_assoc($afd_query2)): 
+                            while ($afd = mysqli_fetch_assoc($afd_query2)):
                             ?>
                                 <option value="<?= htmlspecialchars($afd['nama_afdeling']) ?>"><?= htmlspecialchars($afd['nama_afdeling']) ?></option>
                             <?php endwhile; ?>
@@ -515,9 +514,9 @@ include 'templates/header.php';
                     <label class="form-label">Password</label>
                     <div style="position:relative;">
                         <input type="password" id="password" name="password" class="form-input" placeholder="Isi hanya jika ingin mengubah password">
-                        <button type="button" onclick="togglePassword()" 
-                                style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#94a3b8;padding:4px;display:flex;align-items:center;"
-                                title="Tampilkan/Sembunyikan Password">
+                        <button type="button" onclick="togglePassword()"
+                            style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#94a3b8;padding:4px;display:flex;align-items:center;"
+                            title="Tampilkan/Sembunyikan Password">
                             <svg id="eye-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                                 <circle cx="12" cy="12" r="3"></circle>

@@ -453,6 +453,139 @@ $total_tenaga   = $total_tenaga_l + $total_tenaga_w;
         gap: 10px;
         margin-bottom: 20px;
     }
+
+    .btn-pilih-tenaga {
+        padding: 8px 12px;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 700;
+        cursor: pointer;
+        width: 140px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border: 1.5px solid transparent;
+        transition: all 0.2s;
+    }
+
+    .btn-pilih-tenaga.l {
+        background: #eff6ff;
+        color: #1d4ed8;
+        border-color: #bfdbfe;
+    }
+
+    .btn-pilih-tenaga.l:hover {
+        background: #dbeafe;
+    }
+
+    .btn-pilih-tenaga.w {
+        background: #fdf2f8;
+        color: #be185d;
+        border-color: #fbcfe8;
+    }
+
+    .btn-pilih-tenaga.w:hover {
+        background: #fce7f3;
+    }
+
+    /* Custom Checkbox Modal */
+    .custom-modal {
+        display: none;
+        position: fixed;
+        z-index: 9999;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(15, 23, 42, 0.6);
+        align-items: center;
+        justify-content: center;
+        backdrop-filter: blur(4px);
+    }
+
+    .custom-modal-content {
+        background: white;
+        border-radius: 16px;
+        width: 90%;
+        max-width: 420px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        overflow: hidden;
+    }
+
+    .custom-modal-header {
+        padding: 16px 20px;
+        border-bottom: 1px solid #e2e8f0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: #f8fafc;
+    }
+
+    .custom-modal-header h4 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 800;
+        color: #0f172a;
+    }
+
+    .chk-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 14px;
+        border: 1.5px solid #e2e8f0;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: all 0.2s;
+        background: white;
+        margin-bottom: 4px;
+        user-select: none;
+    }
+
+    .chk-item:hover:not(.disabled) {
+        border-color: #94a3b8;
+        background: #f8fafc;
+    }
+
+    .chk-item.checked {
+        border-color: #3b82f6;
+        background: #f0f9ff;
+    }
+
+    .chk-item.disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+        background: #f1f5f9;
+    }
+
+    .chk-item input[type="checkbox"] {
+        transform: scale(1.2);
+        pointer-events: none;
+        accent-color: #3b82f6;
+    }
+
+    .chk-name {
+        font-weight: 700;
+        color: #334155;
+        font-size: 13px;
+    }
+
+    .chk-alert {
+        font-size: 11px;
+        font-weight: 700;
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .alert-locked {
+        color: #ef4444;
+    }
+
+    .alert-full {
+        color: #94a3b8;
+    }
 </style>
 
 <!-- Notice -->
@@ -561,81 +694,206 @@ $total_tenaga   = $total_tenaga_l + $total_tenaga_w;
                                 <span class="luas-val"><?= htmlspecialchars($row['luas_ha']) ?> Ha</span>
                             </td>
                             <td>
-                                <div class="tenaga-wrap" style="justify-content:center; flex-direction:column; gap:8px;">
-                                    <?php
-                                    $assigned_l = isset($logbook_assignments[$row['id']]['L']) ? $logbook_assignments[$row['id']]['L'] : [];
-                                    $assigned_w = isset($logbook_assignments[$row['id']]['W']) ? $logbook_assignments[$row['id']]['W'] : [];
+                                <?php
+                                $assigned_l = isset($logbook_assignments[$row['id']]['L']) ? $logbook_assignments[$row['id']]['L'] : [];
+                                $assigned_w = isset($logbook_assignments[$row['id']]['W']) ? $logbook_assignments[$row['id']]['W'] : [];
 
-                                    // Generate selects for Laki-laki
-                                    for ($i = 0; $i < (int)$row['tenaga_l']; $i++) {
-                                        $sel_val = isset($assigned_l[$i]) ? $assigned_l[$i] : '';
-                                        echo '<div style="display:flex; align-items:center; gap:6px;">';
-                                        echo '<span class="tenaga-label l">L</span>';
-                                        echo '<select class="select-tenaga select-laki" style="padding:6px; border-radius:6px; border:1.5px solid #bfdbfe; font-size:12px; width:150px; outline:none; background:#f8fafc; font-weight:600;">';
-                                        echo '<option value="">-- Pilih Karyawan --</option>';
-                                        foreach ($karyawan_l as $kw) {
-                                            $sel = ($sel_val == $kw['id']) ? 'selected' : '';
-                                            echo "<option value=\"{$kw['id']}\" $sel>" . htmlspecialchars($kw['name']) . "</option>";
-                                        }
-                                        echo '</select></div>';
-                                    }
+                                if ((int)$row['tenaga_l'] > 0) {
+                                    echo '<button type="button" class="btn-pilih-tenaga l" onclick="bukaModalKaryawan(' . $row['id'] . ', \'L\', ' . $row['tenaga_l'] . ')">';
+                                    echo 'L <span>(<b id="count-l-' . $row['id'] . '">' . count($assigned_l) . '</b>/' . $row['tenaga_l'] . ')</span>';
+                                    echo '</button>';
+                                }
 
-                                    // Generate selects for Wanita
-                                    for ($i = 0; $i < (int)$row['tenaga_w']; $i++) {
-                                        $sel_val = isset($assigned_w[$i]) ? $assigned_w[$i] : '';
-                                        echo '<div style="display:flex; align-items:center; gap:6px;">';
-                                        echo '<span class="tenaga-label w">W</span>';
-                                        echo '<select class="select-tenaga select-wanita" style="padding:6px; border-radius:6px; border:1.5px solid #fbcfe8; font-size:12px; width:150px; outline:none; background:#f8fafc; font-weight:600;">';
-                                        echo '<option value="">-- Pilih Karyawan --</option>';
-                                        foreach ($karyawan_w as $kw) {
-                                            $sel = ($sel_val == $kw['id']) ? 'selected' : '';
-                                            echo "<option value=\"{$kw['id']}\" $sel>" . htmlspecialchars($kw['name']) . "</option>";
-                                        }
-                                        echo '</select></div>';
-                                    }
+                                if ((int)$row['tenaga_w'] > 0) {
+                                    echo '<button type="button" class="btn-pilih-tenaga w" onclick="bukaModalKaryawan(' . $row['id'] . ', \'W\', ' . $row['tenaga_w'] . ')">';
+                                    echo 'W <span>(<b id="count-w-' . $row['id'] . '">' . count($assigned_w) . '</b>/' . $row['tenaga_w'] . ')</span>';
+                                    echo '</button>';
+                                }
 
-                                    if ((int)$row['tenaga_l'] == 0 && (int)$row['tenaga_w'] == 0) {
-                                        echo '<span style="color:#94a3b8; font-size:12px; font-style:italic;">Tidak ada kuota</span>';
-                                    }
-                                    ?>
-                                </div>
-                            </td>
-                        </tr>
-                    <?php endforeach; ?>
-                <?php else: ?>
-                    <tr id="emptyRow">
-                        <td colspan="6">
-                            <div class="empty-state">
-                                <i class="fa-solid fa-file-circle-exclamation"></i>
-                                <p>Belum ada rencana kerja dari Pengawas</p>
-                                <small>Pengawas belum membuat rencana kerja untuk tanggal <?= date('d F Y', strtotime($tanggal)) ?></small>
-                            </div>
-                        </td>
-                    </tr>
-                <?php endif; ?>
-            </tbody>
-        </table>
+                                if ((int)$row['tenaga_l'] == 0 && (int)$row['tenaga_w'] == 0) {
+                                    echo '<span style="color:#94a3b8; font-size:12px; font-style:italic; font-weight:600;">Tidak ada kuota</span>';
+                                }
+                                ?>
     </div>
+    </td>
+    </tr>
+<?php endforeach; ?>
+<?php else: ?>
+    <tr id="emptyRow">
+        <td colspan="6">
+            <div class="empty-state">
+                <i class="fa-solid fa-file-circle-exclamation"></i>
+                <p>Belum ada rencana kerja dari Pengawas</p>
+                <small>Pengawas belum membuat rencana kerja untuk tanggal <?= date('d F Y', strtotime($tanggal)) ?></small>
+            </div>
+        </td>
+    </tr>
+<?php endif; ?>
+</tbody>
+</table>
+</div>
 
-    <?php if (count($rows_rencana) > 0): ?>
-        <div style="padding: 14px 24px; border-top: 1px solid #e2e8f0; display:flex; justify-content:flex-end; gap:10px; background:#f8fafc;">
-            <button type="button" class="btn-filter" style="background:#64748b;" onclick="window.location.reload()">Reset</button>
-            <button type="button" class="btn-filter" onclick="simpanTenaga()">
-                <i class="fa-solid fa-floppy-disk"></i> Simpan Tenaga
-            </button>
+<?php if (count($rows_rencana) > 0): ?>
+    <div style="padding: 14px 24px; border-top: 1px solid #e2e8f0; display:flex; justify-content:flex-end; gap:10px; background:#f8fafc;">
+        <button type="button" class="btn-filter" style="background:#64748b;" onclick="window.location.reload()">Reset</button>
+        <button type="button" class="btn-filter" onclick="simpanTenaga()">
+            <i class="fa-solid fa-floppy-disk"></i> Simpan Tenaga
+        </button>
+    </div>
+<?php endif; ?>
+</div>
+
+<!-- Modal Pilih Karyawan (Single Page App style) -->
+<div id="modalKaryawan" class="custom-modal">
+    <div class="custom-modal-content">
+        <div class="custom-modal-header">
+            <h4 id="modalTitle">Pilih Karyawan</h4>
+            <button type="button" onclick="tutupModal()" style="background:none; border:none; font-size:24px; cursor:pointer; color:#64748b; padding:0; line-height:1;">&times;</button>
         </div>
-    <?php endif; ?>
+        <div style="padding: 16px;">
+            <input type="text" id="modalSearch" oninput="filterKaryawan()" placeholder="Cari nama karyawan..." style="width: 100%; margin-bottom: 15px; padding: 12px 14px; border-radius: 10px; border: 1.5px solid #cbd5e1; outline:none; font-family: inherit; font-size:13px; font-weight:600;">
+            <div id="karyawanListContainer" style="max-height: 400px; overflow-y: auto; display: flex; flex-direction: column; padding-right:6px;">
+                <!-- Checkboxes diinjeksi via JS -->
+            </div>
+        </div>
+        <div class="custom-modal-footer" style="padding: 16px; border-top: 1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center; background:#f8fafc;">
+            <div style="display:flex; align-items:center; gap:8px;">
+                <span id="modalQuotaText" style="font-weight:800; color:var(--accent); font-size:14px; padding:6px 12px; background:#eff6ff; border-radius:8px;">0/0 Terpilih</span>
+            </div>
+            <button type="button" class="btn-filter" onclick="tutupModal()" style="padding: 10px 24px;">Selesai</button>
+        </div>
+    </div>
 </div>
 
 <script>
     const tanggalTugas = '<?= $tanggal ?>';
 
-    function hitungTotal() {
-        // recalculate totals live
-        let totalL = 0,
-            totalW = 0;
-        document.querySelectorAll('.input-tenaga.laki').forEach(inp => totalL += parseInt(inp.value || 0));
-        document.querySelectorAll('.input-tenaga.wanita').forEach(inp => totalW += parseInt(inp.value || 0));
+    const karyawanL = <?= json_encode($karyawan_l) ?>;
+    const karyawanW = <?= json_encode($karyawan_w) ?>;
+    // initial allocations
+    const selections = <?= json_encode($logbook_assignments) ?> || {};
+
+    let currentModalRow = null;
+    let currentModalGender = null;
+    let currentModalQuota = 0;
+
+    function getGlobalSelected(excludeRowId = null) {
+        let set = new Set();
+        for (const rId in selections) {
+            if (rId == excludeRowId) continue;
+            [...(selections[rId]?.L || []), ...(selections[rId]?.W || [])].forEach(uid => set.add(parseInt(uid)));
+        }
+        return set;
+    }
+
+    function ensureRowState(rowId) {
+        if (!selections[rowId]) selections[rowId] = {
+            L: [],
+            W: []
+        };
+        if (!selections[rowId].L) selections[rowId].L = [];
+        if (!selections[rowId].W) selections[rowId].W = [];
+    }
+
+    function bukaModalKaryawan(rowId, gender, quota) {
+        currentModalRow = rowId;
+        currentModalGender = gender;
+        currentModalQuota = parseInt(quota);
+        ensureRowState(rowId);
+
+        const mTitle = document.getElementById('modalTitle');
+        mTitle.innerText = `Pilih ${gender === 'L' ? 'Laki-laki' : 'Wanita'} (Batas: ${quota})`;
+
+        document.getElementById('modalSearch').value = '';
+        renderKaryawanList();
+
+        document.getElementById('modalKaryawan').style.display = 'flex';
+    }
+
+    function tutupModal() {
+        document.getElementById('modalKaryawan').style.display = 'none';
+        // Update the counter on button
+        if (currentModalRow && currentModalGender) {
+            const localSelected = selections[currentModalRow]?.[currentModalGender] || [];
+            const span = document.getElementById(`count-${currentModalGender.toLowerCase()}-${currentModalRow}`);
+            if (span) span.innerText = localSelected.length;
+        }
+    }
+
+    function renderKaryawanList() {
+        const container = document.getElementById('karyawanListContainer');
+        const searchQ = document.getElementById('modalSearch').value.toLowerCase();
+        const list = currentModalGender === 'L' ? karyawanL : karyawanW;
+
+        const localSelected = selections[currentModalRow][currentModalGender];
+        const globalSelected = getGlobalSelected(currentModalRow);
+
+        let quotaReached = localSelected.length >= currentModalQuota;
+        let html = '';
+
+        list.forEach(k => {
+            if (searchQ && !k.name.toLowerCase().includes(searchQ)) return;
+
+            let id = parseInt(k.id);
+            let isChecked = localSelected.includes(id);
+            let isGloballySelected = globalSelected.has(id);
+            let isDisabled = isGloballySelected || (!isChecked && quotaReached);
+
+            let labelClass = 'chk-item';
+            if (isChecked) labelClass += ' checked';
+            if (isDisabled) labelClass += ' disabled';
+
+            let warnHtml = '';
+            if (isGloballySelected) {
+                warnHtml = '<span class="chk-alert alert-locked"><i class="fa-solid fa-lock"></i> Bertugas</span>';
+            } else if (isDisabled && !isChecked) {
+                warnHtml = '<span class="chk-alert alert-full">Penuh</span>';
+            }
+
+            html += `
+                <label class="${labelClass}" onclick="toggleKaryawan(event, this, ${id})">
+                    <input type="checkbox" value="${id}" ${isChecked ? 'checked' : ''}>
+                    <span class="chk-name">${k.name}</span>
+                    ${warnHtml}
+                </label>
+            `;
+        });
+
+        if (html === '') html = '<div style="text-align:center; padding: 20px; color:#94a3b8; font-size:14px; font-weight:600;">Tidak ada Karyawan relevan ditemukan.</div>';
+
+        container.innerHTML = html;
+        document.getElementById('modalQuotaText').innerText = `${localSelected.length} / ${currentModalQuota} Terpilih`;
+    }
+
+    function toggleKaryawan(e, el, id) {
+        if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'LABEL') {
+            // handle click cascading
+            return;
+        }
+
+        if (el.classList.contains('disabled')) {
+            e.preventDefault();
+            return;
+        }
+
+        ensureRowState(currentModalRow);
+        let list = selections[currentModalRow][currentModalGender];
+        let idx = list.indexOf(id);
+
+        if (idx > -1) {
+            list.splice(idx, 1);
+        } else {
+            if (list.length < currentModalQuota) {
+                list.push(id);
+            }
+        }
+
+        // re-render immediately to update visual lock/unlock state
+        renderKaryawanList();
+    }
+
+    function filterKaryawan() {
+        renderKaryawanList();
     }
 
     // ============= SIMPAN TENAGA =============
@@ -649,14 +907,10 @@ $total_tenaga   = $total_tenaga_l + $total_tenaga_w;
 
         rows.forEach(row => {
             const id = row.dataset.id;
-            const selectsL = row.querySelectorAll('.select-laki');
-            selectsL.forEach(s => {
-                if (s.value) fd.append(`rows[${id}][tenaga_l][]`, s.value);
-            });
-            const selectsW = row.querySelectorAll('.select-wanita');
-            selectsW.forEach(s => {
-                if (s.value) fd.append(`rows[${id}][tenaga_w][]`, s.value);
-            });
+            if (selections[id]) {
+                (selections[id].L || []).forEach(uid => fd.append(`rows[${id}][tenaga_l][]`, uid));
+                (selections[id].W || []).forEach(uid => fd.append(`rows[${id}][tenaga_w][]`, uid));
+            }
         });
 
         Swal.fire({

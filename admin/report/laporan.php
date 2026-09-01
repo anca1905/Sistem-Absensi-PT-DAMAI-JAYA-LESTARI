@@ -14,10 +14,18 @@ $afdeling = isset($_GET['afdeling']) ? $_GET['afdeling'] : '';
 $jumlah_hari = cal_days_in_month(CAL_GREGORIAN, $bulan, $tahun);
 
 $nama_bulan = [
-    '01'=>'Januari','02'=>'Februari','03'=>'Maret',
-    '04'=>'April',  '05'=>'Mei',     '06'=>'Juni',
-    '07'=>'Juli',   '08'=>'Agustus', '09'=>'September',
-    '10'=>'Oktober','11'=>'November','12'=>'Desember'
+    '01' => 'Januari',
+    '02' => 'Februari',
+    '03' => 'Maret',
+    '04' => 'April',
+    '05' => 'Mei',
+    '06' => 'Juni',
+    '07' => 'Juli',
+    '08' => 'Agustus',
+    '09' => 'September',
+    '10' => 'Oktober',
+    '11' => 'November',
+    '12' => 'Desember'
 ];
 $periode_judul = $nama_bulan[$bulan] . ' ' . $tahun;
 
@@ -54,37 +62,110 @@ while ($u = mysqli_fetch_assoc($query_users)) {
 
 <style>
     /* Sticky columns untuk tabel absensi lebar */
-    .table-absen { width: 100%; border-collapse: collapse; white-space: nowrap; }
-    .table-absen th, .table-absen td {
-        padding: 10px 8px; text-align: center; border-bottom: 1px solid #e2e8f0; font-size: 13px;
+    .table-absen {
+        width: 100%;
+        border-collapse: collapse;
+        white-space: nowrap;
     }
+
+    .table-absen th,
+    .table-absen td {
+        padding: 10px 8px;
+        text-align: center;
+        border-bottom: 1px solid #e2e8f0;
+        font-size: 13px;
+    }
+
     .table-absen th {
-        background-color: #f8fafc; color: #475569; font-weight: 700;
-        text-transform: uppercase; font-size: 11px; border-bottom: 2px solid #e2e8f0;
+        background-color: #f8fafc;
+        color: #475569;
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 11px;
+        border-bottom: 2px solid #e2e8f0;
     }
-    .table-absen tbody tr { background-color: #fff; }
-    .table-absen tbody tr:hover td { background-color: #f1f5f9; }
+
+    .table-absen tbody tr {
+        background-color: #fff;
+    }
+
+    .table-absen tbody tr:hover td {
+        background-color: #f1f5f9;
+    }
+
     .table-absen thead tr:first-child th:nth-child(1),
-    .table-absen tbody td:nth-child(1) { position: sticky; left: 0; z-index: 2; background-color: inherit; }
+    .table-absen tbody td:nth-child(1) {
+        position: sticky;
+        left: 0;
+        z-index: 2;
+        background-color: inherit;
+    }
+
     .table-absen thead tr:first-child th:nth-child(2),
-    .table-absen tbody td:nth-child(2) { position: sticky; left: 40px; z-index: 2; background-color: inherit; }
+    .table-absen tbody td:nth-child(2) {
+        position: sticky;
+        left: 40px;
+        z-index: 2;
+        background-color: inherit;
+    }
+
     .table-absen thead tr:first-child th:nth-child(3),
-    .table-absen tbody td:nth-child(3) { position: sticky; left: 160px; z-index: 2; background-color: inherit; border-right: 2px solid #cbd5e1; }
+    .table-absen tbody td:nth-child(3) {
+        position: sticky;
+        left: 160px;
+        z-index: 2;
+        background-color: inherit;
+        border-right: 2px solid #cbd5e1;
+    }
+
     .table-absen thead tr:first-child th:nth-child(1),
     .table-absen thead tr:first-child th:nth-child(2),
-    .table-absen thead tr:first-child th:nth-child(3) { z-index: 3; background-color: #f8fafc; }
+    .table-absen thead tr:first-child th:nth-child(3) {
+        z-index: 3;
+        background-color: #f8fafc;
+    }
 
     /* Status badges UI */
     .ab-badge {
-        display: inline-flex; align-items: center; justify-content: center;
-        width: 24px; height: 24px; border-radius: 5px; font-weight: 700; font-size: 11px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 24px;
+        height: 24px;
+        border-radius: 5px;
+        font-weight: 700;
+        font-size: 11px;
     }
-    .ab-H { background-color: #dcfce7; color: #166534; }
-    .ab-A { background-color: #fee2e2; color: #991b1b; }
-    .ab-T { background-color: #fef9c3; color: #854d0e; }
-    .ab-I { background-color: #e0f2fe; color: #075985; }
-    .ab-S { background-color: #ede9fe; color: #5b21b6; }
-    .ab-C { background-color: #ffedd5; color: #9a3412; }
+
+    .ab-H {
+        background-color: #dcfce7;
+        color: #166534;
+    }
+
+    .ab-A {
+        background-color: #fee2e2;
+        color: #991b1b;
+    }
+
+    .ab-T {
+        background-color: #fef9c3;
+        color: #854d0e;
+    }
+
+    .ab-I {
+        background-color: #e0f2fe;
+        color: #075985;
+    }
+
+    .ab-S {
+        background-color: #ede9fe;
+        color: #5b21b6;
+    }
+
+    .ab-C {
+        background-color: #ffedd5;
+        color: #9a3412;
+    }
 </style>
 
 <!-- ========== WEB UI ========== -->
@@ -108,21 +189,21 @@ while ($u = mysqli_fetch_assoc($query_users)) {
 
                 <select name="jabatan" class="form-select" onchange="document.getElementById('formFilter').submit();">
                     <option value="">Semua Jabatan</option>
-                    <option value="mandor"   <?= $jabatan=='mandor'   ? 'selected':'' ?>>Mandor</option>
-                    <option value="karyawan" <?= $jabatan=='karyawan' ? 'selected':'' ?>>Karyawan</option>
-                    <option value="pengawas" <?= $jabatan=='pengawas' ? 'selected':'' ?>>Pengawas</option>
-                    <option value="kerani"   <?= $jabatan=='kerani'   ? 'selected':'' ?>>Kerani</option>
+                    <option value="mandor" <?= $jabatan == 'mandor'   ? 'selected' : '' ?>>Mandor</option>
+                    <option value="karyawan" <?= $jabatan == 'karyawan' ? 'selected' : '' ?>>Karyawan</option>
+                    <option value="pengawas" <?= $jabatan == 'pengawas' ? 'selected' : '' ?>>Pengawas</option>
+                    <option value="kerani" <?= $jabatan == 'kerani'   ? 'selected' : '' ?>>Kerani</option>
                 </select>
 
                 <select name="bulan" class="form-select" onchange="document.getElementById('formFilter').submit();">
-                    <?php foreach($nama_bulan as $num => $name): ?>
-                        <option value="<?= $num ?>" <?= $bulan==$num ? 'selected':'' ?>><?= $name ?></option>
+                    <?php foreach ($nama_bulan as $num => $name): ?>
+                        <option value="<?= $num ?>" <?= $bulan == $num ? 'selected' : '' ?>><?= $name ?></option>
                     <?php endforeach; ?>
                 </select>
 
                 <select name="tahun" class="form-select" onchange="document.getElementById('formFilter').submit();">
-                    <?php for($y = date('Y')-2; $y <= date('Y'); $y++): ?>
-                        <option value="<?= $y ?>" <?= $tahun==$y ? 'selected':'' ?>><?= $y ?></option>
+                    <?php for ($y = date('Y') - 2; $y <= date('Y'); $y++): ?>
+                        <option value="<?= $y ?>" <?= $tahun == $y ? 'selected' : '' ?>><?= $y ?></option>
                     <?php endfor; ?>
                 </select>
             </div>
@@ -130,8 +211,8 @@ while ($u = mysqli_fetch_assoc($query_users)) {
             <div class="report-title-center">
                 <h2>Laporan Absensi</h2>
                 <p>Periode: <strong><?= $periode_judul ?></strong>
-                    <?= !empty($jabatan) ? ' &mdash; '.ucfirst($jabatan) : '' ?>
-                    <?= !empty($afdeling) ? ' | '.htmlspecialchars($afdeling) : '' ?>
+                    <?= !empty($jabatan) ? ' &mdash; ' . ucfirst($jabatan) : '' ?>
+                    <?= !empty($afdeling) ? ' | ' . htmlspecialchars($afdeling) : '' ?>
                 </p>
             </div>
 
@@ -155,10 +236,15 @@ while ($u = mysqli_fetch_assoc($query_users)) {
                     <th rowspan="2" style="text-align:left; min-width:180px;">NAMA</th>
                     <th colspan="<?= $jumlah_hari ?>">TANGGAL</th>
                     <th rowspan="2" style="min-width:90px;">JABATAN</th>
+                    <th rowspan="2" style="min-width:30px;">H</th>
+                    <th rowspan="2" style="min-width:30px;">I</th>
+                    <th rowspan="2" style="min-width:30px;">A</th>
+                    <th rowspan="2" style="min-width:30px;">S</th>
+                    <th rowspan="2" style="min-width:30px;">C</th>
                     <th rowspan="2" style="min-width:80px;">TOTAL<br>HADIR</th>
                 </tr>
                 <tr>
-                    <?php for($i = 1; $i <= $jumlah_hari; $i++): ?>
+                    <?php for ($i = 1; $i <= $jumlah_hari; $i++): ?>
                         <th style="min-width:32px;"><?= $i ?></th>
                     <?php endfor; ?>
                 </tr>
@@ -170,31 +256,61 @@ while ($u = mysqli_fetch_assoc($query_users)) {
                     foreach ($all_users_data as $user):
                         $total_hadir = 0;
                 ?>
-                    <tr>
-                        <td><?= $no++ ?></td>
-                        <td style="text-align:left;"><?= htmlspecialchars($user['nik']) ?></td>
-                        <td style="text-align:left; font-weight:600;"><?= htmlspecialchars($user['name']) ?></td>
+                        <tr>
+                            <td><?= $no++ ?></td>
+                            <td style="text-align:left;"><?= htmlspecialchars($user['nik']) ?></td>
+                            <td style="text-align:left; font-weight:600;"><?= htmlspecialchars($user['name']) ?></td>
 
-                        <?php for($i = 1; $i <= $jumlah_hari; $i++):
-                            $st = $data_absen[$user['id']][$i] ?? null;
-                            $kode = ''; $cls = '';
-                            if (in_array($st, ['hadir','tepat_waktu','terlambat'])) { $kode='H'; $cls='ab-H'; $total_hadir++; }
-                            elseif ($st=='alpha')  { $kode='A'; $cls='ab-A'; }
-                            elseif ($st=='izin')   { $kode='I'; $cls='ab-I'; }
-                            elseif ($st=='sakit')  { $kode='S'; $cls='ab-S'; }
-                            elseif ($st=='cuti')   { $kode='C'; $cls='ab-C'; }
-                        ?>
-                            <td><?php if($kode): ?><span class="ab-badge <?= $cls ?>"><?= $kode ?></span><?php else: ?><span style="color:#e2e8f0;">·</span><?php endif; ?></td>
-                        <?php endfor; ?>
+                            <?php
+                            $t_hadir = 0;
+                            $t_izin = 0;
+                            $t_alpha = 0;
+                            $t_sakit = 0;
+                            $t_cuti = 0;
+                            for ($i = 1; $i <= $jumlah_hari; $i++):
+                                $st = $data_absen[$user['id']][$i] ?? null;
+                                $kode = '';
+                                $cls = '';
+                                if (in_array(strtolower((string)$st), ['hadir', 'tepat_waktu', 'terlambat'])) {
+                                    $kode = 'H';
+                                    $cls = 'ab-H';
+                                    $t_hadir++;
+                                } elseif (in_array(strtolower((string)$st), ['alpha', 'alpa', 'alfa'])) {
+                                    $kode = 'A';
+                                    $cls = 'ab-A';
+                                    $t_alpha++;
+                                } elseif (strtolower((string)$st) == 'izin') {
+                                    $kode = 'I';
+                                    $cls = 'ab-I';
+                                    $t_izin++;
+                                } elseif (strtolower((string)$st) == 'sakit') {
+                                    $kode = 'S';
+                                    $cls = 'ab-S';
+                                    $t_sakit++;
+                                } elseif (strtolower((string)$st) == 'cuti') {
+                                    $kode = 'C';
+                                    $cls = 'ab-C';
+                                    $t_cuti++;
+                                }
+                            ?>
+                                <td><?php if ($kode): ?><span class="ab-badge <?= $cls ?>"><?= $kode ?></span><?php else: ?><span style="color:#e2e8f0;">·</span><?php endif; ?></td>
+                            <?php endfor; ?>
 
-                        <td><?= ucfirst(htmlspecialchars($user['jabatan'] ?? '-')) ?></td>
-                        <td style="font-weight:700;"><?= $total_hadir ?> Hari</td>
-                    </tr>
-                <?php
+                            <td><?= ucfirst(htmlspecialchars($user['jabatan'] ?? '-')) ?></td>
+                            <td style="font-weight:700; color:#166534;"><?= $t_hadir ?></td>
+                            <td style="font-weight:700; color:#075985;"><?= $t_izin ?></td>
+                            <td style="font-weight:700; color:#991b1b;"><?= $t_alpha ?></td>
+                            <td style="font-weight:700; color:#5b21b6;"><?= $t_sakit ?></td>
+                            <td style="font-weight:700; color:#9a3412;"><?= $t_cuti ?></td>
+                            <td style="font-weight:700;"><?= $t_hadir ?> Hari</td>
+                        </tr>
+                    <?php
                     endforeach;
                 else:
-                ?>
-                    <tr><td colspan="<?= $jumlah_hari + 5 ?>" style="padding:30px; color:#94a3b8; text-align:center;">Tidak ada data karyawan ditemukan.</td></tr>
+                    ?>
+                    <tr>
+                        <td colspan="<?= $jumlah_hari + 10 ?>" style="padding:30px; color:#94a3b8; text-align:center;">Tidak ada data karyawan ditemukan.</td>
+                    </tr>
                 <?php endif; ?>
             </tbody>
         </table>
@@ -240,10 +356,15 @@ while ($u = mysqli_fetch_assoc($query_users)) {
                 <th rowspan="2" style="min-width:120px; text-align:left;">Nama Karyawan</th>
                 <th colspan="<?= $jumlah_hari ?>">Tanggal</th>
                 <th rowspan="2" style="width:60px;">Jabatan</th>
+                <th rowspan="2" style="width:20px;">H</th>
+                <th rowspan="2" style="width:20px;">I</th>
+                <th rowspan="2" style="width:20px;">A</th>
+                <th rowspan="2" style="width:20px;">S</th>
+                <th rowspan="2" style="width:20px;">C</th>
                 <th rowspan="2" style="width:40px;">Total Hadir</th>
             </tr>
             <tr>
-                <?php for($i=1; $i<=$jumlah_hari; $i++): ?>
+                <?php for ($i = 1; $i <= $jumlah_hari; $i++): ?>
                     <th style="width:18px; font-size:8pt;"><?= $i ?></th>
                 <?php endfor; ?>
             </tr>
@@ -251,30 +372,60 @@ while ($u = mysqli_fetch_assoc($query_users)) {
         <tbody>
             <?php
             $pno = 1;
-            foreach($all_users_data as $user):
+            foreach ($all_users_data as $user):
                 $total = 0;
             ?>
-            <tr>
-                <td class="text-center"><?= $pno++ ?></td>
-                <td><?= htmlspecialchars($user['nik']) ?></td>
-                <td><?= htmlspecialchars($user['name']) ?></td>
-                <?php for($i=1; $i<=$jumlah_hari; $i++):
-                    $st = $data_absen[$user['id']][$i] ?? null;
-                    $k = ''; $dc = '';
-                    if(in_array($st,['hadir','tepat_waktu','terlambat'])) { $k='H'; $dc='doc-status-H'; $total++; }
-                    elseif($st=='alpha') { $k='A'; $dc='doc-status-A'; }
-                    elseif($st=='izin')  { $k='I'; $dc='doc-status-I'; }
-                    elseif($st=='sakit') { $k='S'; $dc='doc-status-S'; }
-                    elseif($st=='cuti')  { $k='C'; $dc='doc-status-C'; }
-                ?>
-                    <td class="text-center <?= $dc ?>" style="font-size:8pt; font-weight:bold;"><?= $k ?></td>
-                <?php endfor; ?>
-                <td class="text-center"><?= ucfirst(htmlspecialchars($user['jabatan']??'-')) ?></td>
-                <td class="text-center" style="font-weight:bold;"><?= $total ?></td>
-            </tr>
+                <tr>
+                    <td class="text-center"><?= $pno++ ?></td>
+                    <td><?= htmlspecialchars($user['nik']) ?></td>
+                    <td><?= htmlspecialchars($user['name']) ?></td>
+                    <?php
+                    $p_h = 0;
+                    $p_i = 0;
+                    $p_a = 0;
+                    $p_s = 0;
+                    $p_c = 0;
+                    for ($i = 1; $i <= $jumlah_hari; $i++):
+                        $st = $data_absen[$user['id']][$i] ?? null;
+                        $k = '';
+                        $dc = '';
+                        if (in_array(strtolower((string)$st), ['hadir', 'tepat_waktu', 'terlambat'])) {
+                            $k = 'H';
+                            $dc = 'doc-status-H';
+                            $p_h++;
+                        } elseif (in_array(strtolower((string)$st), ['alpha', 'alpa', 'alfa'])) {
+                            $k = 'A';
+                            $dc = 'doc-status-A';
+                            $p_a++;
+                        } elseif (strtolower((string)$st) == 'izin') {
+                            $k = 'I';
+                            $dc = 'doc-status-I';
+                            $p_i++;
+                        } elseif (strtolower((string)$st) == 'sakit') {
+                            $k = 'S';
+                            $dc = 'doc-status-S';
+                            $p_s++;
+                        } elseif (strtolower((string)$st) == 'cuti') {
+                            $k = 'C';
+                            $dc = 'doc-status-C';
+                            $p_c++;
+                        }
+                    ?>
+                        <td class="text-center <?= $dc ?>" style="font-size:8pt; font-weight:bold;"><?= $k ?></td>
+                    <?php endfor; ?>
+                    <td class="text-center"><?= ucfirst(htmlspecialchars($user['jabatan'] ?? '-')) ?></td>
+                    <td class="text-center" style="font-weight:bold;"><?= $p_h ?></td>
+                    <td class="text-center" style="font-weight:bold;"><?= $p_i ?></td>
+                    <td class="text-center" style="font-weight:bold;"><?= $p_a ?></td>
+                    <td class="text-center" style="font-weight:bold;"><?= $p_s ?></td>
+                    <td class="text-center" style="font-weight:bold;"><?= $p_c ?></td>
+                    <td class="text-center" style="font-weight:bold;"><?= $p_h ?></td>
+                </tr>
             <?php endforeach; ?>
-            <?php if(empty($all_users_data)): ?>
-            <tr><td colspan="<?= $jumlah_hari+5 ?>" class="text-center" style="padding:16px;">Tidak ada data.</td></tr>
+            <?php if (empty($all_users_data)): ?>
+                <tr>
+                    <td colspan="<?= $jumlah_hari + 10 ?>" class="text-center" style="padding:16px;">Tidak ada data.</td>
+                </tr>
             <?php endif; ?>
         </tbody>
     </table>

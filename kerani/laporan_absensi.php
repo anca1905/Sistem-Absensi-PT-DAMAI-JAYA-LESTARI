@@ -2,7 +2,11 @@
 require '../config/config.php';
 include 'templates/header.php';
 ?>
-<style type="text/css" media="print">@page { size: landscape; }</style>
+<style type="text/css" media="print">
+    @page {
+        size: landscape;
+    }
+</style>
 <?php
 
 
@@ -12,10 +16,18 @@ $tahun = isset($_GET['tahun']) ? $_GET['tahun'] : date('Y');
 
 $jumlah_hari = cal_days_in_month(CAL_GREGORIAN, $bulan, $tahun);
 $nama_bulan = array(
-    '01' => 'Januari', '02' => 'Februari', '03' => 'Maret',
-    '04' => 'April', '05' => 'Mei', '06' => 'Juni',
-    '07' => 'Juli', '08' => 'Agustus', '09' => 'September',
-    '10' => 'Oktober', '11' => 'November', '12' => 'Desember'
+    '01' => 'Januari',
+    '02' => 'Februari',
+    '03' => 'Maret',
+    '04' => 'April',
+    '05' => 'Mei',
+    '06' => 'Juni',
+    '07' => 'Juli',
+    '08' => 'Agustus',
+    '09' => 'September',
+    '10' => 'Oktober',
+    '11' => 'November',
+    '12' => 'Desember'
 );
 ?>
 
@@ -43,7 +55,10 @@ $nama_bulan = array(
         outline: none;
         cursor: pointer;
     }
-    .filter-select:focus { border-color: var(--accent); }
+
+    .filter-select:focus {
+        border-color: var(--accent);
+    }
 
     .btn-print {
         background: white;
@@ -59,13 +74,17 @@ $nama_bulan = array(
         gap: 8px;
         transition: all 0.2s;
     }
-    .btn-print:hover { background: #f8fafc; border-color: #94a3b8; }
+
+    .btn-print:hover {
+        background: #f8fafc;
+        border-color: #94a3b8;
+    }
 
     .card {
         background: white;
         border-radius: 12px;
         border: 1px solid #e2e8f0;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
         overflow: hidden;
     }
 
@@ -75,7 +94,7 @@ $nama_bulan = array(
         background: #f8fafc;
         text-align: center;
     }
-    
+
     .card-title {
         font-size: 18px;
         font-weight: 700;
@@ -95,7 +114,8 @@ $nama_bulan = array(
         white-space: nowrap;
     }
 
-    .table-data th, .table-data td {
+    .table-data th,
+    .table-data td {
         padding: 12px 10px;
         text-align: center;
         border: 1px solid #e2e8f0;
@@ -113,8 +133,10 @@ $nama_bulan = array(
         background: #f8fafc;
     }
 
-    .text-left { text-align: left !important; }
-    
+    .text-left {
+        text-align: left !important;
+    }
+
     .status-badge {
         display: inline-block;
         width: 20px;
@@ -124,18 +146,60 @@ $nama_bulan = array(
         font-weight: bold;
         font-size: 10px;
     }
-    .status-h { background-color: #dcfce7; color: #166534; }
-    .status-a { background-color: #fee2e2; color: #991b1b; }
-    .status-i { background-color: #e0f2fe; color: #075985; }
-    .status-s { background-color: #ede9fe; color: #5b21b6; }
-    .status-c { background-color: #ffedd5; color: #9a3412; }
-    
+
+    .status-h {
+        background-color: #dcfce7;
+        color: #166534;
+    }
+
+    .status-a {
+        background-color: #fee2e2;
+        color: #991b1b;
+    }
+
+    .status-i {
+        background-color: #e0f2fe;
+        color: #075985;
+    }
+
+    .status-s {
+        background-color: #ede9fe;
+        color: #5b21b6;
+    }
+
+    .status-c {
+        background-color: #ffedd5;
+        color: #9a3412;
+    }
+
     @media print {
-        body * { visibility: hidden; }
-        .main-content { margin-left: 0; }
-        .sidebar, .topbar, .header-actions { display: none !important; }
-        .card, .card * { visibility: visible; }
-        .card { position: absolute; left: 0; top: 0; border: none; box-shadow: none; width: 100%; }
+        body * {
+            visibility: hidden;
+        }
+
+        .main-content {
+            margin-left: 0;
+        }
+
+        .sidebar,
+        .topbar,
+        .header-actions {
+            display: none !important;
+        }
+
+        .card,
+        .card * {
+            visibility: visible;
+        }
+
+        .card {
+            position: absolute;
+            left: 0;
+            top: 0;
+            border: none;
+            box-shadow: none;
+            width: 100%;
+        }
     }
 </style>
 
@@ -149,20 +213,24 @@ $nama_bulan = array(
         </select>
 
         <select name="bulan" class="filter-select" onchange="document.getElementById('filterForm').submit()">
-            <?php foreach($nama_bulan as $num => $name): ?>
+            <?php foreach ($nama_bulan as $num => $name): ?>
                 <option value="<?= $num ?>" <?= $bulan == $num ? 'selected' : '' ?>><?= $name ?></option>
             <?php endforeach; ?>
         </select>
-        
+
         <select name="tahun" class="filter-select" onchange="document.getElementById('filterForm').submit()">
-            <?php for($y = date('Y') - 2; $y <= date('Y'); $y++): ?>
+            <?php for ($y = date('Y') - 2; $y <= date('Y'); $y++): ?>
                 <option value="<?= $y ?>" <?= $tahun == $y ? 'selected' : '' ?>><?= $y ?></option>
             <?php endfor; ?>
         </select>
     </form>
-    
+
     <button class="btn-print" onclick="window.print()">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="6 9 6 2 18 2 18 9"></polyline>
+            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+            <rect x="6" y="14" width="12" height="8"></rect>
+        </svg>
         Cetak PDF
     </button>
 </div>
@@ -171,7 +239,7 @@ $nama_bulan = array(
     <div class="card-header">
         <h3 class="card-title">Laporan Absensi Periode <?= $nama_bulan[$bulan] ?> <?= $tahun ?></h3>
     </div>
-    
+
     <div class="table-container">
         <table class="table-data">
             <thead>
@@ -180,69 +248,85 @@ $nama_bulan = array(
                     <th rowspan="2" class="text-left">NIK</th>
                     <th rowspan="2" class="text-left" width="200">NAMA LENGKAP</th>
                     <th colspan="<?= $jumlah_hari ?>">TGL</th>
-                    <th rowspan="2">STATUS</th>
-                    <th rowspan="2">TOTAL<br>KEHADIRAN</th>
+                    <th rowspan="2" width="30">H</th>
+                    <th rowspan="2" width="30">I</th>
+                    <th rowspan="2" width="30">A</th>
+                    <th rowspan="2" width="30">S</th>
+                    <th rowspan="2" width="30">C</th>
+                    <th rowspan="2">TOTAL<br>HADIR</th>
                 </tr>
                 <tr>
-                    <?php for($i = 1; $i <= $jumlah_hari; $i++): ?>
+                    <?php for ($i = 1; $i <= $jumlah_hari; $i++): ?>
                         <th style="min-width: 25px; padding: 8px 4px;"><?= $i ?></th>
                     <?php endfor; ?>
                 </tr>
             </thead>
             <tbody>
-                <?php 
+                <?php
                 $role_safe = mysqli_real_escape_string($conn, $role_filter);
                 $afdeling_kerani = isset($_SESSION['afdeling']) ? mysqli_real_escape_string($conn, $_SESSION['afdeling']) : '';
-                
+
                 if (!empty($afdeling_kerani)) {
                     $query = mysqli_query($conn, "SELECT id, nik, name FROM users WHERE role='$role_safe' AND afdeling='$afdeling_kerani' ORDER BY name ASC");
                 } else {
                     $query = mysqli_query($conn, "SELECT id, nik, name FROM users WHERE role='$role_safe' ORDER BY name ASC");
                 }
-                
+
                 $no = 1;
-                while($user = mysqli_fetch_assoc($query)): 
+                while ($user = mysqli_fetch_assoc($query)):
                 ?>
-                <tr>
-                    <td style="color: var(--text-muted); font-weight: 600;"><?= $no++ ?></td>
-                    <td class="text-left" style="font-weight: 700;"><?= htmlspecialchars($user['nik']) ?></td>
-                    <td class="text-left"><?= htmlspecialchars($user['name']) ?></td>
-                    
-                    <?php 
-                    $total_hadir = 0;
-                    for($i = 1; $i <= $jumlah_hari; $i++): 
-                        $tgl_str = sprintf("%04d-%02d-%02d", $tahun, $bulan, $i);
-                        $cek_absen = mysqli_query($conn, "SELECT status_kehadiran FROM absensis WHERE user_id={$user['id']} AND tanggal='$tgl_str'");
-                        
-                        if(mysqli_num_rows($cek_absen) > 0) {
-                            $row_abs = mysqli_fetch_assoc($cek_absen);
-                            if ($row_abs['status_kehadiran'] == 'alpha') {
-                                echo '<td><span class="status-badge status-a">A</span></td>';
-                            } elseif ($row_abs['status_kehadiran'] == 'izin') {
-                                echo '<td><span class="status-badge status-i">I</span></td>';
-                            } elseif ($row_abs['status_kehadiran'] == 'sakit') {
-                                echo '<td><span class="status-badge status-s">S</span></td>';
-                            } elseif ($row_abs['status_kehadiran'] == 'cuti') {
-                                echo '<td><span class="status-badge status-c">C</span></td>';
+                    <tr>
+                        <td style="color: var(--text-muted); font-weight: 600;"><?= $no++ ?></td>
+                        <td class="text-left" style="font-weight: 700;"><?= htmlspecialchars($user['nik']) ?></td>
+                        <td class="text-left"><?= htmlspecialchars($user['name']) ?></td>
+
+                        <?php
+                        $t_hadir = 0;
+                        $t_izin = 0;
+                        $t_sakit = 0;
+                        $t_cuti = 0;
+                        $t_alpha = 0;
+                        for ($i = 1; $i <= $jumlah_hari; $i++):
+                            $tgl_str = sprintf("%04d-%02d-%02d", $tahun, $bulan, $i);
+                            $cek_absen = mysqli_query($conn, "SELECT status_kehadiran FROM absensis WHERE user_id={$user['id']} AND tanggal='$tgl_str'");
+
+                            if (mysqli_num_rows($cek_absen) > 0) {
+                                $row_abs = mysqli_fetch_assoc($cek_absen);
+                                if (in_array(strtolower($row_abs['status_kehadiran']), ['alpha', 'alpa', 'alfa'])) {
+                                    $t_alpha++;
+                                    echo '<td><span class="status-badge status-a">A</span></td>';
+                                } elseif (strtolower($row_abs['status_kehadiran']) == 'izin') {
+                                    $t_izin++;
+                                    echo '<td><span class="status-badge status-i">I</span></td>';
+                                } elseif (strtolower($row_abs['status_kehadiran']) == 'sakit') {
+                                    $t_sakit++;
+                                    echo '<td><span class="status-badge status-s">S</span></td>';
+                                } elseif (strtolower($row_abs['status_kehadiran']) == 'cuti') {
+                                    $t_cuti++;
+                                    echo '<td><span class="status-badge status-c">C</span></td>';
+                                } else {
+                                    $t_hadir++;
+                                    echo '<td><span class="status-badge status-h">H</span></td>';
+                                }
                             } else {
-                                $total_hadir++;
-                                echo '<td><span class="status-badge status-h">H</span></td>';
+                                echo '<td><span style="color: #cbd5e1;">-</span></td>';
                             }
-                        } else {
-                            echo '<td><span style="color: #cbd5e1;">-</span></td>';
-                        }
-                    ?>
-                    <?php endfor; ?>
-                    
-                    <td style="color: #64748b;"><?= $total_hadir > 0 ? 'Aktif' : 'Kosong' ?></td>
-                    <td style="font-weight: 800; color: #0f172a;"><?= $total_hadir ?> Hari</td>
-                </tr>
+                        ?>
+                        <?php endfor; ?>
+
+                        <td style="font-weight: 700; color: #166534;"><?= $t_hadir ?></td>
+                        <td style="font-weight: 700; color: #075985;"><?= $t_izin ?></td>
+                        <td style="font-weight: 700; color: #991b1b;"><?= $t_alpha ?></td>
+                        <td style="font-weight: 700; color: #5b21b6;"><?= $t_sakit ?></td>
+                        <td style="font-weight: 700; color: #9a3412;"><?= $t_cuti ?></td>
+                        <td style="font-weight: 800; color: #0f172a;"><?= $t_hadir ?>/<?= date('t') ?></td>
+                    </tr>
                 <?php endwhile; ?>
-                
-                <?php if(mysqli_num_rows($query) == 0): ?>
-                <tr>
-                    <td colspan="<?= $jumlah_hari + 5 ?>" style="text-align:center; padding:20px;">Belum ada data personil.</td>
-                </tr>
+
+                <?php if (mysqli_num_rows($query) == 0): ?>
+                    <tr>
+                        <td colspan="<?= $jumlah_hari + 9 ?>" style="text-align:center; padding:20px;">Belum ada data personil.</td>
+                    </tr>
                 <?php endif; ?>
             </tbody>
         </table>
