@@ -243,6 +243,7 @@ include 'templates/header.php';
             </svg>
         </a>
 
+        <!-- DISABLED: Laporan Kinerja
         <a href="laporan_kinerja.php" class="menu-btn">
             <div class="menu-icon">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -256,7 +257,9 @@ include 'templates/header.php';
                 <polyline points="9 18 15 12 9 6"></polyline>
             </svg>
         </a>
+        -->
 
+        <!-- DISABLED: Laporan Keseluruhan
         <a href="laporan_keseluruhan.php" class="menu-btn">
             <div class="menu-icon">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -272,6 +275,7 @@ include 'templates/header.php';
                 <polyline points="9 18 15 12 9 6"></polyline>
             </svg>
         </a>
+        -->
 
         <a href="laporan_mingguan.php" class="menu-btn">
             <div class="menu-icon">
