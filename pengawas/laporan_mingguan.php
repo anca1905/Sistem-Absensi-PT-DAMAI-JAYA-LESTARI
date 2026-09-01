@@ -54,6 +54,7 @@ $nama_bulan = [
 // --- Filter ---
 $bulan     = isset($_GET['bulan'])      ? str_pad($_GET['bulan'], 2, '0', STR_PAD_LEFT) : date('m');
 $tahun     = isset($_GET['tahun'])      ? (int)$_GET['tahun']  : (int)date('Y');
+$minggu    = isset($_GET['minggu'])     ? (int)$_GET['minggu'] : 1;
 $objek     = isset($_GET['objek'])      ? $_GET['objek']        : 'Langsir manual';
 
 if (!in_array($objek, $list_objek)) $objek = 'Langsir manual';
@@ -65,7 +66,17 @@ $uid          = $_SESSION['user_id'];
 $nama_karyawan = htmlspecialchars($_SESSION['nama'] ?? 'Karyawan');
 
 $jumlah_hari = cal_days_in_month(CAL_GREGORIAN, $bulan_int, $tahun);
-$periode_label = "01 - {$jumlah_hari} " . $nama_bulan[$bulan] . " {$tahun}";
+
+$start_day = ($minggu - 1) * 7 + 1;
+$end_day = $minggu * 7;
+if ($end_day > $jumlah_hari) {
+    $end_day = $jumlah_hari;
+}
+if ($start_day > $jumlah_hari) {
+    $start_day = $jumlah_hari; // At least one valid iteration or none
+}
+
+$periode_label = str_pad($start_day, 2, '0', STR_PAD_LEFT) . " - " . str_pad($end_day, 2, '0', STR_PAD_LEFT) . " " . $nama_bulan[$bulan] . " {$tahun} (Minggu {$minggu})";
 ?>
 <style>
     @media print {
@@ -461,7 +472,7 @@ $periode_label = "01 - {$jumlah_hari} " . $nama_bulan[$bulan] . " {$tahun}";
         Kembali
     </a>
 
-    <h1 class="page-title" style="text-align: left;">Laporan Keseluruhan</h1>
+    <h1 class="page-title" style="text-align: left;">Laporan Mingguan</h1>
 
     <!-- Toolbar Filter -->
     <div class="lk-toolbar no-print">
@@ -475,6 +486,13 @@ $periode_label = "01 - {$jumlah_hari} " . $nama_bulan[$bulan] . " {$tahun}";
                 <?php for ($y = date('Y') - 2; $y <= date('Y') + 1; $y++): ?>
                     <option value="<?= $y ?>" <?= $tahun == $y ? 'selected' : '' ?>><?= $y ?></option>
                 <?php endfor; ?>
+            </select>
+            <select name="minggu" class="lk-select">
+                <option value="1" <?= $minggu == 1 ? 'selected' : '' ?>>Minggu 1</option>
+                <option value="2" <?= $minggu == 2 ? 'selected' : '' ?>>Minggu 2</option>
+                <option value="3" <?= $minggu == 3 ? 'selected' : '' ?>>Minggu 3</option>
+                <option value="4" <?= $minggu == 4 ? 'selected' : '' ?>>Minggu 4</option>
+                <option value="5" <?= $minggu == 5 ? 'selected' : '' ?>>Minggu 5</option>
             </select>
             <select name="objek" class="lk-select" style="min-width:200px;">
                 <?php foreach ($list_objek as $obj): ?>
@@ -496,7 +514,7 @@ $periode_label = "01 - {$jumlah_hari} " . $nama_bulan[$bulan] . " {$tahun}";
     <!-- Card Laporan -->
     <div class="lk-card print-area">
         <div class="lk-header-main">
-            <p class="lk-title">Laporan Absensi dan Hasil Kinerja</p>
+            <p class="lk-title">Laporan Mingguan Absensi & Hasil Kerja</p>
             <p class="lk-subtitle">
                 Objek: <?= htmlspecialchars($objek) ?> &nbsp;|&nbsp;
                 Periode: <?= $periode_label ?> &nbsp;|&nbsp;
@@ -574,7 +592,9 @@ $periode_label = "01 - {$jumlah_hari} " . $nama_bulan[$bulan] . " {$tahun}";
                     $sum_tbs = 0;
                     $sum_total_tandan = 0;
 
-                    for ($d = 1; $d <= $jumlah_hari; $d++):
+                    for ($d = $start_day; $d <= $end_day; $d++):
+                        if ($d > $jumlah_hari) break; // Safeguard
+
                         $tanggal_loop = sprintf('%04d-%02d-%02d', $tahun, $bulan, $d);
 
                         // --- O1: Kehadiran ---
@@ -758,7 +778,7 @@ $periode_label = "01 - {$jumlah_hari} " . $nama_bulan[$bulan] . " {$tahun}";
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<title>Cetak Laporan Keseluruhan</title>
+<title>Cetak Laporan Mingguan</title>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
   body { font-family: 'Times New Roman', Times, serif; color: #000; padding: 10mm; }
@@ -801,7 +821,7 @@ $periode_label = "01 - {$jumlah_hari} " . $nama_bulan[$bulan] . " {$tahun}";
   </div>
   
   <div class="info-laporan">
-    <h2>LAPORAN ABSENSI DAN HASIL KINERJA</h2>
+    <h2>LAPORAN MINGGUAN ABSENSI DAN HASIL KINERJA</h2>
     <p>Objek: <?= htmlspecialchars($objek) ?> &nbsp;|&nbsp; Periode: <?= $periode_label ?></p>
     <div class="info-karyawan">Nama: <?= htmlspecialchars($nama_karyawan) ?></div>
   </div>

@@ -24,10 +24,11 @@ $list_objek = [
     'Membabat gawangan',
     'Rawat jalan',
     'Panen',
-    'Potong buah',
-    'Kutip brondolan',
+    'Penunasan',
+    'Racun piringan',
+    'Perawatan',
     'Muat TBS ke truk',
-    'Muat TBS ke jondol'
+    'Muat TBS ke jonder'
 ];
 $list_blok = [
     'H.39' => '8.66',

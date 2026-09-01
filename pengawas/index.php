@@ -32,7 +32,7 @@ include 'templates/header.php';
         font-weight: 800;
         margin: 0 0 4px 0;
     }
-    
+
     .welcome-subtitle {
         font-size: 13px;
         opacity: 0.9;
@@ -59,7 +59,7 @@ include 'templates/header.php';
         display: flex;
         align-items: center;
         gap: 16px;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
         transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         position: relative;
         overflow: hidden;
@@ -68,20 +68,29 @@ include 'templates/header.php';
     .menu-btn::before {
         content: '';
         position: absolute;
-        left: 0; top: 0; bottom: 0;
+        left: 0;
+        top: 0;
+        bottom: 0;
         width: 4px;
         background: var(--primary-start);
         opacity: 0;
         transition: opacity 0.2s;
     }
 
-    .menu-btn:hover, .menu-btn:active {
+    .menu-btn:hover,
+    .menu-btn:active {
         transform: translateY(-2px);
         box-shadow: 0 8px 15px rgba(54, 72, 217, 0.1);
         border-color: #cbd5e1;
     }
-    .menu-btn:active { transform: translateY(0); }
-    .menu-btn:hover::before { opacity: 1; }
+
+    .menu-btn:active {
+        transform: translateY(0);
+    }
+
+    .menu-btn:hover::before {
+        opacity: 1;
+    }
 
     .menu-icon {
         width: 40px;
@@ -108,9 +117,9 @@ include 'templates/header.php';
         border: 1px solid #e2e8f0;
         border-radius: 20px;
         padding: 24px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
     }
-    
+
     .status-card h3 {
         margin: 0 0 16px 0;
         font-size: 16px;
@@ -132,15 +141,22 @@ include 'templates/header.php';
         margin-bottom: 12px;
         transition: background 0.2s;
     }
-    .status-item:hover { background: white; border-color: #e2e8f0; }
-    .status-item:last-child { margin-bottom: 0; }
+
+    .status-item:hover {
+        background: white;
+        border-color: #e2e8f0;
+    }
+
+    .status-item:last-child {
+        margin-bottom: 0;
+    }
 
     .status-text {
         font-weight: 700;
         font-size: 14px;
         color: var(--text-dark);
     }
-    
+
     .status-desc {
         font-size: 12px;
         color: var(--text-muted);
@@ -154,12 +170,20 @@ include 'templates/header.php';
         font-weight: 800;
         letter-spacing: 0.5px;
     }
-    .status-badge-proses { background: #fef9c3; color: #a16207; }
-    .status-badge-ditolak { background: #fee2e2; color: #b91c1c; }
+
+    .status-badge-proses {
+        background: #fef9c3;
+        color: #a16207;
+    }
+
+    .status-badge-ditolak {
+        background: #fee2e2;
+        color: #b91c1c;
+    }
 </style>
 
 <div class="animate-up" style="animation-delay: 0.1s;">
-    
+
     <!-- Welcome Card -->
     <div class="welcome-card">
         <h1 class="welcome-title">Hai, <?= htmlspecialchars($_SESSION['nama'] ?? 'Pengawas') ?> 👋</h1>
@@ -170,20 +194,30 @@ include 'templates/header.php';
     <div class="menu-list">
         <a href="absen_mandiri.php" class="menu-btn">
             <div class="menu-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
             </div>
             <div class="menu-text">Jam Masuk</div>
-            <svg class="menu-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            <svg class="menu-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
         </a>
-        
+
         <a href="form_izin.php" class="menu-btn">
             <div class="menu-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                </svg>
             </div>
             <div class="menu-text">Ajukan Izin/Sakit/Cuti</div>
-            <svg class="menu-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            <svg class="menu-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
         </a>
-        
+
         <!-- DISABLED: Rekapan Absensi
         <a href="rekapan_absensi.php" class="menu-btn">
             <div class="menu-icon">
@@ -193,31 +227,70 @@ include 'templates/header.php';
             <svg class="menu-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
         </a>
         -->
-        
+
         <a href="buat_objek_kerja.php" class="menu-btn">
             <div class="menu-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
             </div>
             <div class="menu-text">Buat Objek Kerja</div>
-            <svg class="menu-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            <svg class="menu-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
         </a>
-        
+
         <a href="laporan_kinerja.php" class="menu-btn">
             <div class="menu-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="20" x2="18" y2="10"></line>
+                    <line x1="12" y1="20" x2="12" y2="4"></line>
+                    <line x1="6" y1="20" x2="6" y2="14"></line>
+                </svg>
             </div>
             <div class="menu-text">Laporan Kinerja</div>
-            <svg class="menu-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            <svg class="menu-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
         </a>
-        
+
         <a href="laporan_keseluruhan.php" class="menu-btn">
             <div class="menu-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                    <polyline points="10 9 9 9 8 9"></polyline>
+                </svg>
             </div>
             <div class="menu-text">Laporan Keseluruhan</div>
-            <svg class="menu-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            <svg class="menu-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
         </a>
-        
+
+        <a href="laporan_mingguan.php" class="menu-btn">
+            <div class="menu-icon">
+                <!-- Using a calendar week icon -->
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                    <rect x="8" y="14" width="3" height="3"></rect>
+                    <rect x="13" y="14" width="3" height="3"></rect>
+                </svg>
+            </div>
+            <div class="menu-text">Laporan Mingguan</div>
+            <svg class="menu-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+        </a>
+
         <!-- DISABLED: Slip Gaji
         <a href="slip_gaji.php" class="menu-btn">
             <div class="menu-icon">
@@ -233,33 +306,43 @@ include 'templates/header.php';
     <div class="status-card">
         <h3>
             <div class="menu-icon" style="width: 32px; height: 32px;">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg>
             </div>
             Status Izin/Sakit/Cuti
         </h3>
-        
+
         <div>
-            <?php 
+            <?php
             $uid = $_SESSION['user_id'];
             $q_izin = mysqli_query($conn, "SELECT jenis, keterangan, tanggal_izin, status FROM perizinan WHERE user_id='$uid' ORDER BY id DESC LIMIT 3");
             if (mysqli_num_rows($q_izin) > 0):
                 while ($izin = mysqli_fetch_assoc($q_izin)):
                     $badge_class = 'status-badge-proses';
                     $badge_text = 'Proses';
-                    if ($izin['status'] == 'disetujui') { $badge_class = 'status-badge-diterima'; $badge_text = 'Disetujui'; }
-                    if ($izin['status'] == 'ditolak') { $badge_class = 'status-badge-ditolak'; $badge_text = 'Ditolak'; }
+                    if ($izin['status'] == 'disetujui') {
+                        $badge_class = 'status-badge-diterima';
+                        $badge_text = 'Disetujui';
+                    }
+                    if ($izin['status'] == 'ditolak') {
+                        $badge_class = 'status-badge-ditolak';
+                        $badge_text = 'Ditolak';
+                    }
             ?>
-            <div class="status-item">
-                <div>
-                    <div class="status-text"><?= ucfirst(htmlspecialchars($izin['jenis'])) ?></div>
-                    <div class="status-desc">Diajukan: <?= date('d M Y', strtotime($izin['tanggal_izin'])) ?></div>
+                    <div class="status-item">
+                        <div>
+                            <div class="status-text"><?= ucfirst(htmlspecialchars($izin['jenis'])) ?></div>
+                            <div class="status-desc">Diajukan: <?= date('d M Y', strtotime($izin['tanggal_izin'])) ?></div>
+                        </div>
+                        <span class="status-badge <?= $badge_class ?>"><?= $badge_text ?></span>
+                    </div>
+                <?php endwhile;
+            else: ?>
+                <div style="text-align:center; padding: 20px; color: #94a3b8; font-size: 13px;">
+                    Belum ada pengajuan izin.
                 </div>
-                <span class="status-badge <?= $badge_class ?>"><?= $badge_text ?></span>
-            </div>
-            <?php endwhile; else: ?>
-            <div style="text-align:center; padding: 20px; color: #94a3b8; font-size: 13px;">
-                Belum ada pengajuan izin.
-            </div>
             <?php endif; ?>
         </div>
     </div>

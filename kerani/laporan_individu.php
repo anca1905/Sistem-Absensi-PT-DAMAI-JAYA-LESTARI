@@ -6,24 +6,23 @@ include 'templates/header.php';
 $list_objek = [
     'Langsir manual',
     'Membabat gawangan',
-    'Semprot pingan',
     'Rawat jalan',
-    'Kotrek anyangan',
     'Panen',
-    'Potong buah',
-    'Kutip brondolan',
+    'Penunasan',
+    'Racun piringan',
+    'Perawatan',
     'Muat TBS ke truk',
-    'Muat TBS ke jondol'
+    'Muat TBS ke jonder'
 ];
 
 // Tipe tabel berdasarkan objek kerja
 function getTableType($objek)
 {
     if ($objek === 'Langsir manual') return 'T1';
-    if (in_array($objek, ['Membabat gawangan', 'Semprot pingan', 'Rawat jalan', 'Kotrek anyangan'])) return 'T2';
+    if (in_array($objek, ['Membabat gawangan', 'Rawat jalan', 'Penunasan', 'Racun piringan', 'Perawatan'])) return 'T2';
     if (in_array($objek, ['Panen', 'Potong buah'])) return 'T3';
     if ($objek === 'Kutip brondolan') return 'T4';
-    if (in_array($objek, ['Muat TBS ke truk', 'Muat TBS ke jondol'])) return 'T5';
+    if (in_array($objek, ['Muat TBS ke truk', 'Muat TBS ke jonder'])) return 'T5';
     return 'T2';
 }
 
