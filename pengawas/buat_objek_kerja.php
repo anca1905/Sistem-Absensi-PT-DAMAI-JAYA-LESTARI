@@ -20,9 +20,6 @@ while ($m = mysqli_fetch_assoc($query_mandor)) {
 
 // Data Master (Ditanam di code seperti permintaan client)
 $list_objek = [
-    'Langsir manual',
-    'Membabat gawangan',
-    'Rawat jalan',
     'Panen',
     'Penunasan',
     'Racun piringan',

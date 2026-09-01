@@ -4,9 +4,6 @@ include 'templates/header.php';
 
 // --- Konstanta Data Real ---
 $list_objek = [
-    'Langsir manual',
-    'Membabat gawangan',
-    'Rawat jalan',
     'Panen',
     'Penunasan',
     'Racun piringan',
@@ -16,23 +13,17 @@ $list_objek = [
 ];
 
 // Tipe tabel berdasarkan objek kerja
-function getTableType($objek)
-{
-    if ($objek === 'Langsir manual') return 'T1';
-    if (in_array($objek, ['Membabat gawangan', 'Rawat jalan', 'Penunasan', 'Racun piringan', 'Perawatan'])) return 'T2';
-    if (in_array($objek, ['Panen', 'Potong buah'])) return 'T3';
-    if ($objek === 'Kutip brondolan') return 'T4';
+function getTableType($objek) {
+    if ($objek === 'Panen') return 'T3';
+    if (in_array($objek, ['Penunasan', 'Racun piringan', 'Perawatan'])) return 'T2';
     if (in_array($objek, ['Muat TBS ke truk', 'Muat TBS ke jonder'])) return 'T5';
     return 'T2';
 }
 
 // Label tipe tabel
 $label_tipe = [
-    'T1' => 'Langsir',
-    'T2' => 'Perawatan',
-    'T3' => 'Panen/Potong Buah',
-    'T4' => 'Kutip Brondolan',
-    'T5' => 'Muat TBS'
+    'T1' => 'Langsir', 'T2' => 'Pemeliharaan',
+    'T3' => 'Panen', 'T4' => 'Kutip Brondolan', 'T5' => 'Muat TBS'
 ];
 
 // Nama bulan
@@ -465,7 +456,7 @@ $periode_label = "01 - {$jumlah_hari} " . $nama_bulan[$bulan] . " {$tahun}";
 
     <!-- Toolbar Filter -->
     <div class="lk-toolbar no-print">
-        <form method="GET" id="filterForm" class="lk-filter-group">
+        <form method="GET" id="filterForm" class="lk-filter-group" onchange="this.submit()">
             <select name="bulan" class="lk-select">
                 <?php foreach ($nama_bulan as $num => $nm): ?>
                     <option value="<?= $num ?>" <?= $bulan == $num ? 'selected' : '' ?>><?= $nm ?></option>
@@ -481,7 +472,7 @@ $periode_label = "01 - {$jumlah_hari} " . $nama_bulan[$bulan] . " {$tahun}";
                     <option value="<?= htmlspecialchars($obj) ?>" <?= $objek == $obj ? 'selected' : '' ?>><?= htmlspecialchars($obj) ?></option>
                 <?php endforeach; ?>
             </select>
-            <button type="submit" class="btn-filter-go">Tampilkan</button>
+            <button type="submit" class="btn-filter-go" style="display: none;">Tampilkan</button>
         </form>
         <button class="btn-print-lk" onclick="cetakLaporan()">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">

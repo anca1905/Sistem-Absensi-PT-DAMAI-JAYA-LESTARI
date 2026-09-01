@@ -4,9 +4,6 @@ include 'templates/header.php';
 
 // --- Konstanta Data Real ---
 $list_objek = [
-    'Langsir manual',
-    'Membabat gawangan',
-    'Rawat jalan',
     'Panen',
     'Penunasan',
     'Racun piringan',
@@ -16,23 +13,17 @@ $list_objek = [
 ];
 
 // Tipe tabel berdasarkan objek kerja
-function getTableType($objek)
-{
-    if ($objek === 'Langsir manual') return 'T1';
-    if (in_array($objek, ['Membabat gawangan', 'Rawat jalan', 'Penunasan', 'Racun piringan', 'Perawatan'])) return 'T2';
-    if (in_array($objek, ['Panen', 'Potong buah'])) return 'T3';
-    if ($objek === 'Kutip brondolan') return 'T4';
+function getTableType($objek) {
+    if ($objek === 'Panen') return 'T3';
+    if (in_array($objek, ['Penunasan', 'Racun piringan', 'Perawatan'])) return 'T2';
     if (in_array($objek, ['Muat TBS ke truk', 'Muat TBS ke jonder'])) return 'T5';
     return 'T2';
 }
 
 // Label tipe tabel
 $label_tipe = [
-    'T1' => 'Langsir',
-    'T2' => 'Perawatan',
-    'T3' => 'Panen/Potong Buah',
-    'T4' => 'Kutip Brondolan',
-    'T5' => 'Muat TBS'
+    'T1' => 'Langsir', 'T2' => 'Pemeliharaan',
+    'T3' => 'Panen', 'T4' => 'Kutip Brondolan', 'T5' => 'Muat TBS'
 ];
 
 // Nama bulan
@@ -55,15 +46,36 @@ $nama_bulan = [
 $bulan     = isset($_GET['bulan'])      ? str_pad($_GET['bulan'], 2, '0', STR_PAD_LEFT) : date('m');
 $tahun     = isset($_GET['tahun'])      ? (int)$_GET['tahun']  : (int)date('Y');
 $minggu    = isset($_GET['minggu'])     ? (int)$_GET['minggu'] : 1;
-$objek     = isset($_GET['objek'])      ? $_GET['objek']        : 'Langsir manual';
+$objek     = isset($_GET['objek'])      ? $_GET['objek']        : 'Panen';
+$karyawan_id = isset($_GET['karyawan_id']) ? (int)$_GET['karyawan_id'] : 0;
 
-if (!in_array($objek, $list_objek)) $objek = 'Langsir manual';
+if (!in_array($objek, $list_objek)) $objek = 'Panen';
 $tipe = getTableType($objek);
 
 $objek_safe   = mysqli_real_escape_string($conn, $objek);
 $bulan_int    = (int)$bulan;
-$uid          = $_SESSION['user_id'];
-$nama_karyawan = htmlspecialchars($_SESSION['nama'] ?? 'Karyawan');
+$pengawas_id  = $_SESSION['user_id'];
+$afdeling_pengawas = isset($_SESSION['afdeling']) ? mysqli_real_escape_string($conn, $_SESSION['afdeling']) : '';
+
+// --- Fetch List Karyawan ---
+$where_karyawan = "role='karyawan'";
+if (!empty($afdeling_pengawas)) $where_karyawan .= " AND afdeling='$afdeling_pengawas'";
+$q_users = mysqli_query($conn, "SELECT id, name FROM users WHERE $where_karyawan ORDER BY name ASC");
+$list_karyawan = [];
+while ($u = mysqli_fetch_assoc($q_users)) $list_karyawan[] = $u;
+
+if ($karyawan_id == 0 && count($list_karyawan) > 0) {
+    $karyawan_id = $list_karyawan[0]['id'];
+}
+
+$uid          = $karyawan_id;
+$nama_karyawan = 'Pilih Karyawan';
+foreach ($list_karyawan as $lk) {
+    if ($lk['id'] == $karyawan_id) {
+        $nama_karyawan = htmlspecialchars($lk['name']);
+        break;
+    }
+}
 
 $jumlah_hari = cal_days_in_month(CAL_GREGORIAN, $bulan_int, $tahun);
 
@@ -476,7 +488,7 @@ $periode_label = str_pad($start_day, 2, '0', STR_PAD_LEFT) . " - " . str_pad($en
 
     <!-- Toolbar Filter -->
     <div class="lk-toolbar no-print">
-        <form method="GET" id="filterForm" class="lk-filter-group">
+        <form method="GET" id="filterForm" class="lk-filter-group" onchange="this.submit()">
             <select name="bulan" class="lk-select">
                 <?php foreach ($nama_bulan as $num => $nm): ?>
                     <option value="<?= $num ?>" <?= $bulan == $num ? 'selected' : '' ?>><?= $nm ?></option>
@@ -499,7 +511,15 @@ $periode_label = str_pad($start_day, 2, '0', STR_PAD_LEFT) . " - " . str_pad($en
                     <option value="<?= htmlspecialchars($obj) ?>" <?= $objek == $obj ? 'selected' : '' ?>><?= htmlspecialchars($obj) ?></option>
                 <?php endforeach; ?>
             </select>
-            <button type="submit" class="btn-filter-go">Tampilkan</button>
+            <select name="karyawan_id" class="lk-select" style="min-width:200px;">
+                <?php foreach ($list_karyawan as $k): ?>
+                    <option value="<?= $k['id'] ?>" <?= $karyawan_id == $k['id'] ? 'selected' : '' ?>><?= htmlspecialchars($k['name']) ?></option>
+                <?php endforeach; ?>
+                <?php if (empty($list_karyawan)): ?>
+                    <option value="0">Tidak ada karyawan</option>
+                <?php endif; ?>
+            </select>
+            <button type="submit" class="btn-filter-go" style="display: none;">Tampilkan</button>
         </form>
         <button class="btn-print-lk" onclick="cetakLaporan()">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">

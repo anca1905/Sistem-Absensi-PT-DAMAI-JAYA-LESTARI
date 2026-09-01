@@ -4,36 +4,26 @@ include 'templates/header.php';
 
 // --- Konstanta Data Real ---
 $list_objek = [
-    'Langsir manual',
-    'Membabat gawangan',
-    'Semprot pingan',
-    'Rawat jalan',
-    'Kotrek anyangan',
     'Panen',
-    'Potong buah',
-    'Kutip brondolan',
+    'Penunasan',
+    'Racun piringan',
+    'Perawatan',
     'Muat TBS ke truk',
-    'Muat TBS ke jondol'
+    'Muat TBS ke jonder'
 ];
 
 // Tipe tabel berdasarkan objek kerja
-function getTableType($objek)
-{
-    if ($objek === 'Langsir manual') return 'T1';
-    if (in_array($objek, ['Membabat gawangan', 'Semprot pingan', 'Rawat jalan', 'Kotrek anyangan'])) return 'T2';
-    if (in_array($objek, ['Panen', 'Potong buah'])) return 'T3';
-    if ($objek === 'Kutip brondolan') return 'T4';
-    if (in_array($objek, ['Muat TBS ke truk', 'Muat TBS ke jondol'])) return 'T5';
+function getTableType($objek) {
+    if ($objek === 'Panen') return 'T3';
+    if (in_array($objek, ['Penunasan', 'Racun piringan', 'Perawatan'])) return 'T2';
+    if (in_array($objek, ['Muat TBS ke truk', 'Muat TBS ke jonder'])) return 'T5';
     return 'T2';
 }
 
 // Label tipe tabel
 $label_tipe = [
-    'T1' => 'Langsir',
-    'T2' => 'Perawatan',
-    'T3' => 'Panen/Potong Buah',
-    'T4' => 'Kutip Brondolan',
-    'T5' => 'Muat TBS'
+    'T1' => 'Langsir', 'T2' => 'Pemeliharaan',
+    'T3' => 'Panen', 'T4' => 'Kutip Brondolan', 'T5' => 'Muat TBS'
 ];
 
 // Nama bulan
@@ -509,7 +499,7 @@ $list_karyawan_page = array_slice($list_karyawan, $offset, $per_page);
 
 <!-- Toolbar Filter -->
 <div class="lk-toolbar no-print">
-    <form method="GET" id="filterForm" class="lk-filter-group">
+    <form method="GET" id="filterForm" class="lk-filter-group" onchange="this.submit()">
         <!-- Filter Afdeling -->
         <select name="afdeling" class="lk-select">
             <option value="">Semua Afdeling</option>
@@ -536,7 +526,7 @@ $list_karyawan_page = array_slice($list_karyawan, $offset, $per_page);
             <i class="fa-solid fa-magnifying-glass" style="position:absolute; left:12px; color:#94a3b8; font-size:13px; pointer-events:none;"></i>
             <input type="text" name="cari" class="lk-input" placeholder="Cari nama / NIK..." value="<?= htmlspecialchars($cari) ?>" style="padding-left:34px;">
         </div>
-        <button type="submit" class="btn-filter-go">Tampilkan</button>
+        <button type="submit" class="btn-filter-go" style="display: none;">Tampilkan</button>
     </form>
     <button class="btn-print-lk" onclick="cetakLaporan()">
         <i class="fa-solid fa-print"></i>

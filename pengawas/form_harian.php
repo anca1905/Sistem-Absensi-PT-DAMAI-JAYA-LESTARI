@@ -23,16 +23,12 @@ while($m = mysqli_fetch_assoc($query_mandor)) { $list_mandor[] = $m; }
 
 // --- Data Master (blok & objek — data real PT DJL) ---
 $list_objek = [
-    'Langsir manual',
-    'Membabat gawangan',
-    'Semprot pingan',
-    'Rawat jalan',
-    'Kotrek anyangan',
     'Panen',
-    'Potong buah',
-    'Kutip brondolan',
+    'Penunasan',
+    'Racun piringan',
+    'Perawatan',
     'Muat TBS ke truk',
-    'Muat TBS ke jondol'
+    'Muat TBS ke jonder'
 ];
 $list_blok = [
     'H.39' => '8.66',  'H.40' => '0.91',
