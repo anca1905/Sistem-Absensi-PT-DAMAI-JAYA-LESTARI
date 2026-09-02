@@ -6,7 +6,7 @@ $bulan = isset($_GET['bulan']) ? str_pad($_GET['bulan'], 2, '0', STR_PAD_LEFT) :
 $tahun = isset($_GET['tahun']) ? (int)$_GET['tahun'] : (int)date('Y');
 $cari  = isset($_GET['cari'])  ? trim($_GET['cari']) : '';
 
-$jumlah_hari = cal_days_in_month(CAL_GREGORIAN, (int)$bulan, $tahun);
+$jumlah_hari = date('t', mktime(0, 0, 0, (int)$bulan, 1, $tahun));
 $nama_bulan  = [
     '01' => 'Januari',
     '02' => 'Februari',

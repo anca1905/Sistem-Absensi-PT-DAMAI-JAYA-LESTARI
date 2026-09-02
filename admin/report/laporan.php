@@ -11,7 +11,7 @@ $tahun    = isset($_GET['tahun'])    ? $_GET['tahun']    : date('Y');
 $jabatan  = isset($_GET['jabatan'])  ? $_GET['jabatan']  : '';
 $afdeling = isset($_GET['afdeling']) ? $_GET['afdeling'] : '';
 
-$jumlah_hari = cal_days_in_month(CAL_GREGORIAN, $bulan, $tahun);
+$jumlah_hari = date('t', mktime(0, 0, 0, $bulan, 1, $tahun));
 
 $nama_bulan = [
     '01' => 'Januari',
