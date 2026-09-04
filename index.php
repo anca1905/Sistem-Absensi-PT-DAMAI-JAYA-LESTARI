@@ -226,19 +226,21 @@ if (isset($_POST['login'])) {
             border-top: 1px solid #e5e7eb;
         }
 
-        /* --- LOGO PLACEHOLDER --- */
+        /* --- LOGO --- */
         .logo-area {
-            width: 60px;
-            height: 60px;
-            background-color: white;
-            border-radius: 50%;
+            width: 80px;
+            height: 80px;
             margin: 0 auto 10px auto;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: bold;
-            color: #1e3a8a;
-            font-size: 24px;
+        }
+
+        .logo-area img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
         }
 
         /* --- MODAL PIN SCANNER --- */
@@ -362,7 +364,9 @@ if (isset($_POST['login'])) {
 
     <div class="login-container">
         <div class="login-header">
-            <div class="logo-area">DJL</div>
+            <div class="logo-area">
+                <img src="assets/img/logo.png" alt="Logo PT DJL" onerror="this.style.display='none'">
+            </div>
             <h2>Sistem Absensi</h2>
             <p>PT DAMAI JAYA LESTARI</p>
         </div>
