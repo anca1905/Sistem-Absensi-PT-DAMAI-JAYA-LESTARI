@@ -1,0 +1,67 @@
+CREATE TABLE `logbook_kinerja` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `mandor_id` int DEFAULT NULL,
+  `tanggal` date NOT NULL,
+  `blok` varchar(20) DEFAULT NULL,
+  `luas_ha` decimal(5,2) DEFAULT NULL,
+  `objek_kerja` varchar(100) DEFAULT NULL,
+  `kategori_task` enum('perawatan','potong_buah','muat_tbs','langsir','jaga') NOT NULL,
+  `hasil_ton` decimal(8,2) DEFAULT NULL,
+  `hasil_kg` decimal(8,2) DEFAULT NULL,
+  `prestasi_ton` decimal(8,2) DEFAULT NULL,
+  `prestasi_kg` decimal(8,2) DEFAULT NULL,
+  `tbs` int DEFAULT NULL,
+  `tandan_kosong` int DEFAULT NULL,
+  `tandan_brondol` int DEFAULT NULL,
+  `total_tandan` int DEFAULT NULL,
+  `hasil_langsir_kg` decimal(8,2) DEFAULT NULL,
+  `jumlah_jam_kerja` decimal(5,1) DEFAULT NULL,
+  `aksi` enum('belum','selesai') DEFAULT 'belum',
+  `status` enum('pending','ditinjau','diterima','ditolak') DEFAULT 'pending',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `rencana_id` int DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+
+CREATE TABLE `rencana_kerja_pengawas` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `tanggal` date NOT NULL,
+  `pengawas_id` int NOT NULL,
+  `mandor_id` int NOT NULL,
+  `objek_kerja` varchar(100) NOT NULL,
+  `tenaga_l` int DEFAULT '0',
+  `tenaga_w` int DEFAULT '0',
+  `blok` varchar(50) DEFAULT NULL,
+  `luas_ha` varchar(50) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+
+CREATE TABLE `perizinan` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `tanggal_pengajuan` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `tanggal_izin` date NOT NULL,
+  `jenis` enum('sakit','izin','cuti') COLLATE utf8mb4_general_ci NOT NULL,
+  `keterangan` text COLLATE utf8mb4_general_ci NOT NULL,
+  `bukti_file` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `status` enum('pending','disetujui','ditolak') COLLATE utf8mb4_general_ci DEFAULT 'pending',
+  `keterangan_pengawas` text COLLATE utf8mb4_general_ci,
+  PRIMARY KEY (`id`),
+  KEY `user_id` (`user_id`),
+  CONSTRAINT `perizinan_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci
+
+CREATE TABLE `absensis` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `tanggal` date NOT NULL,
+  `waktu_masuk` time DEFAULT NULL,
+  `waktu_pulang` time DEFAULT NULL,
+  `status_kehadiran` enum('tepat_waktu','terlambat','alpha','izin','sakit','hadir','cuti') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT 'hadir',
+  PRIMARY KEY (`id`),
+  KEY `user_id` (`user_id`),
+  CONSTRAINT `absensis_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=68 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci
+

@@ -13,7 +13,8 @@ $list_objek = [
 ];
 
 // Tipe tabel berdasarkan objek kerja
-function getTableType($objek) {
+function getTableType($objek)
+{
     if ($objek === 'Panen') return 'T3';
     if (in_array($objek, ['Penunasan', 'Racun piringan', 'Perawatan'])) return 'T2';
     if (in_array($objek, ['Muat TBS ke truk', 'Muat TBS ke jonder'])) return 'T5';
@@ -22,8 +23,11 @@ function getTableType($objek) {
 
 // Label tipe tabel
 $label_tipe = [
-    'T1' => 'Langsir', 'T2' => 'Pemeliharaan',
-    'T3' => 'Panen', 'T4' => 'Kutip Brondolan', 'T5' => 'Muat TBS'
+    'T1' => 'Langsir',
+    'T2' => 'Pemeliharaan',
+    'T3' => 'Panen',
+    'T4' => 'Kutip Brondolan',
+    'T5' => 'Muat TBS'
 ];
 
 // Nama bulan
@@ -55,7 +59,7 @@ $bulan_int    = (int)$bulan;
 $uid          = $_SESSION['user_id'];
 $nama_karyawan = htmlspecialchars($_SESSION['nama'] ?? 'Karyawan');
 
-$jumlah_hari = cal_days_in_month(CAL_GREGORIAN, $bulan_int, $tahun);
+$jumlah_hari = (int)date('t', mktime(0, 0, 0, $bulan_int, 1, $tahun));
 $periode_label = "01 - {$jumlah_hari} " . $nama_bulan[$bulan] . " {$tahun}";
 ?>
 <style>
@@ -533,7 +537,7 @@ $periode_label = "01 - {$jumlah_hari} " . $nama_bulan[$bulan] . " {$tahun}";
                             <th class="th-o2">LUAS (Ha)</th>
                         <?php elseif ($tipe === 'T3'): ?>
                             <th class="th-o2">NAMA MANDOR</th>
-                            
+
                             <th class="th-o2">TS</th>
                             <th class="th-o2">TBS</th>
                             <th class="th-o2">TOTAL TANDAN</th>
@@ -657,7 +661,7 @@ $periode_label = "01 - {$jumlah_hari} " . $nama_bulan[$bulan] . " {$tahun}";
                             <?php elseif ($tipe === 'T3'): ?>
                                 <?php if ($has_data): ?>
                                     <td><?= htmlspecialchars($lb['nama_mandor'] ?? '—') ?></td>
-                                                                        <td class="td-num"><?= number_format($lb['tandan_kosong'] ?? 0, 0) ?></td>
+                                    <td class="td-num"><?= number_format($lb['tandan_kosong'] ?? 0, 0) ?></td>
                                     <td class="td-num"><?= number_format($lb['tbs'] ?? 0, 0) ?></td>
                                     <td class="td-num"><?= number_format($lb['total_tandan'] ?? 0, 0) ?></td>
                                     <td class="td-center"><?= htmlspecialchars($lb['blok'] ?? '—') ?></td>
@@ -710,7 +714,7 @@ $periode_label = "01 - {$jumlah_hari} " . $nama_bulan[$bulan] . " {$tahun}";
                             <td>—</td>
                         <?php elseif ($tipe === 'T3'): ?>
                             <td>—</td>
-                                                        <td style="text-align:right;"><?= number_format($sum_ts, 0) ?></td>
+                            <td style="text-align:right;"><?= number_format($sum_ts, 0) ?></td>
                             <td style="text-align:right;"><?= number_format($sum_tbs, 0) ?></td>
                             <td style="text-align:right;"><?= number_format($sum_total_tandan, 0) ?></td>
                             <td>—</td>

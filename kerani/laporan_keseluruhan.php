@@ -26,7 +26,8 @@ $list_blok = [
 ];
 
 // Tipe tabel berdasarkan objek kerja
-function getTableType($objek) {
+function getTableType($objek)
+{
     if ($objek === 'Panen') return 'T3';
     if (in_array($objek, ['Penunasan', 'Racun piringan', 'Perawatan'])) return 'T2';
     if (in_array($objek, ['Muat TBS ke truk', 'Muat TBS ke jonder'])) return 'T5';
@@ -35,8 +36,11 @@ function getTableType($objek) {
 
 // Label tipe tabel
 $label_tipe = [
-    'T1' => 'Langsir', 'T2' => 'Pemeliharaan',
-    'T3' => 'Panen', 'T4' => 'Kutip Brondolan', 'T5' => 'Muat TBS'
+    'T1' => 'Langsir',
+    'T2' => 'Pemeliharaan',
+    'T3' => 'Panen',
+    'T4' => 'Kutip Brondolan',
+    'T5' => 'Muat TBS'
 ];
 
 // Nama bulan
@@ -79,7 +83,7 @@ $q_users = mysqli_query($conn, "SELECT id, nik, name FROM users WHERE $where_kar
 $list_karyawan = [];
 while ($u = mysqli_fetch_assoc($q_users)) $list_karyawan[] = $u;
 
-$jumlah_hari = cal_days_in_month(CAL_GREGORIAN, $bulan_int, $tahun);
+$jumlah_hari = (int)date('t', mktime(0, 0, 0, $bulan_int, 1, $tahun));
 $periode_label = "01 - {$jumlah_hari} " . $nama_bulan[$bulan] . " {$tahun}";
 
 // --- Pagination ---

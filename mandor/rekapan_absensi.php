@@ -2,19 +2,31 @@
 require '../config/config.php';
 include 'templates/header.php';
 ?>
-<style type="text/css" media="print">@page { size: landscape; }</style>
+<style type="text/css" media="print">
+    @page {
+        size: landscape;
+    }
+</style>
 <?php
 
 $user_id = $_SESSION['user_id'];
 $bulan = isset($_GET['bulan']) ? $_GET['bulan'] : date('m');
 $tahun = isset($_GET['tahun']) ? $_GET['tahun'] : date('Y');
-$jumlah_hari = cal_days_in_month(CAL_GREGORIAN, $bulan, $tahun);
+$jumlah_hari = (int)date('t', mktime(0, 0, 0, (int)$bulan, 1, $tahun));
 
 $nama_bulan = array(
-    '01' => 'Januari', '02' => 'Februari', '03' => 'Maret',
-    '04' => 'April', '05' => 'Mei', '06' => 'Juni',
-    '07' => 'Juli', '08' => 'Agustus', '09' => 'September',
-    '10' => 'Oktober', '11' => 'November', '12' => 'Desember'
+    '01' => 'Januari',
+    '02' => 'Februari',
+    '03' => 'Maret',
+    '04' => 'April',
+    '05' => 'Mei',
+    '06' => 'Juni',
+    '07' => 'Juli',
+    '08' => 'Agustus',
+    '09' => 'September',
+    '10' => 'Oktober',
+    '11' => 'November',
+    '12' => 'Desember'
 );
 
 // Ambil data absensi dari DB
@@ -34,7 +46,7 @@ while ($row = mysqli_fetch_assoc($query_absen)) {
         background: #ffffff;
         border-radius: 16px;
         padding: 24px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
         border: 1px solid #e2e8f0;
         margin-bottom: 20px;
     }
@@ -54,7 +66,7 @@ while ($row = mysqli_fetch_assoc($query_absen)) {
         transition: all 0.2s;
         box-sizing: border-box;
     }
-    
+
     .form-select:focus {
         border-color: var(--primary-start);
         box-shadow: 0 0 0 4px rgba(66, 88, 255, 0.1);
@@ -66,17 +78,20 @@ while ($row = mysqli_fetch_assoc($query_absen)) {
         overflow-x: auto;
         border-radius: 10px;
         border: 1px solid #e2e8f0;
-        -webkit-overflow-scrolling: touch; /* Smooth scroll on iOS */
+        -webkit-overflow-scrolling: touch;
+        /* Smooth scroll on iOS */
     }
 
     .table-absen {
         border-collapse: collapse;
         white-space: nowrap;
         font-size: 13px;
-        min-width: 600px; /* Force scroll if too small */
+        min-width: 600px;
+        /* Force scroll if too small */
     }
 
-    .table-absen th, .table-absen td {
+    .table-absen th,
+    .table-absen td {
         padding: 10px 12px;
         border: 1px solid #e2e8f0;
         text-align: center;
@@ -98,13 +113,36 @@ while ($row = mysqli_fetch_assoc($query_absen)) {
         font-weight: bold;
         font-size: 10px;
     }
-    
-    .status-h { background-color: #dcfce7; color: #166534; }
-    .status-t { background-color: #fef9c3; color: #854d0e; }
-    .status-a { background-color: #fee2e2; color: #991b1b; }
-    .status-i { background-color: #e0f2fe; color: #075985; }
-    .status-s { background-color: #ede9fe; color: #5b21b6; }
-    .status-c { background-color: #ffedd5; color: #9a3412; }
+
+    .status-h {
+        background-color: #dcfce7;
+        color: #166534;
+    }
+
+    .status-t {
+        background-color: #fef9c3;
+        color: #854d0e;
+    }
+
+    .status-a {
+        background-color: #fee2e2;
+        color: #991b1b;
+    }
+
+    .status-i {
+        background-color: #e0f2fe;
+        color: #075985;
+    }
+
+    .status-s {
+        background-color: #ede9fe;
+        color: #5b21b6;
+    }
+
+    .status-c {
+        background-color: #ffedd5;
+        color: #9a3412;
+    }
 
     .btn-print {
         width: 100%;
@@ -147,13 +185,45 @@ while ($row = mysqli_fetch_assoc($query_absen)) {
 
     /* Print styles for mobile view */
     @media print {
-        body * { visibility: hidden; }
-        .mobile-container { box-shadow: none; max-width: 100%; width: 100%; margin: 0; padding: 0; }
-        .mobile-content { padding: 0; background: white; }
-        .animate-up, .animate-up * { visibility: visible; }
-        .btn-back, .btn-print, .mobile-header, select { display: none !important; }
-        .table-responsive { overflow: visible; border: none; }
-        .card-container { border: none; box-shadow: none; padding: 0; }
+        body * {
+            visibility: hidden;
+        }
+
+        .mobile-container {
+            box-shadow: none;
+            max-width: 100%;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        .mobile-content {
+            padding: 0;
+            background: white;
+        }
+
+        .animate-up,
+        .animate-up * {
+            visibility: visible;
+        }
+
+        .btn-back,
+        .btn-print,
+        .mobile-header,
+        select {
+            display: none !important;
+        }
+
+        .table-responsive {
+            overflow: visible;
+            border: none;
+        }
+
+        .card-container {
+            border: none;
+            box-shadow: none;
+            padding: 0;
+        }
     }
 </style>
 
@@ -174,12 +244,12 @@ while ($row = mysqli_fetch_assoc($query_absen)) {
             <label style="font-size: 13px; font-weight: 700; color: #475569; display: block; margin-bottom: 8px;">Pilih Periode</label>
             <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px;">
                 <select name="bulan" class="form-select" onchange="document.getElementById('filterForm').submit()">
-                    <?php foreach($nama_bulan as $num => $name): ?>
+                    <?php foreach ($nama_bulan as $num => $name): ?>
                         <option value="<?= $num ?>" <?= $bulan == $num ? 'selected' : '' ?>><?= $name ?></option>
                     <?php endforeach; ?>
                 </select>
                 <select name="tahun" class="form-select" onchange="document.getElementById('filterForm').submit()">
-                    <?php for($y = date('Y') - 2; $y <= date('Y'); $y++): ?>
+                    <?php for ($y = date('Y') - 2; $y <= date('Y'); $y++): ?>
                         <option value="<?= $y ?>" <?= $tahun == $y ? 'selected' : '' ?>><?= $y ?></option>
                     <?php endfor; ?>
                 </select>
@@ -200,16 +270,16 @@ while ($row = mysqli_fetch_assoc($query_absen)) {
                         <th rowspan="2">TOTAL<br>KEHADIRAN</th>
                     </tr>
                     <tr>
-                        <?php for($i = 1; $i <= $jumlah_hari; $i++): ?>
+                        <?php for ($i = 1; $i <= $jumlah_hari; $i++): ?>
                             <th style="min-width: 25px;"><?= $i ?></th>
                         <?php endfor; ?>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
-                        <?php 
+                        <?php
                         $total_hadir = 0;
-                        for($i = 1; $i <= $jumlah_hari; $i++): 
+                        for ($i = 1; $i <= $jumlah_hari; $i++):
                             $status = isset($data_absen[$i]) ? $data_absen[$i] : null;
                             if ($status == 'tepat_waktu' || $status == 'hadir') {
                                 $total_hadir++;
@@ -230,7 +300,7 @@ while ($row = mysqli_fetch_assoc($query_absen)) {
                             }
                         ?>
                         <?php endfor; ?>
-                        
+
                         <td style="font-weight: 600; color: #334155;">-</td>
                         <td style="font-weight: 800; color: #0f172a;"><?= $total_hadir ?> Hari</td>
                     </tr>

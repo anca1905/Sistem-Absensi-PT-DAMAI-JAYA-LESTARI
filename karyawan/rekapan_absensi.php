@@ -2,18 +2,30 @@
 require '../config/config.php';
 include 'templates/header.php';
 ?>
-<style type="text/css" media="print">@page { size: landscape; }</style>
+<style type="text/css" media="print">
+    @page {
+        size: landscape;
+    }
+</style>
 <?php
 
 $bulan = isset($_GET['bulan']) ? $_GET['bulan'] : date('m');
 $tahun = isset($_GET['tahun']) ? $_GET['tahun'] : date('Y');
-$jumlah_hari = cal_days_in_month(CAL_GREGORIAN, $bulan, $tahun);
+$jumlah_hari = (int)date('t', mktime(0, 0, 0, (int)$bulan, 1, $tahun));
 
 $nama_bulan = array(
-    '01' => 'Januari', '02' => 'Februari', '03' => 'Maret',
-    '04' => 'April', '05' => 'Mei', '06' => 'Juni',
-    '07' => 'Juli', '08' => 'Agustus', '09' => 'September',
-    '10' => 'Oktober', '11' => 'November', '12' => 'Desember'
+    '01' => 'Januari',
+    '02' => 'Februari',
+    '03' => 'Maret',
+    '04' => 'April',
+    '05' => 'Mei',
+    '06' => 'Juni',
+    '07' => 'Juli',
+    '08' => 'Agustus',
+    '09' => 'September',
+    '10' => 'Oktober',
+    '11' => 'November',
+    '12' => 'Desember'
 );
 ?>
 
@@ -22,7 +34,7 @@ $nama_bulan = array(
         background: #ffffff;
         border-radius: 16px;
         padding: 24px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
         border: 1px solid #e2e8f0;
         margin-bottom: 20px;
     }
@@ -42,7 +54,7 @@ $nama_bulan = array(
         transition: all 0.2s;
         box-sizing: border-box;
     }
-    
+
     .form-select:focus {
         border-color: var(--primary-start);
         box-shadow: 0 0 0 4px rgba(66, 88, 255, 0.1);
@@ -54,17 +66,20 @@ $nama_bulan = array(
         overflow-x: auto;
         border-radius: 10px;
         border: 1px solid #e2e8f0;
-        -webkit-overflow-scrolling: touch; /* Smooth scroll on iOS */
+        -webkit-overflow-scrolling: touch;
+        /* Smooth scroll on iOS */
     }
 
     .table-absen {
         border-collapse: collapse;
         white-space: nowrap;
         font-size: 13px;
-        min-width: 600px; /* Force scroll if too small */
+        min-width: 600px;
+        /* Force scroll if too small */
     }
 
-    .table-absen th, .table-absen td {
+    .table-absen th,
+    .table-absen td {
         padding: 10px 12px;
         border: 1px solid #e2e8f0;
         text-align: center;
@@ -86,13 +101,36 @@ $nama_bulan = array(
         font-weight: bold;
         font-size: 10px;
     }
-    
-    .status-h { background-color: #dcfce7; color: #166534; }
-    .status-t { background-color: #fef9c3; color: #854d0e; }
-    .status-a { background-color: #fee2e2; color: #991b1b; }
-    .status-i { background-color: #e0f2fe; color: #075985; }
-    .status-s { background-color: #ede9fe; color: #5b21b6; }
-    .status-c { background-color: #ffedd5; color: #9a3412; }
+
+    .status-h {
+        background-color: #dcfce7;
+        color: #166534;
+    }
+
+    .status-t {
+        background-color: #fef9c3;
+        color: #854d0e;
+    }
+
+    .status-a {
+        background-color: #fee2e2;
+        color: #991b1b;
+    }
+
+    .status-i {
+        background-color: #e0f2fe;
+        color: #075985;
+    }
+
+    .status-s {
+        background-color: #ede9fe;
+        color: #5b21b6;
+    }
+
+    .status-c {
+        background-color: #ffedd5;
+        color: #9a3412;
+    }
 
     .btn-print {
         width: 100%;
@@ -135,13 +173,45 @@ $nama_bulan = array(
 
     /* Print styles for mobile view */
     @media print {
-        body * { visibility: hidden; }
-        .mobile-container { box-shadow: none; max-width: 100%; width: 100%; margin: 0; padding: 0; }
-        .mobile-content { padding: 0; background: white; }
-        .animate-up, .animate-up * { visibility: visible; }
-        .btn-back, .btn-print, .mobile-header, select { display: none !important; }
-        .table-responsive { overflow: visible; border: none; }
-        .card-container { border: none; box-shadow: none; padding: 0; }
+        body * {
+            visibility: hidden;
+        }
+
+        .mobile-container {
+            box-shadow: none;
+            max-width: 100%;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        .mobile-content {
+            padding: 0;
+            background: white;
+        }
+
+        .animate-up,
+        .animate-up * {
+            visibility: visible;
+        }
+
+        .btn-back,
+        .btn-print,
+        .mobile-header,
+        select {
+            display: none !important;
+        }
+
+        .table-responsive {
+            overflow: visible;
+            border: none;
+        }
+
+        .card-container {
+            border: none;
+            box-shadow: none;
+            padding: 0;
+        }
     }
 </style>
 
@@ -162,12 +232,12 @@ $nama_bulan = array(
             <label style="font-size: 13px; font-weight: 700; color: #475569; display: block; margin-bottom: 8px;">Pilih Periode</label>
             <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px;">
                 <select name="bulan" class="form-select" onchange="document.getElementById('filterForm').submit()">
-                    <?php foreach($nama_bulan as $num => $name): ?>
+                    <?php foreach ($nama_bulan as $num => $name): ?>
                         <option value="<?= $num ?>" <?= $bulan == $num ? 'selected' : '' ?>><?= $name ?></option>
                     <?php endforeach; ?>
                 </select>
                 <select name="tahun" class="form-select" onchange="document.getElementById('filterForm').submit()">
-                    <?php for($y = date('Y') - 2; $y <= date('Y'); $y++): ?>
+                    <?php for ($y = date('Y') - 2; $y <= date('Y'); $y++): ?>
                         <option value="<?= $y ?>" <?= $tahun == $y ? 'selected' : '' ?>><?= $y ?></option>
                     <?php endfor; ?>
                 </select>
@@ -188,21 +258,21 @@ $nama_bulan = array(
                         <th rowspan="2">TOTAL<br>KEHADIRAN</th>
                     </tr>
                     <tr>
-                        <?php for($i = 1; $i <= $jumlah_hari; $i++): ?>
+                        <?php for ($i = 1; $i <= $jumlah_hari; $i++): ?>
                             <th style="min-width: 25px;"><?= $i ?></th>
                         <?php endfor; ?>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
-                        <?php 
+                        <?php
                         $total_hadir = 0;
                         $user_id = $_SESSION['user_id'] ?? 1;
-                        for($i = 1; $i <= $jumlah_hari; $i++): 
+                        for ($i = 1; $i <= $jumlah_hari; $i++):
                             $tgl_str = sprintf("%04d-%02d-%02d", $tahun, $bulan, $i);
                             $cek_absen = mysqli_query($conn, "SELECT status_kehadiran FROM absensis WHERE user_id=$user_id AND tanggal='$tgl_str'");
-                            
-                            if(mysqli_num_rows($cek_absen) > 0) {
+
+                            if (mysqli_num_rows($cek_absen) > 0) {
                                 $row_abs = mysqli_fetch_assoc($cek_absen);
                                 if ($row_abs['status_kehadiran'] == 'alpha') {
                                     echo '<td><span class="status-badge status-a">A</span></td>';
@@ -234,7 +304,7 @@ $nama_bulan = array(
                             }
                         ?>
                         <?php endfor; ?>
-                        
+
                         <td style="font-weight: 600; color: #334155;">-</td>
                         <td style="font-weight: 800; color: #0f172a;"><?= $total_hadir ?> Hari</td>
                     </tr>
