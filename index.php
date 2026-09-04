@@ -19,7 +19,7 @@ if (isset($_POST['login'])) {
             $_SESSION['user_id'] = $data['id'];
             $_SESSION['nama']    = $data['name'];
             $_SESSION['role']    = $data['role'];
-            $_SESSION['afdeling']= $data['afdeling'];
+            $_SESSION['afdeling'] = $data['afdeling'];
 
             if ($data['role'] == 'admin' || $data['role'] == 'pimpinan') {
                 header("Location: admin/index.php");
@@ -377,7 +377,7 @@ if (isset($_POST['login'])) {
 
             <form method="POST">
                 <div class="form-group">
-                    <label class="form-label">Email Pegawai</label>
+                    <label class="form-label">Email</label>
                     <input type="email" name="email" class="form-input" placeholder="Contoh: nama@kantor.com" required autocomplete="email">
                 </div>
 
@@ -385,9 +385,9 @@ if (isset($_POST['login'])) {
                     <label class="form-label">Kata Sandi</label>
                     <div style="position:relative;">
                         <input type="password" id="password" name="password" class="form-input" placeholder="Masukkan kata sandi Anda" required>
-                        <button type="button" onclick="togglePassword()" 
-                                style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#94a3b8;padding:4px;display:flex;align-items:center;"
-                                title="Tampilkan/Sembunyikan Password">
+                        <button type="button" onclick="togglePassword()"
+                            style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#94a3b8;padding:4px;display:flex;align-items:center;"
+                            title="Tampilkan/Sembunyikan Password">
                             <svg id="eye-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                                 <circle cx="12" cy="12" r="3"></circle>
@@ -402,7 +402,7 @@ if (isset($_POST['login'])) {
             </form>
 
             <div class="divider">
-                <span>MODE PENGAWAS</span>
+                <span>MODE KERANI</span>
             </div>
 
             <a href="#" onclick="openModal()" class="btn-scan">
