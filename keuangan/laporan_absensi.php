@@ -5,6 +5,7 @@ include 'templates/header.php';
 $bulan = isset($_GET['bulan']) ? str_pad($_GET['bulan'], 2, '0', STR_PAD_LEFT) : date('m');
 $tahun = isset($_GET['tahun']) ? (int)$_GET['tahun'] : (int)date('Y');
 $cari  = isset($_GET['cari'])  ? trim($_GET['cari']) : '';
+$afdeling = isset($_GET['afdeling']) ? trim($_GET['afdeling']) : '';
 
 $jumlah_hari = date('t', mktime(0, 0, 0, (int)$bulan, 1, $tahun));
 $nama_bulan  = [
@@ -22,12 +23,24 @@ $nama_bulan  = [
     '12' => 'Desember'
 ];
 
+// List afdeling untuk dropdown filter
+$q_afdeling = mysqli_query($conn, "SELECT DISTINCT afdeling FROM users WHERE role='karyawan' AND afdeling IS NOT NULL AND afdeling != '' ORDER BY afdeling ASC");
+$list_afdeling = [];
+while ($afd = mysqli_fetch_assoc($q_afdeling)) {
+    $list_afdeling[] = $afd['afdeling'];
+}
+
 // Ambil semua karyawan (view-only, semua afdeling)
 $where = "role='karyawan'";
 if (!empty($cari)) {
     $cari_safe = mysqli_real_escape_string($conn, $cari);
     $where .= " AND (name LIKE '%$cari_safe%' OR nik LIKE '%$cari_safe%')";
 }
+if (!empty($afdeling)) {
+    $afdeling_safe = mysqli_real_escape_string($conn, $afdeling);
+    $where .= " AND afdeling = '$afdeling_safe'";
+}
+
 $q_users = mysqli_query($conn, "SELECT id, nik, name, afdeling FROM users WHERE $where ORDER BY afdeling ASC, name ASC");
 $list_karyawan = [];
 while ($u = mysqli_fetch_assoc($q_users)) $list_karyawan[] = $u;
@@ -287,6 +300,12 @@ while ($a = mysqli_fetch_assoc($q_absen)) {
             <?php for ($y = date('Y') - 2; $y <= date('Y'); $y++): ?>
                 <option value="<?= $y ?>" <?= $tahun == $y ? 'selected' : '' ?>><?= $y ?></option>
             <?php endfor; ?>
+        </select>
+        <select name="afdeling" class="filter-select">
+            <option value="">Semua Afdeling</option>
+            <?php foreach ($list_afdeling as $afd): ?>
+                <option value="<?= htmlspecialchars($afd) ?>" <?= $afdeling == $afd ? 'selected' : '' ?>>Afdeling <?= htmlspecialchars($afd) ?></option>
+            <?php endforeach; ?>
         </select>
         <input type="text" name="cari" class="filter-input" placeholder="Cari nama / NIK..." value="<?= htmlspecialchars($cari) ?>" style="min-width:180px;">
         <button type="submit" class="btn-filter">
