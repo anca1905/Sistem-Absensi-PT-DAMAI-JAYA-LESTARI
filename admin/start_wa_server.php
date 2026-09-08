@@ -15,7 +15,8 @@ $logFile = $dir . DIRECTORY_SEPARATOR . 'server.log';
 try {
     $WshShell = new COM("WScript.Shell");
     $WshShell->CurrentDirectory = $dir;
-    $cmd = "cmd /c node server.js > \"$logFile\" 2>&1";
+    // Pindah ke direktori dengan cd /d untuk memastikan
+    $cmd = "cmd /c cd /d \"$dir\" && node server.js > \"$logFile\" 2>&1";
     $WshShell->Run($cmd, 0, false);
     echo json_encode(['status' => 'success', 'message' => 'Node.js Server sedang dihidupkan di latar belakang...']);
 } catch (Throwable $e) {
