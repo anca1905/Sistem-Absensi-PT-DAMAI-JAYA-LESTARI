@@ -5,6 +5,8 @@ const cors = require('cors');
 
 // Disable Crashpad handler yang sering bikin error di Linux VPS
 process.env.DISABLE_CRASHPAD = 'true';
+// Paksa Chrome mengira folder project adalah Home-nya (agar tidak error permission /home/www)
+process.env.HOME = __dirname;
 
 const app = express();
 const port = 3000;
