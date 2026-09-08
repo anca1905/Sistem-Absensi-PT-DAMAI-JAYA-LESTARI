@@ -135,7 +135,10 @@ include 'templates/header.php';
 
     async function checkStatus() {
         try {
-            const response = await fetch('http://localhost:3000/api/status');
+            const waHost = window.location.hostname;
+            // Gunakan http:// atau https:// tergantung konfigurasi SSL Anda
+            // Jika Anda menggunakan HTTPS, Anda perlu mengatur Reverse Proxy di aaPanel
+            const response = await fetch('http://' + waHost + ':3000/api/status');
             const data = await response.json();
             
             // Server Online
@@ -241,7 +244,8 @@ include 'templates/header.php';
         }).then(async (result) => {
             if (result.isConfirmed) {
                 try {
-                    await fetch('http://localhost:3000/api/logout', { method: 'POST' });
+                    const waHost = window.location.hostname;
+                    await fetch('http://' + waHost + ':3000/api/logout', { method: 'POST' });
                     Swal.fire('Terputus', 'Sistem memutus koneksi WA.', 'success');
                 } catch(e) {
                     Swal.fire('Error', 'Gagal memutus koneksi.', 'error');
