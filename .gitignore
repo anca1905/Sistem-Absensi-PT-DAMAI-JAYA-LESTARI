@@ -9,3 +9,6 @@ uploads/
 
 # File uji coba
 test_*.php
+
+# Dependensi Node.js (JANGAN PERNAH DIUPLOAD, BIKIN ERROR BEDA OS)
+wa-bot/node_modules/
