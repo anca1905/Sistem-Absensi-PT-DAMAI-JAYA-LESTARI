@@ -172,6 +172,18 @@ include 'templates/header.php';
             `;
             connectedActionContainer.style.display = 'none';
         } 
+        else if (data.status === 'ERROR') {
+            botStateBox.innerHTML = `
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" style="margin-bottom:15px">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+                <p style="color: #ef4444; font-weight: bold;">Gagal Membuka WhatsApp Web!</p>
+                <p style="color: #64748b; font-size:13px; margin-top:5px;">Ini biasanya terjadi di Linux (aaPanel) karena library Chromium belum terinstall. Silakan cek menu Terminal/Log Node.js.</p>
+            `;
+            connectedActionContainer.style.display = 'none';
+        }
         else if (data.status === 'QR_READY') {
             botStateBox.innerHTML = `
                 <h3 style="color: #1e293b; margin-bottom:10px; font-size:16px;">Scan QR Code di bawah ini:</h3>

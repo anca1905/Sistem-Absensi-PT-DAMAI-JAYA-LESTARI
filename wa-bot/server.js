@@ -61,7 +61,10 @@ client.on('disconnected', (reason) => {
     client.initialize(); 
 });
 
-client.initialize();
+client.initialize().catch(err => {
+    botStatus = 'ERROR';
+    console.error('Gagal menginisialisasi client:', err);
+});
 
 // --- ENDPOINTS BARU ---
 
