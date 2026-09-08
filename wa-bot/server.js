@@ -18,11 +18,15 @@ let botStatus = 'INITIALIZING';
 let currentQR = '';
 let lastError = '';
 
+const os = require('os');
+
 // Inisialisasi WhatsApp Client
 const client = new Client({
     authStrategy: new LocalAuth(),
     puppeteer: {
         headless: true,
+        // Paksa gunakan Google Chrome Asli sistem jika berjalan di Linux
+        executablePath: os.platform() === 'linux' ? '/usr/bin/google-chrome-stable' : undefined,
         args: [
             '--no-sandbox',
             '--disable-setuid-sandbox',
