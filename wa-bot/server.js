@@ -3,6 +3,9 @@ const { Client, LocalAuth } = require('whatsapp-web.js');
 const qrcode = require('qrcode');
 const cors = require('cors');
 
+// Disable Crashpad handler yang sering bikin error di Linux VPS
+process.env.DISABLE_CRASHPAD = 'true';
+
 const app = express();
 const port = 3000;
 
