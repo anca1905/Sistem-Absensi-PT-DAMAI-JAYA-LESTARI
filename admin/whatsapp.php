@@ -180,7 +180,11 @@ include 'templates/header.php';
                     <line x1="12" y1="16" x2="12.01" y2="16"></line>
                 </svg>
                 <p style="color: #ef4444; font-weight: bold;">Gagal Membuka WhatsApp Web!</p>
-                <p style="color: #64748b; font-size:13px; margin-top:5px;">Ini biasanya terjadi di Linux (aaPanel) karena library Chromium belum terinstall. Silakan cek menu Terminal/Log Node.js.</p>
+                <p style="color: #64748b; font-size:13px; margin-top:5px;">Terjadi error saat mencoba membuka Chromium di Linux.</p>
+                <div style="margin-top:10px; background:#fee2e2; color:#b91c1c; padding:8px; border-radius:6px; font-size:11px; text-align:left; overflow-wrap:anywhere; max-width: 100%;">
+                    <strong>Detail Error:</strong><br>
+                    ${data.error || 'Unknown Error'}
+                </div>
             `;
             connectedActionContainer.style.display = 'none';
         }

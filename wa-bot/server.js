@@ -13,6 +13,7 @@ app.use(cors());
 // Variables for state
 let botStatus = 'INITIALIZING'; 
 let currentQR = '';
+let lastError = '';
 
 // Inisialisasi WhatsApp Client
 const client = new Client({
@@ -60,11 +61,16 @@ client.on('disconnected', (reason) => {
     console.log('Client was logged out or disconnected', reason);
     // Kita inisialisasi ulang agar QR baru bisa digenerate jika putus
     botStatus = 'INITIALIZING';
-    client.initialize(); 
+    client.initialize().catch(err => {
+        botStatus = 'ERROR';
+        lastError = err.toString();
+        console.error('Gagal menginisialisasi client:', err);
+    }); 
 });
 
 client.initialize().catch(err => {
     botStatus = 'ERROR';
+    lastError = err.toString();
     console.error('Gagal menginisialisasi client:', err);
 });
 
@@ -74,7 +80,8 @@ client.initialize().catch(err => {
 app.get('/api/status', (req, res) => {
     res.json({
         status: botStatus,
-        qr: currentQR
+        qr: currentQR,
+        error: lastError
     });
 });
 
