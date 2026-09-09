@@ -252,26 +252,16 @@ while ($row = mysqli_fetch_assoc($query)) {
         </tfoot>
     </table>
 
-    <div class="signature-area">
-        <div class="sig-box">
-            <p>Disetujui oleh,</p>
-            <span class="sig-name">Ir. Pikir Manurung</span>
-            <span class="sig-role">Manager Kebun</span>
-        </div>
+    <div class="signature-area" style="justify-content: space-around;">
         <div class="sig-box">
             <p>Diketahui oleh,</p>
-            <span class="sig-name">I Nyoman Sukadana, SP</span>
-            <span class="sig-role">KTU</span>
-        </div>
-        <div class="sig-box">
-            <p>Diperiksa Oleh,</p>
-            <span class="sig-name">Elinson Silalahi</span>
-            <span class="sig-role">Asisten Afd <?= strtoupper(str_replace('Afdeling ', '', $afdeling)) ?></span>
+            <span class="sig-name" style="border-bottom: 1px solid #000; padding-bottom: 2px;">Manda</span>
+            <span class="sig-role">Pengawas Afd 9</span>
         </div>
         <div class="sig-box">
             <p>Disusun oleh,</p>
-            <span class="sig-name">Ernawati</span>
-            <span class="sig-role">Adm. Penggajian</span>
+            <span class="sig-name" style="border-bottom: 1px solid #000; padding-bottom: 2px;">Arsyad</span>
+            <span class="sig-role">Kerani Afd 9</span>
         </div>
     </div>
 

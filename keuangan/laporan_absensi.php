@@ -59,38 +59,7 @@ while ($a = mysqli_fetch_assoc($q_absen)) {
 ?>
 
 <style>
-    @media print {
-        @page {
-            size: landscape;
-            margin: 8mm;
-        }
-
-        body * {
-            visibility: hidden;
-        }
-
-        .main-content {
-            margin-left: 0 !important;
-        }
-
-        .sidebar,
-        .topbar,
-        .no-print {
-            display: none !important;
-        }
-
-        .print-area,
-        .print-area * {
-            visibility: visible;
-        }
-
-        .print-area {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
-        }
-    }
+    /* Print styles handled by print.css */
 
     .toolbar {
         display: flex;
@@ -290,7 +259,7 @@ while ($a = mysqli_fetch_assoc($q_absen)) {
 
 <!-- Toolbar -->
 <div class="toolbar no-print">
-    <form method="GET" style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+    <form method="GET" id="filterForm" onchange="this.submit()" style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
         <select name="bulan" class="filter-select">
             <?php foreach ($nama_bulan as $num => $name): ?>
                 <option value="<?= $num ?>" <?= $bulan == $num ? 'selected' : '' ?>><?= $name ?></option>
@@ -308,11 +277,7 @@ while ($a = mysqli_fetch_assoc($q_absen)) {
             <?php endforeach; ?>
         </select>
         <input type="text" name="cari" class="filter-input" placeholder="Cari nama / NIK..." value="<?= htmlspecialchars($cari) ?>" style="min-width:180px;">
-        <button type="submit" class="btn-filter">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <circle cx="11" cy="11" r="8"></circle>
-                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-            </svg>
+        <button type="submit" class="btn-filter" style="display: none;">
             Tampilkan
         </button>
     </form>
@@ -438,6 +403,120 @@ while ($a = mysqli_fetch_assoc($q_absen)) {
             Tidak ada data karyawan yang ditemukan.
         </div>
     <?php endif; ?>
+</div>
+
+<!-- ========== DOKUMEN CETAK RESMI ========== -->
+<div id="official-print-doc">
+    <!-- Kop Surat -->
+    <div class="doc-header">
+        <img src="<?= BASE_URL ?>assets/img/logo.png" alt="" class="doc-header-logo" onerror="this.style.display='none'">
+        <div class="doc-header-text">
+            <h1>PT Damai Jaya Lestari</h1>
+            <h2>Laporan Rekapitulasi Absensi Karyawan</h2>
+            <p>Jl. Perkebunan No. 1 &nbsp;|&nbsp; Telp: (021) 000-0000 &nbsp;|&nbsp; Email: admin@djl.co.id</p>
+        </div>
+    </div>
+
+    <!-- Judul & Metadata -->
+    <div class="doc-title">
+        <h3>Laporan Absensi &mdash; <?= $nama_bulan[$bulan] ?> <?= $tahun ?></h3>
+    </div>
+    <div class="doc-meta">
+        <div><strong>Afdeling&nbsp;:</strong> <?= !empty($afdeling) ? htmlspecialchars($afdeling) : 'Semua Afdeling' ?></div>
+        <div><strong>Jumlah Hari:</strong> <?= $jumlah_hari ?> hari</div>
+        <div><strong>Dicetak&nbsp;&nbsp;:</strong> <?= date('d F Y, H:i') ?></div>
+    </div>
+
+    <!-- Keterangan Kode -->
+    <p style="font-size:9pt; margin-bottom:10px;">
+        <strong>Keterangan:</strong>
+        H = Hadir &nbsp;|&nbsp; A = Alpha/Tidak Hadir &nbsp;|&nbsp; I = Izin &nbsp;|&nbsp; S = Sakit &nbsp;|&nbsp; C = Cuti &nbsp;|&nbsp; (kosong) = Belum tercatat
+    </p>
+
+    <!-- Tabel Absensi -->
+    <table class="doc-table" style="font-size:8.5pt;">
+        <thead>
+            <tr>
+                <th rowspan="2" style="width:25px;">No</th>
+                <th rowspan="2" style="width:80px; text-align:left;">NIK</th>
+                <th rowspan="2" style="min-width:120px; text-align:left;">Nama Karyawan</th>
+                <th colspan="<?= $jumlah_hari ?>">Tanggal</th>
+                <th rowspan="2" style="width:20px;">H</th>
+                <th rowspan="2" style="width:20px;">I</th>
+                <th rowspan="2" style="width:20px;">A</th>
+                <th rowspan="2" style="width:20px;">S</th>
+                <th rowspan="2" style="width:20px;">C</th>
+                <th rowspan="2" style="width:40px;">Total Hadir</th>
+            </tr>
+            <tr>
+                <?php for ($i = 1; $i <= $jumlah_hari; $i++): ?>
+                    <th style="width:18px; font-size:8pt;"><?= $i ?></th>
+                <?php endfor; ?>
+            </tr>
+        </thead>
+        <tbody>
+            <?php
+            $pno = 1;
+            foreach ($list_karyawan as $kar):
+            ?>
+                <tr>
+                    <td class="text-center"><?= $pno++ ?></td>
+                    <td><?= htmlspecialchars($kar['nik']) ?></td>
+                    <td><?= htmlspecialchars($kar['name']) ?></td>
+                    <?php
+                    $h = 0; $a = 0; $i_jin = 0; $s_sakit = 0; $c_cuti = 0;
+                    $absen = $data_absen[$kar['id']] ?? [];
+                    for ($i = 1; $i <= $jumlah_hari; $i++):
+                        $st = strtolower((string)($absen[$i] ?? null));
+                        $k = '';
+                        $dc = '';
+                        if (in_array($st, ['hadir', 'tepat_waktu', 'terlambat'])) {
+                            $k = 'H'; $dc = 'doc-status-H'; $h++;
+                        } elseif (in_array($st, ['alpha', 'alpa', 'alfa'])) {
+                            $k = 'A'; $dc = 'doc-status-A'; $a++;
+                        } elseif ($st == 'izin') {
+                            $k = 'I'; $dc = 'doc-status-I'; $i_jin++;
+                        } elseif ($st == 'sakit') {
+                            $k = 'S'; $dc = 'doc-status-S'; $s_sakit++;
+                        } elseif ($st == 'cuti') {
+                            $k = 'C'; $dc = 'doc-status-C'; $c_cuti++;
+                        }
+                    ?>
+                        <td class="text-center <?= $dc ?>" style="font-size:8pt; font-weight:bold;"><?= $k ?></td>
+                    <?php endfor; ?>
+                    <td class="text-center" style="font-weight:bold;"><?= $h ?></td>
+                    <td class="text-center" style="font-weight:bold;"><?= $i_jin ?></td>
+                    <td class="text-center" style="font-weight:bold;"><?= $a ?></td>
+                    <td class="text-center" style="font-weight:bold;"><?= $s_sakit ?></td>
+                    <td class="text-center" style="font-weight:bold;"><?= $c_cuti ?></td>
+                    <td class="text-center" style="font-weight:bold;"><?= $h ?></td>
+                </tr>
+            <?php endforeach; ?>
+            <?php if (empty($list_karyawan)): ?>
+                <tr>
+                    <td colspan="<?= $jumlah_hari + 9 ?>" class="text-center" style="padding:16px;">Tidak ada data.</td>
+                </tr>
+            <?php endif; ?>
+        </tbody>
+    </table>
+
+    <!-- Tanda Tangan -->
+    <div class="doc-signature">
+        <div class="doc-signature-col">
+            <p>Diketahui oleh,</p>
+            <span class="sig-name">Manda</span>
+            <div style="font-weight:bold;">Pengawas Afd 9</div>
+        </div>
+        <div class="doc-signature-col">
+            <p>Disusun oleh,</p>
+            <span class="sig-name">Arsyad</span>
+            <div style="font-weight:bold;">Kerani Afd 9</div>
+        </div>
+    </div>
+
+    <div class="doc-footer">
+        Dokumen ini dicetak secara otomatis oleh Sistem Informasi PT Damai Jaya Lestari pada <?= date('d F Y \p\u\k\u\l H:i') ?> WIB.
+    </div>
 </div>
 
 <?php include 'templates/footer.php'; ?>

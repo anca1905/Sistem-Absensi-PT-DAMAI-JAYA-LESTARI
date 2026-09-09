@@ -430,19 +430,16 @@ while ($u = mysqli_fetch_assoc($query_users)) {
         </tbody>
     </table>
 
-    <!-- Tanda Tangan -->
     <div class="doc-signature">
         <div class="doc-signature-col">
-            <p>Mengetahui,<br>Manager / Askep</p>
-            <span class="sig-name">(_____________________)</span>
+            <p>Diketahui oleh,</p>
+            <span class="sig-name">Manda</span>
+            <div style="font-weight:bold;">Pengawas Afd 9</div>
         </div>
         <div class="doc-signature-col">
-            <p>Menyetujui,<br>Kepala Administrasi</p>
-            <span class="sig-name">(_____________________)</span>
-        </div>
-        <div class="doc-signature-col">
-            <p>Dibuat Oleh,<br>Kerani / Admin</p>
-            <span class="sig-name">(_____________________)</span>
+            <p>Disusun oleh,</p>
+            <span class="sig-name">Arsyad</span>
+            <div style="font-weight:bold;">Kerani Afd 9</div>
         </div>
     </div>
 

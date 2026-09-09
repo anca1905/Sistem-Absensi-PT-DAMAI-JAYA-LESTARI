@@ -597,9 +597,9 @@ $total_tenaga   = $total_tenaga_l + $total_tenaga_w;
 <!-- Toolbar -->
 <div class="ok-toolbar">
     <div class="ok-toolbar-left">
-        <form method="GET" id="filterForm" style="display:flex;gap:10px;align-items:center;">
+        <form method="GET" id="filterForm" onchange="this.submit()" style="display:flex;gap:10px;align-items:center;">
             <input type="date" name="tanggal" value="<?= htmlspecialchars($tanggal) ?>" class="ok-date-input" id="tanggalInput">
-            <button type="submit" class="btn-filter">
+            <button type="submit" class="btn-filter" style="display: none;">
                 <i class="fa-solid fa-magnifying-glass" style="margin-right:4px;"></i>
                 Tampilkan
             </button>

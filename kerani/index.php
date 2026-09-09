@@ -1,6 +1,33 @@
 <?php
 require '../config/config.php';
 include 'templates/header.php';
+
+$afdeling = isset($_SESSION['afdeling']) ? mysqli_real_escape_string($conn, $_SESSION['afdeling']) : '';
+$today = date('Y-m-d');
+
+// 1. Total Personil
+if (!empty($afdeling)) {
+    $q_personil = mysqli_query($conn, "SELECT COUNT(*) as total FROM users WHERE afdeling='$afdeling' AND role != 'kerani'");
+} else {
+    $q_personil = mysqli_query($conn, "SELECT COUNT(*) as total FROM users WHERE role != 'kerani' AND role != 'admin' AND role != 'keuangan'");
+}
+$total_personil = mysqli_fetch_assoc($q_personil)['total'] ?? 0;
+
+// 2. Hadir Hari Ini
+if (!empty($afdeling)) {
+    $q_hadir = mysqli_query($conn, "SELECT COUNT(*) as total FROM absensis a JOIN users u ON a.user_id = u.id WHERE a.tanggal='$today' AND (LOWER(a.status_kehadiran) IN ('hadir', 'tepat_waktu', 'terlambat')) AND u.afdeling='$afdeling'");
+} else {
+    $q_hadir = mysqli_query($conn, "SELECT COUNT(*) as total FROM absensis WHERE tanggal='$today' AND (LOWER(status_kehadiran) IN ('hadir', 'tepat_waktu', 'terlambat'))");
+}
+$total_hadir = mysqli_fetch_assoc($q_hadir)['total'] ?? 0;
+
+// 3. Total Tdk Hadir Hari Ini
+if (!empty($afdeling)) {
+    $q_tdk = mysqli_query($conn, "SELECT COUNT(*) as total FROM absensis a JOIN users u ON a.user_id = u.id WHERE a.tanggal='$today' AND (LOWER(a.status_kehadiran) IN ('alpha', 'alpa', 'alfa', 'izin', 'sakit', 'cuti')) AND u.afdeling='$afdeling'");
+} else {
+    $q_tdk = mysqli_query($conn, "SELECT COUNT(*) as total FROM absensis WHERE tanggal='$today' AND (LOWER(status_kehadiran) IN ('alpha', 'alpa', 'alfa', 'izin', 'sakit', 'cuti'))");
+}
+$total_tdk_hadir = mysqli_fetch_assoc($q_tdk)['total'] ?? 0;
 ?>
 
 <style>
@@ -107,7 +134,7 @@ include 'templates/header.php';
 
 <div class="welcome-banner">
     <h1 class="welcome-title">Selamat Datang, <?= htmlspecialchars($_SESSION['nama'] ?? 'Kerani') ?>! 👋</h1>
-    <p class="welcome-subtitle">Portal Manajemen Administrasi & Personalia PT DJL</p>
+    <p class="welcome-subtitle">Portal Manajemen Administratif Afdeling</p>
 </div>
 
 <div class="stats-grid">
@@ -122,7 +149,7 @@ include 'templates/header.php';
         </div>
         <div class="stat-info">
             <h3>Total Personil</h3>
-            <p>124</p>
+            <p><?= $total_personil ?></p>
         </div>
     </div>
 
@@ -137,7 +164,7 @@ include 'templates/header.php';
         </div>
         <div class="stat-info">
             <h3>Hadir Hari Ini</h3>
-            <p>118</p>
+            <p><?= $total_hadir ?></p>
         </div>
     </div>
 
@@ -146,12 +173,12 @@ include 'templates/header.php';
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                 <polyline points="14 2 14 8 20 8"></polyline>
-                <path d="M9 15l2 2 4-4"></path>
+                <line x1="9" y1="15" x2="15" y2="15"></line>
             </svg>
         </div>
         <div class="stat-info">
-            <h3>Pengajuan Izin</h3>
-            <p>6</p>
+            <h3>Total Tdk Hadir Hari Ini</h3>
+            <p><?= $total_tdk_hadir ?></p>
         </div>
     </div>
 </div>

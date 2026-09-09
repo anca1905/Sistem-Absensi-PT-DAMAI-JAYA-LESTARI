@@ -770,12 +770,14 @@ $list_karyawan_page = array_slice($list_karyawan, $offset, $per_page);
   ${tableHTML}
   <div class="footer-ttd">
     <div class="ttd-col">
-      <p>Diperiksa Oleh,</p>
-      <div class="ttd-line">Bagian Keuangan</div>
+      <p>Diketahui oleh,</p>
+      <div class="ttd-line">Manda</div>
+      <div style="font-weight:bold; margin-top:4px;">Pengawas Afd 9</div>
     </div>
     <div class="ttd-col">
-      <p>Disetujui Oleh,</p>
-      <div class="ttd-line">Manager / Askep</div>
+      <p>Disusun oleh,</p>
+      <div class="ttd-line">Arsyad</div>
+      <div style="font-weight:bold; margin-top:4px;">Kerani Afd 9</div>
     </div>
   </div>
 </body>

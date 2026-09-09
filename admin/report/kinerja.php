@@ -305,19 +305,14 @@ while ($user = mysqli_fetch_assoc($query_users)) {
             <!-- Tanda Tangan -->
             <div style="display:flex; justify-content:space-between; margin-top:30px; text-align:center; font-size:13px; flex-wrap:wrap; gap:20px;">
                 <div style="min-width:160px;">
-                    <div>Mengetahui,</div>
-                    <div style="color:#64748b; font-size:12px;">Manager / Askep</div>
-                    <div style="margin-top:60px; border-top:1px solid #334155; padding-top:4px; font-weight:700;">(_____________________)</div>
+                    <div>Diketahui oleh,</div>
+                    <div style="margin-top:60px; border-bottom:1px solid #334155; padding-bottom:4px; font-weight:700;">Manda</div>
+                    <div style="font-weight:bold; margin-top:4px;">Pengawas Afd 9</div>
                 </div>
                 <div style="min-width:160px;">
-                    <div>Diperiksa Oleh,</div>
-                    <div style="color:#64748b; font-size:12px;">Pengawas Lapangan</div>
-                    <div style="margin-top:60px; border-top:1px solid #334155; padding-top:4px; font-weight:700;">(_____________________)</div>
-                </div>
-                <div style="min-width:160px;">
-                    <div>Dibuat Oleh,</div>
-                    <div style="color:#64748b; font-size:12px;">Kerani / Admin</div>
-                    <div style="margin-top:60px; border-top:1px solid #334155; padding-top:4px; font-weight:700;">(_____________________)</div>
+                    <div>Disusun oleh,</div>
+                    <div style="margin-top:60px; border-bottom:1px solid #334155; padding-bottom:4px; font-weight:700;">Arsyad</div>
+                    <div style="font-weight:bold; margin-top:4px;">Kerani Afd 9</div>
                 </div>
             </div>
 
@@ -398,16 +393,14 @@ while ($user = mysqli_fetch_assoc($query_users)) {
 
     <div class="doc-signature">
         <div class="doc-signature-col">
-            <p>Mengetahui,<br>Manager / Askep</p>
-            <span class="sig-name">(_____________________)</span>
+            <p>Diketahui oleh,</p>
+            <span class="sig-name">Manda</span>
+            <div style="font-weight:bold;">Pengawas Afd 9</div>
         </div>
         <div class="doc-signature-col">
-            <p>Diperiksa Oleh,<br>Pengawas Lapangan</p>
-            <span class="sig-name">(_____________________)</span>
-        </div>
-        <div class="doc-signature-col">
-            <p>Dibuat Oleh,<br>Kerani / Admin</p>
-            <span class="sig-name">(_____________________)</span>
+            <p>Disusun oleh,</p>
+            <span class="sig-name">Arsyad</span>
+            <div style="font-weight:bold;">Kerani Afd 9</div>
         </div>
     </div>
     <div class="doc-footer">

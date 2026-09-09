@@ -7,10 +7,16 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 // --- 1. LOGIKA STATISTIK KARTU ---
-$total_karyawan = mysqli_num_rows(mysqli_query($conn, "SELECT * FROM users WHERE role='karyawan'"));
-$hadir_hari_ini = mysqli_num_rows(mysqli_query($conn, "SELECT * FROM absensis WHERE tanggal = CURDATE()"));
-$izin_sakit = 0; // TODO: Implementasi logika izin/sakit
-$belum_hadir    = $total_karyawan - $hadir_hari_ini - $izin_sakit;
+$q_tot = mysqli_query($conn, "SELECT COUNT(*) as total FROM users WHERE role NOT IN ('admin', 'keuangan')");
+$total_personil = mysqli_fetch_assoc($q_tot)['total'] ?? 0;
+
+$q_hadir = mysqli_query($conn, "SELECT COUNT(*) as total FROM absensis WHERE tanggal = CURDATE() AND LOWER(status_kehadiran) IN ('hadir', 'tepat_waktu', 'terlambat')");
+$hadir_hari_ini = mysqli_fetch_assoc($q_hadir)['total'] ?? 0;
+
+$q_izin_sakit = mysqli_query($conn, "SELECT COUNT(*) as total FROM absensis WHERE tanggal = CURDATE() AND LOWER(status_kehadiran) IN ('izin', 'sakit')");
+$izin_sakit = mysqli_fetch_assoc($q_izin_sakit)['total'] ?? 0;
+
+$belum_hadir = max(0, $total_personil - $hadir_hari_ini - $izin_sakit);
 
 // --- 2. LOGIKA GRAFIK (7 HARI TERAKHIR) ---
 $labels = [];
@@ -19,7 +25,7 @@ $data_grafik = [];
 for ($i = 6; $i >= 0; $i--) {
     $tgl = date('Y-m-d', strtotime("-$i days")); 
     $labels[] = date('d M', strtotime($tgl)); 
-    $query_grafik = mysqli_query($conn, "SELECT COUNT(*) as total FROM absensis WHERE tanggal = '$tgl'");
+    $query_grafik = mysqli_query($conn, "SELECT COUNT(*) as total FROM absensis WHERE tanggal = '$tgl' AND LOWER(status_kehadiran) IN ('hadir', 'tepat_waktu', 'terlambat')");
     $row_grafik = mysqli_fetch_assoc($query_grafik);
     $data_grafik[] = $row_grafik['total'];
 }
@@ -28,7 +34,7 @@ $json_labels = json_encode($labels);
 $json_data   = json_encode($data_grafik);
 
 // --- 3. DATA KARYAWAN (Box 2) ---
-$query_karyawan = mysqli_query($conn, "SELECT nik, name FROM users WHERE role='karyawan' ORDER BY id DESC LIMIT 3");
+$query_karyawan = mysqli_query($conn, "SELECT nik, name FROM users WHERE role NOT IN ('admin', 'keuangan') ORDER BY id DESC LIMIT 3");
 
 // --- 4. LAPORAN ABSENSI (Box 3) ---
 $query_absensi = mysqli_query($conn, "SELECT u.nik, u.name, a.tanggal, a.status_kehadiran FROM absensis a JOIN users u ON a.user_id = u.id ORDER BY a.id DESC LIMIT 3");
@@ -99,52 +105,63 @@ include 'templates/header.php';
     }
 
     .stat-desc {
-        font-size: 12px;
+        font-size: 11px;
         color: #94a3b8;
-        margin-top: 4px;
     }
 
-    /* Layout 2x2 Grid */
+    /* Dua Kolom Grid */
     .dashboard-grid-2x2 {
         display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 20px;
-        margin-bottom: 20px;
+        grid-template-columns: 2fr 1fr;
+        gap: 25px;
+        margin-bottom: 25px;
     }
 
-    /* Container Box Putih */
+    /* Komponen Box Standard */
     .box-container {
         background: #fff;
         border-radius: 12px;
         border: 1px solid #e2e8f0;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
         padding: 20px;
-        display: flex;
-        flex-direction: column;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
     }
 
     .box-header {
-        font-size: 16px;
-        font-weight: 700;
-        color: #334155;
-        margin-bottom: 20px;
         display: flex;
         justify-content: space-between;
         align-items: center;
+        margin-bottom: 20px;
+        font-size: 14px;
+        font-weight: 700;
+        color: #334155;
     }
 
-    .btn-outline {
-        border: 1px solid #e2e8f0;
-        background: #fff;
+    /* Select Sederhana */
+    .select-sm {
         padding: 6px 12px;
-        border-radius: 6px;
         font-size: 12px;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
         color: #475569;
-        font-weight: 600;
+        outline: none;
+        background: #f8fafc;
+        cursor: pointer;
+    }
+    
+    /* Tombol Outline */
+    .btn-outline {
+        padding: 6px 12px;
+        font-size: 12px;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        color: #475569;
+        background: white;
         cursor: pointer;
         display: inline-flex;
         align-items: center;
         gap: 6px;
+        font-weight: 500;
+        transition: all 0.2s;
     }
 
     .btn-outline:hover {
@@ -227,8 +244,8 @@ include 'templates/header.php';
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
             </div>
             <div>
-                <div class="stat-title">TOTAL PEGAWAI</div>
-                <div class="stat-num"><?= $total_karyawan ?></div>
+                <div class="stat-title">TOTAL PERSONIL</div>
+                <div class="stat-num"><?= $total_personil ?></div>
                 <div class="stat-desc">Orang</div>
             </div>
         </div>
