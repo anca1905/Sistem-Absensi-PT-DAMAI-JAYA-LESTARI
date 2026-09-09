@@ -30,6 +30,9 @@
     .sidebar,
     .sidebar-overlay,
     .top-header,
+    .topbar,
+    .header-actions,
+    .toolbar,
     .toggle-btn {
         display: none !important;
     }
@@ -50,15 +53,19 @@
         margin: 0 !important;
     }
 
-    .content-body {
+    .content-body,
+    .content-container,
+    .report-wrapper {
         padding: 0 !important;
         margin: 0 !important;
         overflow: visible !important;
         height: auto !important;
     }
 
-    /* --- Sembunyikan SEMUA konten web dalam content-body --- */
-    .content-body > *:not(#official-print-doc) {
+    /* --- Sembunyikan SEMUA konten web dalam content-body/container --- */
+    .content-body > *:not(#official-print-doc),
+    .content-container > *:not(#official-print-doc),
+    .report-wrapper > *:not(#official-print-doc) {
         display: none !important;
     }
 
