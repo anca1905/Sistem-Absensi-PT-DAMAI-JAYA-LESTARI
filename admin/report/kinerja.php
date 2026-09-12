@@ -65,6 +65,27 @@ while ($user = mysqli_fetch_assoc($query_users)) {
     $user['_detail'] = $detail;
     $print_data[] = $user;
 }
+
+// --- TAMBAHKAN KODE INI SEBELUM PENUTUP
+
+// Ambil data kerani dari session (sesuaikan nama variabel session-nya jika berbeda)
+$nama_kerani   = $_SESSION['name'] ?? 'Nama Kerani'; 
+$afdeling_user = $_SESSION['afdeling'] ?? '';
+
+// Cari nama pengawas di afdeling yang sama
+$nama_pengawas = '-';
+if (!empty($afdeling_user)) {
+    // Sesuaikan nama tabel 'users' dan kolom 'role', 'afdeling', 'name' dengan database
+    $query_pengawas = mysqli_query($conn, "SELECT name FROM users WHERE (role = 'pengawas' OR jabatan = 'pengawas') AND afdeling = '" . mysqli_real_escape_string($conn, $afdeling_user) . "' LIMIT 1");
+    
+    if ($query_pengawas && mysqli_num_rows($query_pengawas) > 0) {
+        $pengawas = mysqli_fetch_assoc($query_pengawas);
+        $nama_pengawas = $pengawas['name'];
+    }
+}
+
+// Format tulisan untuk di bawah TTD
+$teks_afdeling = !empty($afdeling_user) ? "Afd " . htmlspecialchars($afdeling_user) : "Semua Afdeling";
 ?>
 
 <style>
@@ -394,13 +415,13 @@ while ($user = mysqli_fetch_assoc($query_users)) {
     <div class="doc-signature">
         <div class="doc-signature-col">
             <p>Diketahui oleh,</p>
-            <span class="sig-name">Manda</span>
-            <div style="font-weight:bold;">Pengawas Afd 9</div>
+            <span class="sig-name"><?= htmlspecialchars($nama_pengawas) ?></span>
+            <div style="font-weight:bold;">Pengawas <?= $teks_afdeling ?></div>
         </div>
         <div class="doc-signature-col">
             <p>Disusun oleh,</p>
-            <span class="sig-name">Arsyad</span>
-            <div style="font-weight:bold;">Kerani Afd 9</div>
+            <span class="sig-name"><?= htmlspecialchars($nama_kerani) ?></span>
+            <div style="font-weight:bold;">Kerani <?= $teks_afdeling ?></div>
         </div>
     </div>
     <div class="doc-footer">

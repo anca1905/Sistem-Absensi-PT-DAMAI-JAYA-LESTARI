@@ -67,6 +67,37 @@ $data_absen = [];
 while ($a = mysqli_fetch_assoc($q_absen)) {
     $data_absen[$a['user_id']][$a['hari']] = $a['status_kehadiran'];
 }
+
+
+// --- LOGIKA TANDA TANGAN BERDASARKAN FILTER AFDELING ---
+$nama_kerani = '-';
+$nama_pengawas = '-';
+$teks_afdeling = 'Semua Afdeling';
+
+if (!empty($afdeling)) {
+    $afd_esc = mysqli_real_escape_string($conn, $afdeling);
+    $teks_afdeling = "Afd " . htmlspecialchars($afdeling);
+    
+    // Cari nama Pengawas di afdeling yang difilter
+    $q_pengawas = mysqli_query($conn, "SELECT name FROM users WHERE (role = 'pengawas' OR jabatan = 'pengawas') AND afdeling = '$afd_esc' LIMIT 1");
+    if ($q_pengawas && mysqli_num_rows($q_pengawas) > 0) {
+        $pengawas = mysqli_fetch_assoc($q_pengawas);
+        $nama_pengawas = $pengawas['name'];
+    }
+
+    // Cari nama Kerani di afdeling yang difilter
+    $q_kerani = mysqli_query($conn, "SELECT name FROM users WHERE (role = 'kerani' OR jabatan = 'kerani') AND afdeling = '$afd_esc' LIMIT 1");
+    if ($q_kerani && mysqli_num_rows($q_kerani) > 0) {
+        $kerani = mysqli_fetch_assoc($q_kerani);
+        $nama_kerani = $kerani['name'];
+    }
+} else {
+    // Jika filter 'Semua Afdeling', tampilkan garis titik-titik untuk diisi manual jika dicetak
+    $nama_kerani = '( ................................... )';
+    $nama_pengawas = '( ................................... )';
+}
+// -------------------------------------------------------
+
 ?>
 
 <style>
@@ -532,13 +563,13 @@ while ($a = mysqli_fetch_assoc($q_absen)) {
     <div class="doc-signature">
         <div class="doc-signature-col">
             <p>Diketahui oleh,</p>
-            <span class="sig-name">Manda</span>
-            <div style="font-weight:bold;">Pengawas Afd 9</div>
+            <span class="sig-name"><?= htmlspecialchars($nama_pengawas) ?></span>
+            <div style="font-weight:bold;">Pengawas <?= $teks_afdeling ?></div>
         </div>
         <div class="doc-signature-col">
             <p>Disusun oleh,</p>
-            <span class="sig-name">Arsyad</span>
-            <div style="font-weight:bold;">Kerani Afd 9</div>
+            <span class="sig-name"><?= htmlspecialchars($nama_kerani) ?></span>
+            <div style="font-weight:bold;">Kerani <?= $teks_afdeling ?></div>
         </div>
     </div>
 

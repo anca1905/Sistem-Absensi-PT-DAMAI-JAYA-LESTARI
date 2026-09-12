@@ -58,6 +58,24 @@ $objek_safe   = mysqli_real_escape_string($conn, $objek);
 $bulan_int    = (int)$bulan;
 $uid          = $_SESSION['user_id'];
 $nama_karyawan = htmlspecialchars($_SESSION['nama'] ?? 'Karyawan');
+$afdeling_karyawan = $_SESSION['afdeling'] ?? '';
+
+// --- LOGIKA MENCARI NAMA KERANI BERDASARKAN AFDELING KARYAWAN ---
+$nama_kerani = '( ................................... )';
+$teks_afdeling = 'Afdeling';
+
+if (!empty($afdeling_karyawan)) {
+    $teks_afdeling = "Afd " . htmlspecialchars($afdeling_karyawan);
+    $afd_esc = mysqli_real_escape_string($conn, $afdeling_karyawan);
+    
+    // Cari nama Kerani di afdeling karyawan ini
+    $q_kerani = mysqli_query($conn, "SELECT name FROM users WHERE (role = 'kerani' OR jabatan = 'kerani') AND afdeling = '$afd_esc' LIMIT 1");
+    if ($q_kerani && mysqli_num_rows($q_kerani) > 0) {
+        $kerani = mysqli_fetch_assoc($q_kerani);
+        $nama_kerani = $kerani['name'];
+    }
+}
+// ----------------------------------------------------------------
 
 $jumlah_hari = (int)date('t', mktime(0, 0, 0, $bulan_int, 1, $tahun));
 $periode_label = "01 - {$jumlah_hari} " . $nama_bulan[$bulan] . " {$tahun}";
@@ -824,8 +842,8 @@ $periode_label = "01 - {$jumlah_hari} " . $nama_bulan[$bulan] . " {$tahun}";
       <div class="ttd-line"><?= htmlspecialchars($nama_karyawan) ?></div>
     </div>
     <div class="ttd-col">
-      <p>Kerani Afdeling,</p>
-      <div class="ttd-line">____________________</div>
+      <p>Kerani <?= $teks_afdeling ?>,</p>
+      <div class="ttd-line"><?= htmlspecialchars($nama_kerani) ?></div>
     </div>
   </div>
 </body>

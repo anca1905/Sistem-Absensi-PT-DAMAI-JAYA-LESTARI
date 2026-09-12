@@ -69,6 +69,37 @@ $tipe = getTableType($objek);
 $objek_safe   = mysqli_real_escape_string($conn, $objek);
 $bulan_int    = (int)$bulan;
 
+
+// --- LOGIKA TANDA TANGAN BERDASARKAN FILTER AFDELING ---
+$nama_kerani = '-';
+$nama_pengawas = '-';
+$teks_afdeling = 'Semua Afdeling';
+
+if (!empty($afdeling)) {
+    $afd_esc = mysqli_real_escape_string($conn, $afdeling);
+    $teks_afdeling = "Afd " . htmlspecialchars($afdeling);
+
+    // Cari nama Pengawas di afdeling yang difilter
+    $q_pengawas = mysqli_query($conn, "SELECT name FROM users WHERE (role = 'pengawas' OR jabatan = 'pengawas') AND afdeling = '$afd_esc' LIMIT 1");
+    if ($q_pengawas && mysqli_num_rows($q_pengawas) > 0) {
+        $pengawas = mysqli_fetch_assoc($q_pengawas);
+        $nama_pengawas = $pengawas['name'];
+    }
+
+    // Cari nama Kerani di afdeling yang difilter
+    $q_kerani = mysqli_query($conn, "SELECT name FROM users WHERE (role = 'kerani' OR jabatan = 'kerani') AND afdeling = '$afd_esc' LIMIT 1");
+    if ($q_kerani && mysqli_num_rows($q_kerani) > 0) {
+        $kerani = mysqli_fetch_assoc($q_kerani);
+        $nama_kerani = $kerani['name'];
+    }
+} else {
+    // Jika filter 'Semua Afdeling', tampilkan garis titik-titik untuk diisi manual
+    $nama_kerani = '( ................................... )';
+    $nama_pengawas = '( ................................... )';
+}
+// -------------------------------------------------------
+
+
 // Ambil daftar afdeling
 $q_afd = mysqli_query($conn, "SELECT DISTINCT afdeling FROM users WHERE role IN ('karyawan', 'kerani', 'mandor', 'pengawas') AND afdeling != '' ORDER BY afdeling ASC");
 $list_afdeling = [];
@@ -790,13 +821,13 @@ $list_karyawan_page = array_slice($list_karyawan, $offset, $per_page);
   <div class="footer-ttd">
     <div class="ttd-col">
       <p>Diketahui oleh,</p>
-      <div class="ttd-line">Manda</div>
-      <div style="font-weight:bold; margin-top:4px;">Pengawas Afd 9</div>
+      <div class="ttd-line"><?= htmlspecialchars($nama_pengawas) ?></div>
+      <div style="font-weight:bold; margin-top:4px;">Pengawas <?= $teks_afdeling ?></div>
     </div>
     <div class="ttd-col">
       <p>Disusun oleh,</p>
-      <div class="ttd-line">Arsyad</div>
-      <div style="font-weight:bold; margin-top:4px;">Kerani Afd 9</div>
+      <div class="ttd-line"><?= htmlspecialchars($nama_kerani) ?></div>
+      <div style="font-weight:bold; margin-top:4px;">Kerani <?= $teks_afdeling ?></div>
     </div>
   </div>
 </body>
