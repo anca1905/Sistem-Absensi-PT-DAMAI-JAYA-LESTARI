@@ -23,18 +23,26 @@ if (isset($_POST['simpan_tenaga'])) {
         elseif (strpos($ok_lower, 'muat') !== false) $kategori_task = 'muat_tbs';
         elseif (strpos($ok_lower, 'jaga') !== false) $kategori_task = 'jaga';
 
-        // Hapus penugasan lama untuk rencana_id ini yang masih berstatus 'ditinjau'
-        mysqli_query($conn, "DELETE FROM logbook_kinerja WHERE rencana_id = $id AND status = 'ditinjau'");
-
         // Kumpulkan semua tenaga yang dipilih (L & W)
         $tenaga_l = isset($val['tenaga_l']) && is_array($val['tenaga_l']) ? $val['tenaga_l'] : [];
         $tenaga_w = isset($val['tenaga_w']) && is_array($val['tenaga_w']) ? $val['tenaga_w'] : [];
         $all_tenaga = array_merge($tenaga_l, $tenaga_w);
 
+        // 1. Hapus karyawan yang TIDAK LAGI DICENTANG di rencana ini
+        // (Ini mencegah data 'hasil_kg' hilang bagi karyawan yang tetap dicentang)
+        if (count($all_tenaga) > 0) {
+            $in_clause = implode(',', array_map('intval', $all_tenaga));
+            mysqli_query($conn, "DELETE FROM logbook_kinerja WHERE rencana_id = $id AND user_id NOT IN ($in_clause)");
+        } else {
+            // Jika Kerani mengosongkan semua centang, hapus semua karyawan di rencana ini
+            mysqli_query($conn, "DELETE FROM logbook_kinerja WHERE rencana_id = $id");
+        }
+
+        // 2. Insert atau Update karyawan yang dicentang
         foreach ($all_tenaga as $uid) {
             $uid = (int)$uid;
             if ($uid > 0) {
-                // Cek apakah karyawan ini sudah punya logbook di tanggal yang sama (mencegah double input di hari sama)
+                // Cek apakah karyawan ini sudah punya logbook di tanggal yang sama
                 $cek = mysqli_query($conn, "SELECT id FROM logbook_kinerja WHERE user_id=$uid AND tanggal='$tanggal'");
                 if (mysqli_num_rows($cek) == 0) {
                     mysqli_query($conn, "INSERT INTO logbook_kinerja 
@@ -44,10 +52,11 @@ if (isset($_POST['simpan_tenaga'])) {
                     $updated++;
                 } else {
                     // Update jika sudah ada (karyawan dipindah tugas ke rencana ini)
+                    $existing = mysqli_fetch_assoc($cek);
                     mysqli_query($conn, "UPDATE logbook_kinerja 
                         SET mandor_id={$rencana['mandor_id']}, blok='{$rencana['blok']}', luas_ha='{$rencana['luas_ha']}', 
                             objek_kerja='{$rencana['objek_kerja']}', kategori_task='$kategori_task', rencana_id=$id 
-                        WHERE user_id=$uid AND tanggal='$tanggal'");
+                        WHERE id={$existing['id']}");
                     $updated++;
                 }
             }
@@ -713,33 +722,32 @@ $total_tenaga   = $total_tenaga_l + $total_tenaga_w;
                                     echo '<span style="color:#94a3b8; font-size:12px; font-style:italic; font-weight:600;">Tidak ada kuota</span>';
                                 }
                                 ?>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <tr id="emptyRow">
+                        <td colspan="6">
+                            <div class="empty-state">
+                                <i class="fa-solid fa-file-circle-exclamation"></i>
+                                <p>Belum ada rencana kerja dari Pengawas</p>
+                                <small>Pengawas belum membuat rencana kerja untuk tanggal <?= date('d F Y', strtotime($tanggal)) ?></small>
+                            </div>
+                        </td>
+                    </tr>
+                <?php endif; ?>
+            </tbody>
+        </table>
     </div>
-    </td>
-    </tr>
-<?php endforeach; ?>
-<?php else: ?>
-    <tr id="emptyRow">
-        <td colspan="6">
-            <div class="empty-state">
-                <i class="fa-solid fa-file-circle-exclamation"></i>
-                <p>Belum ada rencana kerja dari Pengawas</p>
-                <small>Pengawas belum membuat rencana kerja untuk tanggal <?= date('d F Y', strtotime($tanggal)) ?></small>
-            </div>
-        </td>
-    </tr>
-<?php endif; ?>
-</tbody>
-</table>
-</div>
 
-<?php if (count($rows_rencana) > 0): ?>
-    <div style="padding: 14px 24px; border-top: 1px solid #e2e8f0; display:flex; justify-content:flex-end; gap:10px; background:#f8fafc;">
-        <button type="button" class="btn-filter" style="background:#64748b;" onclick="window.location.reload()">Reset</button>
-        <button type="button" class="btn-filter" onclick="simpanTenaga()">
-            <i class="fa-solid fa-floppy-disk"></i> Simpan Tenaga
-        </button>
-    </div>
-<?php endif; ?>
+    <?php if (count($rows_rencana) > 0): ?>
+        <div style="padding: 14px 24px; border-top: 1px solid #e2e8f0; display:flex; justify-content:flex-end; gap:10px; background:#f8fafc;">
+            <button type="button" class="btn-filter" style="background:#64748b;" onclick="window.location.reload()">Reset</button>
+            <button type="button" class="btn-filter" onclick="simpanTenaga()">
+                <i class="fa-solid fa-floppy-disk"></i> Simpan Tenaga
+            </button>
+        </div>
+    <?php endif; ?>
 </div>
 
 <!-- Modal Pilih Karyawan (Single Page App style) -->
@@ -903,6 +911,9 @@ $total_tenaga   = $total_tenaga_l + $total_tenaga_w;
 
         rows.forEach(row => {
             const id = row.dataset.id;
+            // Tambahkan parameter penanda (processed) agar PHP tetap membaca baris yang karyawan-nya dikosongkan (di-uncheck semua)
+            fd.append(`rows[${id}][processed]`, 1);
+
             if (selections[id]) {
                 (selections[id].L || []).forEach(uid => fd.append(`rows[${id}][tenaga_l][]`, uid));
                 (selections[id].W || []).forEach(uid => fd.append(`rows[${id}][tenaga_w][]`, uid));

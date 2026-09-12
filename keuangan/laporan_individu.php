@@ -53,29 +53,34 @@ function statusKehadiran(?string $status): array
     .detail-select, .detail-btn { min-height:40px; padding:9px 13px; border:1px solid #cbd5e1; border-radius:9px; background:#fff; color:#334155; font:600 13px inherit; }
     .detail-btn { cursor:pointer; text-decoration:none; display:inline-flex; align-items:center; gap:7px; }
     .detail-btn:hover { border-color:#10b981; color:#047857; }
+    
     .detail-card { overflow:hidden; background:#fff; border:1px solid #e2e8f0; border-radius:14px; box-shadow:0 4px 15px rgba(0,0,0,.03); }
     .detail-heading { padding:22px 24px; text-align:center; background:#f8fafc; border-bottom:1px solid #e2e8f0; }
     .detail-heading h2 { margin:0; color:#064e3b; font-size:18px; }
     .detail-heading p { margin:6px 0 0; color:#64748b; font-size:13px; }
+    
     .detail-table-wrap { overflow-x:auto; }
     .detail-table { width:100%; border-collapse:collapse; min-width:860px; font-size:13px; }
     .detail-table th { padding:13px 12px; background:#065f46; color:#fff; text-align:center; font-size:11px; letter-spacing:.2px; }
     .detail-table td { padding:12px; border-bottom:1px solid #eef2f7; color:#334155; vertical-align:middle; }
     .detail-table tbody tr:nth-child(even) { background:#f6fdf9; }
     .detail-table tbody tr:hover { background:#eefbf5; }
+    
     .text-center { text-align:center; }
+    
     .status-badge, .attendance-badge { display:inline-flex; align-items:center; justify-content:center; min-width:72px; padding:5px 9px; border-radius:999px; font-weight:800; font-size:11px; }
     .status-diterima { background:#dcfce7; color:#166534; }
     .status-ditolak { background:#fee2e2; color:#991b1b; }
     .status-ditinjau { background:#fef3c7; color:#92400e; }
     .status-kosong, .kosong { background:#f1f5f9; color:#94a3b8; }
+    
     .hadir { background:#dcfce7; color:#166534; }
     .izin { background:#dbeafe; color:#1d4ed8; }
     .sakit { background:#ede9fe; color:#6d28d9; }
     .cuti { background:#ffedd5; color:#c2410c; }
     .alpha { background:#fee2e2; color:#b91c1c; }
+    
     .detail-footer { padding:14px 20px; color:#64748b; font-size:12px; background:#f8fafc; }
-    @media print { .sidebar,.topbar,.detail-toolbar { display:none !important; } .main-content{margin-left:0!important;} .content-container{padding:0!important;} .detail-card{border:none;box-shadow:none;} }
 </style>
 
 <div class="detail-toolbar no-print">
@@ -99,11 +104,13 @@ function statusKehadiran(?string $status): array
     </form>
     <div style="display:flex;gap:9px;">
         <a href="lap_keseluruhan.php?bulan=<?= $bulan ?>&tahun=<?= $tahun ?>&objek=<?= urlencode($objek) ?>" class="detail-btn">← Kembali</a>
-        <button type="button" class="detail-btn" onclick="window.print()">▣ Cetak PDF</button>
+        <!-- Tombol cetak memanggil fungsi JS -->
+        <button type="button" class="detail-btn" onclick="cetakLaporanIndividu()">▣ Cetak PDF</button>
     </div>
 </div>
 
-<div class="detail-card">
+<!-- Beri ID pada wrapper card agar mudah diambil oleh JS -->
+<div class="detail-card" id="print-area">
     <div class="detail-heading">
         <h2>Rincian Harian: <?= htmlspecialchars($personel['name']) ?></h2>
         <p>NIK: <?= htmlspecialchars($personel['nik']) ?> &nbsp;|&nbsp; Afdeling: <?= htmlspecialchars($personel['afdeling'] ?: '-') ?></p>
@@ -128,9 +135,11 @@ function statusKehadiran(?string $status): array
                     $q_absen = mysqli_query($conn, "SELECT status_kehadiran FROM absensis WHERE user_id={$personel['id']} AND tanggal='$tanggal' LIMIT 1");
                     $absen = $q_absen ? mysqli_fetch_assoc($q_absen) : null;
                     [$label_absen, $kelas_absen] = statusKehadiran($absen['status_kehadiran'] ?? null);
+                    
                     $q_logbook = mysqli_query($conn, "SELECT lk.*, m.name AS nama_mandor FROM logbook_kinerja lk LEFT JOIN users m ON m.id=lk.mandor_id WHERE lk.user_id={$personel['id']} AND lk.objek_kerja='$objek_safe' AND lk.tanggal='$tanggal' LIMIT 1");
                     $logbook = $q_logbook ? mysqli_fetch_assoc($q_logbook) : null;
                     [$label_status, $kelas_status] = statusObjekKerja($logbook['status'] ?? null);
+                    
                     $hasil = '—';
                     if ($logbook) {
                         if ($objek === 'Panen') $hasil = number_format((float) ($logbook['total_tandan'] ?? 0), 0) . ' tandan';
@@ -154,5 +163,65 @@ function statusKehadiran(?string $status): array
     </div>
     <div class="detail-footer">Status objek kerja: <strong>Diterima</strong> berarti telah diverifikasi, <strong>Ditinjau</strong> masih menunggu pemeriksaan, dan <strong>Ditolak</strong> perlu tindak lanjut.</div>
 </div>
+
+<script>
+    function cetakLaporanIndividu() {
+        const tableHTML = document.getElementById('print-area').innerHTML;
+        const win = window.open('', '_blank', 'width=900,height=700');
+        
+        win.document.write(`<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Cetak Laporan Individu</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: 'Times New Roman', Times, serif; color: #000; padding: 10mm; }
+  
+  .kop { display:flex; align-items:center; border-bottom:3px solid #000; padding-bottom:10px; margin-bottom:20px; }
+  .kop img { width:70px; margin-right:15px; }
+  .kop-text { flex:1; text-align:center; }
+  .kop-text h1 { font-size:18pt; font-weight:bold; text-transform:uppercase; margin:0; }
+  .kop-text p { font-size:11pt; margin:3px 0 0 0; }
+  
+  .detail-heading { text-align: center; margin-bottom: 20px; }
+  .detail-heading h2 { font-size: 14pt; margin-bottom: 5px; text-transform: uppercase; text-decoration: underline; }
+  .detail-heading p { font-size: 11pt; margin-bottom: 3px; }
+  
+  table { width:100%; border-collapse:collapse; margin-bottom:20px; font-size: 10pt; }
+  th, td { border:1px solid #000; padding:6px 8px; }
+  th { background:#f0f0f0 !important; font-weight:bold; text-align:center; text-transform:uppercase; }
+  
+  .text-center { text-align: center; }
+  
+  /* Hilangkan background warna warni badge saat print, ubah jadi teks tebal */
+  span[class*="-badge"] { font-weight: bold; color: #000 !important; background: transparent !important; padding: 0 !important; }
+  
+  .detail-footer { font-size: 10pt; margin-top: 15px; font-style: italic; }
+  
+  @page { size: A4 portrait; margin: 10mm; }
+</style>
+</head>
+<body>
+  <div class="kop">
+    <img src="../assets/img/logo.png" onerror="this.style.display='none'" alt="">
+    <div class="kop-text">
+      <h1>PT Damai Jaya Lestari</h1>
+      <p>Perkebunan Kelapa Sawit & Pabrik Minyak Kelapa Sawit</p>
+    </div>
+  </div>
+
+  ${tableHTML}
+  
+</body>
+</html>`);
+        
+        win.document.close();
+        win.focus();
+        setTimeout(() => {
+            win.print();
+        }, 500);
+    }
+</script>
 
 <?php include 'templates/footer.php'; ?>
