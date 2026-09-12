@@ -6,6 +6,16 @@ $bulan = isset($_GET['bulan']) ? str_pad($_GET['bulan'], 2, '0', STR_PAD_LEFT) :
 $tahun = isset($_GET['tahun']) ? (int)$_GET['tahun'] : (int)date('Y');
 $cari  = isset($_GET['cari'])  ? trim($_GET['cari']) : '';
 $afdeling = isset($_GET['afdeling']) ? trim($_GET['afdeling']) : '';
+$daftar_jabatan = [
+    'karyawan' => 'Karyawan',
+    'kerani'   => 'Kerani',
+    'mandor'   => 'Mandor',
+    'pengawas' => 'Pengawas',
+];
+$jabatan = isset($_GET['jabatan']) ? strtolower(trim($_GET['jabatan'])) : 'karyawan';
+if (!array_key_exists($jabatan, $daftar_jabatan)) {
+    $jabatan = 'karyawan';
+}
 
 $jumlah_hari = date('t', mktime(0, 0, 0, (int)$bulan, 1, $tahun));
 $nama_bulan  = [
@@ -24,14 +34,15 @@ $nama_bulan  = [
 ];
 
 // List afdeling untuk dropdown filter
-$q_afdeling = mysqli_query($conn, "SELECT DISTINCT afdeling FROM users WHERE role='karyawan' AND afdeling IS NOT NULL AND afdeling != '' ORDER BY afdeling ASC");
+$q_afdeling = mysqli_query($conn, "SELECT DISTINCT afdeling FROM users WHERE role IN ('karyawan', 'kerani', 'mandor', 'pengawas') AND afdeling IS NOT NULL AND afdeling != '' ORDER BY afdeling ASC");
 $list_afdeling = [];
 while ($afd = mysqli_fetch_assoc($q_afdeling)) {
     $list_afdeling[] = $afd['afdeling'];
 }
 
-// Ambil semua karyawan (view-only, semua afdeling)
-$where = "role='karyawan'";
+// Keuangan dapat melihat laporan untuk seluruh jabatan operasional.
+$jabatan_safe = mysqli_real_escape_string($conn, $jabatan);
+$where = "(role='$jabatan_safe' OR jabatan='$jabatan_safe')";
 if (!empty($cari)) {
     $cari_safe = mysqli_real_escape_string($conn, $cari);
     $where .= " AND (name LIKE '%$cari_safe%' OR nik LIKE '%$cari_safe%')";
@@ -41,7 +52,7 @@ if (!empty($afdeling)) {
     $where .= " AND afdeling = '$afdeling_safe'";
 }
 
-$q_users = mysqli_query($conn, "SELECT id, nik, name, afdeling FROM users WHERE $where ORDER BY afdeling ASC, name ASC");
+$q_users = mysqli_query($conn, "SELECT id, nik, name, afdeling, role, jabatan FROM users WHERE $where ORDER BY afdeling ASC, name ASC");
 $list_karyawan = [];
 while ($u = mysqli_fetch_assoc($q_users)) $list_karyawan[] = $u;
 
@@ -60,6 +71,17 @@ while ($a = mysqli_fetch_assoc($q_absen)) {
 
 <style>
     /* Print styles handled by print.css */
+
+    /* Dokumen resmi hanya digunakan saat mencetak, bukan pada tampilan laporan. */
+    #official-print-doc {
+        display: none;
+    }
+
+    @media print {
+        #official-print-doc {
+            display: block !important;
+        }
+    }
 
     .toolbar {
         display: flex;
@@ -276,6 +298,11 @@ while ($a = mysqli_fetch_assoc($q_absen)) {
                 <option value="<?= htmlspecialchars($afd) ?>" <?= $afdeling == $afd ? 'selected' : '' ?>>Afdeling <?= htmlspecialchars($afd) ?></option>
             <?php endforeach; ?>
         </select>
+        <select name="jabatan" class="filter-select" aria-label="Filter jabatan">
+            <?php foreach ($daftar_jabatan as $nilai_jabatan => $label_jabatan): ?>
+                <option value="<?= $nilai_jabatan ?>" <?= $jabatan === $nilai_jabatan ? 'selected' : '' ?>><?= $label_jabatan ?></option>
+            <?php endforeach; ?>
+        </select>
         <input type="text" name="cari" class="filter-input" placeholder="Cari nama / NIK..." value="<?= htmlspecialchars($cari) ?>" style="min-width:180px;">
         <button type="submit" class="btn-filter" style="display: none;">
             Tampilkan
@@ -400,7 +427,7 @@ while ($a = mysqli_fetch_assoc($q_absen)) {
                 <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
                 <circle cx="9" cy="7" r="4"></circle>
             </svg>
-            Tidak ada data karyawan yang ditemukan.
+            Tidak ada data <?= strtolower($daftar_jabatan[$jabatan]) ?> yang ditemukan.
         </div>
     <?php endif; ?>
 </div>
@@ -412,7 +439,7 @@ while ($a = mysqli_fetch_assoc($q_absen)) {
         <img src="<?= BASE_URL ?>assets/img/logo.png" alt="" class="doc-header-logo" onerror="this.style.display='none'">
         <div class="doc-header-text">
             <h1>PT Damai Jaya Lestari</h1>
-            <h2>Laporan Rekapitulasi Absensi Karyawan</h2>
+            <h2>Laporan Rekapitulasi Absensi <?= htmlspecialchars($daftar_jabatan[$jabatan]) ?></h2>
             <p>Jl. Perkebunan No. 1 &nbsp;|&nbsp; Telp: (021) 000-0000 &nbsp;|&nbsp; Email: admin@djl.co.id</p>
         </div>
     </div>
@@ -423,6 +450,7 @@ while ($a = mysqli_fetch_assoc($q_absen)) {
     </div>
     <div class="doc-meta">
         <div><strong>Afdeling&nbsp;:</strong> <?= !empty($afdeling) ? htmlspecialchars($afdeling) : 'Semua Afdeling' ?></div>
+        <div><strong>Jabatan&nbsp;&nbsp;:</strong> <?= htmlspecialchars($daftar_jabatan[$jabatan]) ?></div>
         <div><strong>Jumlah Hari:</strong> <?= $jumlah_hari ?> hari</div>
         <div><strong>Dicetak&nbsp;&nbsp;:</strong> <?= date('d F Y, H:i') ?></div>
     </div>
@@ -439,7 +467,7 @@ while ($a = mysqli_fetch_assoc($q_absen)) {
             <tr>
                 <th rowspan="2" style="width:25px;">No</th>
                 <th rowspan="2" style="width:80px; text-align:left;">NIK</th>
-                <th rowspan="2" style="min-width:120px; text-align:left;">Nama Karyawan</th>
+                <th rowspan="2" style="min-width:120px; text-align:left;">Nama Personel</th>
                 <th colspan="<?= $jumlah_hari ?>">Tanggal</th>
                 <th rowspan="2" style="width:20px;">H</th>
                 <th rowspan="2" style="width:20px;">I</th>

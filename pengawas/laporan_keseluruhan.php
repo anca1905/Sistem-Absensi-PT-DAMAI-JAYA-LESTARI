@@ -49,9 +49,9 @@ $nama_bulan = [
 // --- Filter ---
 $bulan     = isset($_GET['bulan'])      ? str_pad($_GET['bulan'], 2, '0', STR_PAD_LEFT) : date('m');
 $tahun     = isset($_GET['tahun'])      ? (int)$_GET['tahun']  : (int)date('Y');
-$objek     = isset($_GET['objek'])      ? $_GET['objek']        : 'Langsir manual';
+$objek     = isset($_GET['objek'])      ? $_GET['objek']        : 'Panen';
 
-if (!in_array($objek, $list_objek)) $objek = 'Langsir manual';
+if (!in_array($objek, $list_objek, true)) $objek = 'Panen';
 $tipe = getTableType($objek);
 
 $objek_safe   = mysqli_real_escape_string($conn, $objek);
@@ -511,13 +511,13 @@ $periode_label = "01 - {$jumlah_hari} " . $nama_bulan[$bulan] . " {$tahun}";
                         <?php if ($tipe === 'T1'): ?>
                             <th colspan="5" class="th-o2">HASIL KERJA (LANGSIR)</th>
                         <?php elseif ($tipe === 'T2'): ?>
-                            <th colspan="3" class="th-o2">DATA KERJA</th>
+                            <th colspan="4" class="th-o2">DATA KERJA</th>
                         <?php elseif ($tipe === 'T3'): ?>
-                            <th colspan="6" class="th-o2">HASIL PANEN</th>
+                            <th colspan="7" class="th-o2">HASIL PANEN</th>
                         <?php elseif ($tipe === 'T4'): ?>
                             <th colspan="5" class="th-o2">HASIL KUTIP BRONDOLAN</th>
                         <?php elseif ($tipe === 'T5'): ?>
-                            <th colspan="4" class="th-o2">HASIL MUAT TBS</th>
+                            <th colspan="5" class="th-o2">HASIL MUAT TBS</th>
                         <?php endif; ?>
                     </tr>
                     <!-- Baris 2: Detail kolom -->
@@ -555,6 +555,7 @@ $periode_label = "01 - {$jumlah_hari} " . $nama_bulan[$bulan] . " {$tahun}";
                             <th class="th-o2">BLOK</th>
                             <th class="th-o2">LUAS (Ha)</th>
                         <?php endif; ?>
+                        <th class="th-o2">STATUS OBJEK</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -615,6 +616,20 @@ $periode_label = "01 - {$jumlah_hari} " . $nama_bulan[$bulan] . " {$tahun}";
                     ");
                         $lb = $q_lb ? mysqli_fetch_assoc($q_lb) : null;
                         $has_data = $lb != null;
+                        $status_objek = strtolower((string)($lb['status'] ?? ''));
+                        if (!$has_data) {
+                            $status_label = 'Belum ada objek';
+                            $status_style = 'background:#f1f5f9;color:#94a3b8;';
+                        } elseif ($status_objek === 'diterima' || $status_objek === 'selesai') {
+                            $status_label = 'Diterima';
+                            $status_style = 'background:#dcfce7;color:#166534;';
+                        } elseif ($status_objek === 'ditolak') {
+                            $status_label = 'Ditolak';
+                            $status_style = 'background:#fee2e2;color:#991b1b;';
+                        } else {
+                            $status_label = 'Ditinjau';
+                            $status_style = 'background:#fef3c7;color:#92400e;';
+                        }
 
                         // Akumulasi totals
                         if ($has_data) {
@@ -693,6 +708,7 @@ $periode_label = "01 - {$jumlah_hari} " . $nama_bulan[$bulan] . " {$tahun}";
                                     <td class="td-empty" colspan="4">—</td>
                                 <?php endif; ?>
                             <?php endif; ?>
+                            <td class="td-center"><span style="display:inline-block;padding:4px 9px;border-radius:999px;font-weight:800;font-size:11px;<?= $status_style ?>"><?= $status_label ?></span></td>
                         </tr>
                     <?php endfor; ?>
                 </tbody>
@@ -731,6 +747,7 @@ $periode_label = "01 - {$jumlah_hari} " . $nama_bulan[$bulan] . " {$tahun}";
                             <td>—</td>
                             <td>—</td>
                         <?php endif; ?>
+                        <td>-</td>
                     </tr>
                 </tfoot>
             </table>

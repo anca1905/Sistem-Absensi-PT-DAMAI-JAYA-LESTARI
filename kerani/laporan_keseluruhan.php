@@ -62,10 +62,10 @@ $nama_bulan = [
 // --- Filter ---
 $bulan     = isset($_GET['bulan'])      ? str_pad($_GET['bulan'], 2, '0', STR_PAD_LEFT) : date('m');
 $tahun     = isset($_GET['tahun'])      ? (int)$_GET['tahun']  : (int)date('Y');
-$objek     = isset($_GET['objek'])      ? $_GET['objek']        : 'Langsir manual';
+$objek     = isset($_GET['objek'])      ? $_GET['objek']        : 'Panen';
 $cari      = isset($_GET['cari'])       ? trim($_GET['cari'])   : '';
 
-if (!in_array($objek, $list_objek)) $objek = 'Langsir manual';
+if (!in_array($objek, $list_objek, true)) $objek = 'Panen';
 $tipe = getTableType($objek);
 
 $objek_safe   = mysqli_real_escape_string($conn, $objek);

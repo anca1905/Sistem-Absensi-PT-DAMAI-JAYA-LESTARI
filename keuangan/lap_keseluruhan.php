@@ -49,23 +49,34 @@ $nama_bulan = [
 // --- Filter ---
 $bulan     = isset($_GET['bulan'])      ? str_pad($_GET['bulan'], 2, '0', STR_PAD_LEFT) : date('m');
 $tahun     = isset($_GET['tahun'])      ? (int)$_GET['tahun']  : (int)date('Y');
-$objek     = isset($_GET['objek'])      ? $_GET['objek']        : 'Langsir manual';
+$objek     = isset($_GET['objek'])      ? $_GET['objek']        : 'Panen';
 $afdeling  = isset($_GET['afdeling'])   ? trim($_GET['afdeling']) : '';
 $cari      = isset($_GET['cari'])       ? trim($_GET['cari'])   : '';
+$daftar_jabatan = [
+    'karyawan' => 'Karyawan',
+    'kerani'   => 'Kerani',
+    'mandor'   => 'Mandor',
+    'pengawas' => 'Pengawas',
+];
+$jabatan = isset($_GET['jabatan']) ? strtolower(trim($_GET['jabatan'])) : 'karyawan';
+if (!array_key_exists($jabatan, $daftar_jabatan)) {
+    $jabatan = 'karyawan';
+}
 
-if (!in_array($objek, $list_objek)) $objek = 'Langsir manual';
+if (!in_array($objek, $list_objek, true)) $objek = 'Panen';
 $tipe = getTableType($objek);
 
 $objek_safe   = mysqli_real_escape_string($conn, $objek);
 $bulan_int    = (int)$bulan;
 
 // Ambil daftar afdeling
-$q_afd = mysqli_query($conn, "SELECT DISTINCT afdeling FROM users WHERE role='karyawan' AND afdeling != '' ORDER BY afdeling ASC");
+$q_afd = mysqli_query($conn, "SELECT DISTINCT afdeling FROM users WHERE role IN ('karyawan', 'kerani', 'mandor', 'pengawas') AND afdeling != '' ORDER BY afdeling ASC");
 $list_afdeling = [];
 while ($a = mysqli_fetch_assoc($q_afd)) $list_afdeling[] = $a['afdeling'];
 
-// --- Ambil Semua Karyawan (keuangan bisa lihat semua afdeling) ---
-$where_karyawan = "role='karyawan'";
+// --- Ambil personel sesuai jabatan (keuangan bisa lihat semua afdeling) ---
+$jabatan_safe = mysqli_real_escape_string($conn, $jabatan);
+$where_karyawan = "(role='$jabatan_safe' OR jabatan='$jabatan_safe')";
 if (!empty($afdeling)) {
     $afd_safe = mysqli_real_escape_string($conn, $afdeling);
     $where_karyawan .= " AND afdeling='$afd_safe'";
@@ -74,7 +85,7 @@ if (!empty($cari)) {
     $cari_safe = mysqli_real_escape_string($conn, $cari);
     $where_karyawan .= " AND (name LIKE '%$cari_safe%' OR nik LIKE '%$cari_safe%')";
 }
-$q_users = mysqli_query($conn, "SELECT id, nik, name, afdeling FROM users WHERE $where_karyawan ORDER BY afdeling ASC, name ASC");
+$q_users = mysqli_query($conn, "SELECT id, nik, name, afdeling, role, jabatan FROM users WHERE $where_karyawan ORDER BY afdeling ASC, name ASC");
 $list_karyawan = [];
 while ($u = mysqli_fetch_assoc($q_users)) $list_karyawan[] = $u;
 
@@ -511,6 +522,11 @@ $list_karyawan_page = array_slice($list_karyawan, $offset, $per_page);
                 <option value="<?= htmlspecialchars($afd) ?>" <?= $afdeling == $afd ? 'selected' : '' ?>><?= htmlspecialchars($afd) ?></option>
             <?php endforeach; ?>
         </select>
+        <select name="jabatan" class="lk-select" aria-label="Filter jabatan">
+            <?php foreach ($daftar_jabatan as $nilai_jabatan => $label_jabatan): ?>
+                <option value="<?= $nilai_jabatan ?>" <?= $jabatan === $nilai_jabatan ? 'selected' : '' ?>><?= $label_jabatan ?></option>
+            <?php endforeach; ?>
+        </select>
         <select name="bulan" class="lk-select">
             <?php foreach ($nama_bulan as $num => $nm): ?>
                 <option value="<?= $num ?>" <?= $bulan == $num ? 'selected' : '' ?>><?= $nm ?></option>
@@ -541,10 +557,11 @@ $list_karyawan_page = array_slice($list_karyawan, $offset, $per_page);
 <!-- Card Laporan -->
 <div class="lk-card print-area">
     <div class="lk-header-main">
-        <p class="lk-title">Laporan Absensi dan Hasil Kinerja (<?= htmlspecialchars($objek) ?>)</p>
+        <p class="lk-title">Laporan Absensi dan Hasil Kinerja <?= htmlspecialchars($daftar_jabatan[$jabatan]) ?> (<?= htmlspecialchars($objek) ?>)</p>
         <p class="lk-subtitle">
             Periode: <?= $periode_label ?> &nbsp;|&nbsp;
             Afdeling: <?= htmlspecialchars($afdeling ?: 'Semua') ?> &nbsp;|&nbsp;
+            Jabatan: <?= htmlspecialchars($daftar_jabatan[$jabatan]) ?> &nbsp;|&nbsp;
             <span class="tipe-badge <?= strtolower($tipe) ?>"><?= $label_tipe[$tipe] ?></span>
         </p>
     </div>
@@ -565,7 +582,7 @@ $list_karyawan_page = array_slice($list_karyawan, $offset, $per_page);
                     $colspan_empty = $has_prestasi ? 8 : 7;
                     ?>
                     <th class="td-no">No</th>
-                    <th class="th-left" style="min-width:200px;">Nama Karyawan</th>
+                    <th class="th-left" style="min-width:200px;">Nama Personel</th>
                     <th class="th-left">Afdeling</th>
                     <th>Total Kehadiran (Hari)</th>
                     <th>Total Alpa</th>
@@ -676,14 +693,16 @@ $list_karyawan_page = array_slice($list_karyawan, $offset, $per_page);
                             </td>
                         <?php endif; ?>
                         <td class="td-center">
-                            <!-- No detail link for keuangan -->
+                            <a href="laporan_individu.php?user_id=<?= $uid ?>&bulan=<?= $bulan ?>&tahun=<?= $tahun ?>&objek=<?= urlencode($objek) ?>" class="btn-detail-aksi" title="Lihat rincian harian <?= htmlspecialchars($user['name']) ?>" aria-label="Lihat rincian <?= htmlspecialchars($user['name']) ?>">
+                                <i class="fa-solid fa-table-cells" style="font-size:14px;"></i>
+                            </a>
                         </td>
                     </tr>
                 <?php endforeach; ?>
 
                 <?php if (empty($list_karyawan)): ?>
                     <tr>
-                        <td colspan="<?= $colspan_empty ?>" style="text-align:center;padding:50px;color:#94a3b8;font-size:14px;">Belum ada data karyawan untuk filter ini.</td>
+                        <td colspan="<?= $colspan_empty ?>" style="text-align:center;padding:50px;color:#94a3b8;font-size:14px;">Belum ada data <?= strtolower($daftar_jabatan[$jabatan]) ?> untuk filter ini.</td>
                     </tr>
                 <?php endif; ?>
             </tbody>
@@ -764,8 +783,8 @@ $list_karyawan_page = array_slice($list_karyawan, $offset, $per_page);
     </div>
   </div>
   <div class="info-laporan">
-    <h2>LAPORAN ABSENSI DAN HASIL KINERJA (<?= htmlspecialchars($objek) ?>)</h2>
-    <p>Periode: <?= $periode_label ?> &nbsp;|&nbsp; Afdeling: <?= htmlspecialchars($afdeling ?: 'Semua') ?></p>
+    <h2>LAPORAN ABSENSI DAN HASIL KINERJA <?= htmlspecialchars(strtoupper($daftar_jabatan[$jabatan])) ?> (<?= htmlspecialchars($objek) ?>)</h2>
+    <p>Periode: <?= $periode_label ?> &nbsp;|&nbsp; Afdeling: <?= htmlspecialchars($afdeling ?: 'Semua') ?> &nbsp;|&nbsp; Jabatan: <?= htmlspecialchars($daftar_jabatan[$jabatan]) ?></p>
   </div>
   ${tableHTML}
   <div class="footer-ttd">
