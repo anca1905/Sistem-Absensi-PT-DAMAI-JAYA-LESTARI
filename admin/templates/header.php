@@ -20,7 +20,7 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'admin') {
 
     <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/style.css">
     <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/admin-components.css">
-    <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/print.css" media="print">
+    <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/print.css">
     <!-- SweetAlert2 -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>

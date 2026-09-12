@@ -16,7 +16,7 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'pengawas') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Dashboard Pengawas - PT DJL</title>
     
-    <link rel="stylesheet" href="../assets/css/print.css" media="print">
+    <link rel="stylesheet" href="../assets/css/print.css">
     
     <!-- Mobile-first CSS styling (Theme: Blue Premium) -->
     <style>

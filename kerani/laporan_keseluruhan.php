@@ -71,6 +71,7 @@ $tipe = getTableType($objek);
 $objek_safe   = mysqli_real_escape_string($conn, $objek);
 $bulan_int    = (int)$bulan;
 $afdeling_kerani = isset($_SESSION['afdeling']) ? mysqli_real_escape_string($conn, $_SESSION['afdeling']) : '';
+$penandatangan = getReportSignatories($conn, $_SESSION['afdeling'] ?? '');
 
 // --- Ambil Semua Karyawan ---
 $where_karyawan = "role='karyawan'";
@@ -772,12 +773,14 @@ $list_karyawan_page = array_slice($list_karyawan, $offset, $per_page);
   
   <div class="footer-ttd">
     <div class="ttd-col">
-      <p>Dibuat Oleh,</p>
-      <div class="ttd-line">Kerani Afdeling</div>
+      <p>Diketahui oleh,</p>
+      <div class="ttd-line"><?= htmlspecialchars($penandatangan['pengawas']) ?></div>
+      <div style="font-weight:bold; margin-top:4px;">Pengawas Afdeling <?= htmlspecialchars($penandatangan['afdeling']) ?></div>
     </div>
     <div class="ttd-col">
-      <p>Disetujui Oleh,</p>
-      <div class="ttd-line">Askep / Manajer</div>
+      <p>Disusun oleh,</p>
+      <div class="ttd-line"><?= htmlspecialchars($penandatangan['kerani']) ?></div>
+      <div style="font-weight:bold; margin-top:4px;">Kerani Afdeling <?= htmlspecialchars($penandatangan['afdeling']) ?></div>
     </div>
   </div>
 </body>

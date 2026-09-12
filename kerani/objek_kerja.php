@@ -560,7 +560,6 @@ $total_tenaga   = $total_tenaga_l + $total_tenaga_w;
 
     .chk-item input[type="checkbox"] {
         transform: scale(1.2);
-        pointer-events: none;
         accent-color: #3b82f6;
     }
 
@@ -866,13 +865,10 @@ $total_tenaga   = $total_tenaga_l + $total_tenaga_w;
     }
 
     function toggleKaryawan(e, el, id) {
-        if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'LABEL') {
-            // handle click cascading
-            return;
-        }
+        // Label, teks nama, maupun kotak checklist semuanya harus dapat dipilih.
+        e.preventDefault();
 
         if (el.classList.contains('disabled')) {
-            e.preventDefault();
             return;
         }
 

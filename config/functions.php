@@ -65,3 +65,47 @@ function checkAndSetAlpha($conn) {
         }
     }
 }
+
+/**
+ * Mengambil penandatangan laporan berdasarkan afdeling.
+ * Jika laporan dicetak oleh Kerani pada afdeling tersebut, gunakan nama Kerani
+ * yang sedang login agar tanda tangan selalu sesuai akun aktif.
+ */
+function getReportSignatories($conn, $afdeling = '')
+{
+    $afdeling = trim((string) $afdeling);
+    if ($afdeling === '' && !empty($_SESSION['afdeling'])) {
+        $afdeling = trim((string) $_SESSION['afdeling']);
+    }
+
+    $result = [
+        'afdeling' => $afdeling,
+        'kerani' => '-',
+        'pengawas' => '-',
+    ];
+
+    if ($afdeling === '') {
+        return $result;
+    }
+
+    if (($_SESSION['role'] ?? '') === 'kerani'
+        && !empty($_SESSION['nama'])
+        && trim((string) ($_SESSION['afdeling'] ?? '')) === $afdeling) {
+        $result['kerani'] = $_SESSION['nama'];
+    }
+
+    $afdeling_safe = mysqli_real_escape_string($conn, $afdeling);
+    if ($result['kerani'] === '-') {
+        $q_kerani = mysqli_query($conn, "SELECT name FROM users WHERE (role='kerani' OR jabatan='kerani') AND afdeling='$afdeling_safe' ORDER BY id ASC LIMIT 1");
+        if ($q_kerani && ($data_kerani = mysqli_fetch_assoc($q_kerani))) {
+            $result['kerani'] = $data_kerani['name'];
+        }
+    }
+
+    $q_pengawas = mysqli_query($conn, "SELECT name FROM users WHERE (role='pengawas' OR jabatan='pengawas') AND afdeling='$afdeling_safe' ORDER BY id ASC LIMIT 1");
+    if ($q_pengawas && ($data_pengawas = mysqli_fetch_assoc($q_pengawas))) {
+        $result['pengawas'] = $data_pengawas['name'];
+    }
+
+    return $result;
+}

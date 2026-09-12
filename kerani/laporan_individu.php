@@ -58,6 +58,7 @@ $objek_safe   = mysqli_real_escape_string($conn, $objek);
 $bulan_int    = (int)$bulan;
 
 $uid = isset($_GET['user_id']) ? (int)$_GET['user_id'] : 0;
+$penandatangan = getReportSignatories($conn, $_SESSION['afdeling'] ?? '');
 if ($uid === 0) {
     header("Location: laporan_keseluruhan.php");
     exit;
@@ -837,12 +838,14 @@ $periode_label = "01 - {$jumlah_hari} " . $nama_bulan[$bulan] . " {$tahun}";
   
   <div class="footer-ttd">
     <div class="ttd-col">
-      <p>Dibuat Oleh,</p>
-      <div class="ttd-line">Kerani Afdeling</div>
+      <p>Diketahui oleh,</p>
+      <div class="ttd-line"><?= htmlspecialchars($penandatangan['pengawas']) ?></div>
+      <div style="font-weight:bold; margin-top:4px;">Pengawas Afdeling <?= htmlspecialchars($penandatangan['afdeling']) ?></div>
     </div>
     <div class="ttd-col">
-      <p>Kerani Afdeling,</p>
-      <div class="ttd-line">____________________</div>
+      <p>Disusun oleh,</p>
+      <div class="ttd-line"><?= htmlspecialchars($penandatangan['kerani']) ?></div>
+      <div style="font-weight:bold; margin-top:4px;">Kerani Afdeling <?= htmlspecialchars($penandatangan['afdeling']) ?></div>
     </div>
   </div>
 </body>

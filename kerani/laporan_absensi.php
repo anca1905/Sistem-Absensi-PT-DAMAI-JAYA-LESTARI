@@ -29,9 +29,17 @@ $nama_bulan = array(
     '11' => 'November',
     '12' => 'Desember'
 );
+$penandatangan = getReportSignatories($conn, $_SESSION['afdeling'] ?? '');
 ?>
 
 <style>
+    /* Dokumen dengan kop/logo hanya ditampilkan pada hasil cetak. */
+    #official-print-doc { display: none; }
+
+    @media print {
+        #official-print-doc { display: block !important; }
+    }
+
     .header-actions {
         display: flex;
         justify-content: space-between;
@@ -428,13 +436,13 @@ $nama_bulan = array(
     <div class="doc-signature">
         <div class="doc-signature-col">
             <p>Diketahui oleh,</p>
-            <span class="sig-name">Manda</span>
-            <div style="font-weight:bold;">Pengawas Afd 9</div>
+            <span class="sig-name"><?= htmlspecialchars($penandatangan['pengawas']) ?></span>
+            <div style="font-weight:bold;">Pengawas Afdeling <?= htmlspecialchars($penandatangan['afdeling']) ?></div>
         </div>
         <div class="doc-signature-col">
             <p>Disusun oleh,</p>
-            <span class="sig-name">Arsyad</span>
-            <div style="font-weight:bold;">Kerani Afd 9</div>
+            <span class="sig-name"><?= htmlspecialchars($penandatangan['kerani']) ?></span>
+            <div style="font-weight:bold;">Kerani Afdeling <?= htmlspecialchars($penandatangan['afdeling']) ?></div>
         </div>
     </div>
 
