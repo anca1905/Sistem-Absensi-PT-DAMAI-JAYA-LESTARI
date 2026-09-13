@@ -278,13 +278,13 @@ if (!file_exists($filePath)) {
         <div id="cardFront" class="id-card">
             <div class="card-circle"></div>
             <div class="card-content-left">
-                <div class="company-name">ID Card Pegawai</div>
+                <div class="company-name">ID Card Karyawan</div>
                 <div class="company-title">PT DAMAI JAYA LESTARI</div>
 
                 <div class="emp-name"><?= $karyawan['name'] ?></div>
                 <div class="emp-role"><?= strtoupper($karyawan['role']) ?></div>
 
-                <div class="emp-nik-label">Nomor Induk Pegawai</div>
+                <div class="emp-nik-label">Nomor Induk Karyawan</div>
                 <div class="emp-nik"><?= $karyawan['nik'] ?></div>
             </div>
             <div class="card-content-right">
