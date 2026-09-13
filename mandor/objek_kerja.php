@@ -54,7 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['simpan_semua'])) {
     exit;
 }
 
-// 2. Ambil Data
+// 2. Ambil Data dari logbook_kinerja
 if (!empty($afdeling_mandor)) {
     $query_logbook = mysqli_query($conn, "
         SELECT lk.*, u.nik, u.name as karyawan_name
@@ -77,6 +77,23 @@ $all_tasks = [];
 if ($query_logbook) {
     while ($row = mysqli_fetch_assoc($query_logbook)) {
         $all_tasks[] = $row;
+    }
+}
+
+// 2b. Jika logbook kosong, ambil rencana dari pengawas supaya mandor tetap bisa lihat tugasnya
+$rencana_pengawas = [];
+if (count($all_tasks) == 0) {
+    $q_rencana = mysqli_query($conn, "
+        SELECT r.*, p.name as nama_pengawas
+        FROM rencana_kerja_pengawas r
+        LEFT JOIN users p ON r.pengawas_id = p.id
+        WHERE r.tanggal = '$tgl_safe' AND r.mandor_id = $mandor_id
+        ORDER BY r.id ASC
+    ");
+    if ($q_rencana) {
+        while ($rw = mysqli_fetch_assoc($q_rencana)) {
+            $rencana_pengawas[] = $rw;
+        }
     }
 }
 
@@ -441,12 +458,53 @@ foreach ($all_tasks as $t) {
             </button>
 
         <?php else: ?>
-            <div class="card-container" style="text-align:center; padding:40px;">
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5" style="margin-bottom:12px;">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                </svg>
-                <p style="color:#94a3b8; font-size:14px; font-weight:600;">Belum ada objek kerja untuk tanggal ini.</p>
-            </div>
+            <?php if (count($rencana_pengawas) > 0): ?>
+                <!-- Rencana dari Pengawas (belum ada karyawan yang diassign kerani) -->
+                <div class="card-container">
+                    <h3 class="table-title">
+                        <span style="color:var(--primary-start)">■</span> Rencana Tugas dari Pengawas
+                    </h3>
+                    <p style="font-size:12px; color:#f59e0b; background:#fffbeb; border:1px solid #fcd34d; border-radius:8px; padding:10px 14px; margin-bottom:14px; font-weight:600;">
+                        ⏳ Kerani belum mengassign karyawan untuk tanggal ini. Data di bawah adalah rencana tugas dari pengawas.
+                    </p>
+                    <div class="table-responsive">
+                        <table class="table-logbook">
+                            <thead>
+                                <tr>
+                                    <th>NO</th>
+                                    <th>Objek Kerja</th>
+                                    <th>Blok</th>
+                                    <th>Luas Ha</th>
+                                    <th>Tenaga L</th>
+                                    <th>Tenaga W</th>
+                                    <th>Dari Pengawas</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php $no = 1; foreach ($rencana_pengawas as $rp): ?>
+                                    <tr>
+                                        <td><?= $no++ ?></td>
+                                        <td style="text-align:left; font-weight:700; color:var(--text-dark);"><?= htmlspecialchars($rp['objek_kerja']) ?></td>
+                                        <td class="readonly-text"><?= htmlspecialchars($rp['blok'] ?? '-') ?></td>
+                                        <td class="readonly-text"><?= htmlspecialchars($rp['luas_ha'] ?? '-') ?></td>
+                                        <td><span style="background:#eff6ff;color:#1d4ed8;padding:3px 10px;border-radius:6px;font-weight:700;"><?= (int)$rp['tenaga_l'] ?></span></td>
+                                        <td><span style="background:#fdf2f8;color:#be185d;padding:3px 10px;border-radius:6px;font-weight:700;"><?= (int)$rp['tenaga_w'] ?></span></td>
+                                        <td class="readonly-text"><?= htmlspecialchars($rp['nama_pengawas'] ?? '-') ?></td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            <?php else: ?>
+                <div class="card-container" style="text-align:center; padding:40px;">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5" style="margin-bottom:12px;">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    </svg>
+                    <p style="color:#94a3b8; font-size:14px; font-weight:600;">Belum ada objek kerja untuk tanggal ini.</p>
+                    <p style="color:#cbd5e1; font-size:12px;">Pengawas belum membuat rencana kerja untuk tanggal <?= date('d F Y', strtotime($tanggal)) ?></p>
+                </div>
+            <?php endif; ?>
         <?php endif; ?>
 
     </form>

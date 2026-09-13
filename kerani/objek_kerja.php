@@ -784,15 +784,6 @@ $total_tenaga   = $total_tenaga_l + $total_tenaga_w;
     let currentModalGender = null;
     let currentModalQuota = 0;
 
-    function getGlobalSelected(excludeRowId = null) {
-        let set = new Set();
-        for (const rId in selections) {
-            if (rId == excludeRowId) continue;
-            [...(selections[rId]?.L || []), ...(selections[rId]?.W || [])].forEach(uid => set.add(parseInt(uid)));
-        }
-        return set;
-    }
-
     function ensureRowState(rowId) {
         if (!selections[rowId]) selections[rowId] = {
             L: [],
@@ -833,8 +824,8 @@ $total_tenaga   = $total_tenaga_l + $total_tenaga_w;
         const list = currentModalGender === 'L' ? karyawanL : karyawanW;
 
         const localSelected = selections[currentModalRow][currentModalGender];
-        const globalSelected = getGlobalSelected(currentModalRow);
 
+        // Hitung kuota: apakah sudah penuh untuk baris ini?
         let quotaReached = localSelected.length >= currentModalQuota;
         let html = '';
 
@@ -843,17 +834,15 @@ $total_tenaga   = $total_tenaga_l + $total_tenaga_w;
 
             let id = parseInt(k.id);
             let isChecked = localSelected.includes(id);
-            let isGloballySelected = globalSelected.has(id);
-            let isDisabled = isGloballySelected || (!isChecked && quotaReached);
+            // Hanya disabled jika quota penuh DAN belum dipilih di baris ini
+            let isDisabled = !isChecked && quotaReached;
 
             let labelClass = 'chk-item';
             if (isChecked) labelClass += ' checked';
             if (isDisabled) labelClass += ' disabled';
 
             let warnHtml = '';
-            if (isGloballySelected) {
-                warnHtml = '<span class="chk-alert alert-locked"><i class="fa-solid fa-lock"></i> Bertugas</span>';
-            } else if (isDisabled && !isChecked) {
+            if (isDisabled) {
                 warnHtml = '<span class="chk-alert alert-full">Penuh</span>';
             }
 
@@ -892,7 +881,7 @@ $total_tenaga   = $total_tenaga_l + $total_tenaga_w;
             }
         }
 
-        // re-render immediately to update visual lock/unlock state
+        // re-render immediately to update visual state
         renderKaryawanList();
     }
 
