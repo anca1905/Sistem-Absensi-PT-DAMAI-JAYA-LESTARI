@@ -17,7 +17,7 @@ $q_hadir_hari     = mysqli_query($conn, "SELECT COUNT(*) as total FROM absensis 
 $hadir_hari       = mysqli_fetch_assoc($q_hadir_hari)['total'];
 
 // Total izin bulan ini (pending)
-$q_izin_pending   = mysqli_query($conn, "SELECT COUNT(*) as total FROM perizinan WHERE status='menunggu' AND MONTH(tanggal_izin)='$bulan' AND YEAR(tanggal_izin)='$tahun'");
+$q_izin_pending   = mysqli_query($conn, "SELECT COUNT(*) as total FROM perizinan WHERE status='pending' AND MONTH(tanggal_izin)='$bulan' AND YEAR(tanggal_izin)='$tahun'");
 $izin_pending     = mysqli_fetch_assoc($q_izin_pending)['total'];
 
 // Total record logbook bulan ini
@@ -216,7 +216,7 @@ $logbook_total    = mysqli_fetch_assoc($q_logbook_total)['total'];
             </div>
             <div>
                 <div class="stat-value"><?= $total_karyawan ?></div>
-                <div class="stat-label">Total Karyawan</div>
+                <div class="stat-label">Total Personil</div>
             </div>
         </div>
         <div class="stat-card">
