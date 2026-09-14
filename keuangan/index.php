@@ -9,7 +9,7 @@ $bulan   = date('m');
 $tahun   = date('Y');
 
 // Total karyawan
-$q_total_karyawan = mysqli_query($conn, "SELECT COUNT(*) as total FROM users WHERE role='karyawan'");
+$q_total_karyawan = mysqli_query($conn, "SELECT COUNT(*) as total FROM users");
 $total_karyawan   = mysqli_fetch_assoc($q_total_karyawan)['total'];
 
 // Hadir hari ini
