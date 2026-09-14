@@ -556,16 +556,17 @@ $periode_label = str_pad($start_day, 2, '0', STR_PAD_LEFT) . " - " . str_pad($en
                         <th colspan="1" class="th-o1">KEHADIRAN</th>
                         <!-- berbeda setiap tipe -->
                         <?php if ($tipe === 'T1'): ?>
-                            <th colspan="5" class="th-o2">HASIL KERJA (LANGSIR)</th>
+                            <th colspan="4" class="th-o2">HASIL KERJA (LANGSIR)</th>
                         <?php elseif ($tipe === 'T2'): ?>
                             <th colspan="3" class="th-o2">DATA KERJA</th>
                         <?php elseif ($tipe === 'T3'): ?>
                             <th colspan="6" class="th-o2">HASIL PANEN</th>
                         <?php elseif ($tipe === 'T4'): ?>
-                            <th colspan="5" class="th-o2">HASIL KUTIP BRONDOLAN</th>
+                            <th colspan="4" class="th-o2">HASIL KUTIP BRONDOLAN</th>
                         <?php elseif ($tipe === 'T5'): ?>
                             <th colspan="4" class="th-o2">HASIL MUAT TBS</th>
                         <?php endif; ?>
+                        <th rowspan="2" class="th-o2">STATUS (MANDOR)</th>
                     </tr>
                     <!-- Baris 2: Detail kolom -->
                     <tr>
@@ -677,6 +678,21 @@ $periode_label = str_pad($start_day, 2, '0', STR_PAD_LEFT) . " - " . str_pad($en
                         }
 
                         $row_class = ($badge_text == 'Alpha' || $badge_text == '—') ? 'absent-row' : '';
+                        
+                        // Status Aksi (Dari Mandor)
+                        if (!$has_data) {
+                            $aksi_label = '—';
+                            $aksi_style = 'background:#f1f5f9;color:#94a3b8;';
+                        } else {
+                            $status_aksi = strtolower((string)($lb['aksi'] ?? 'belum'));
+                            if ($status_aksi === 'selesai') {
+                                $aksi_label = 'Selesai';
+                                $aksi_style = 'background:#dcfce7;color:#166534;';
+                            } else {
+                                $aksi_label = 'Belum';
+                                $aksi_style = 'background:#fee2e2;color:#991b1b;';
+                            }
+                        }
                     ?>
                         <tr class="<?= $row_class ?>">
                             <td class="td-date"><?= str_pad($d, 2, '0', STR_PAD_LEFT) ?> <?= $nama_bulan[$bulan] ?></td>
@@ -693,7 +709,7 @@ $periode_label = str_pad($start_day, 2, '0', STR_PAD_LEFT) . " - " . str_pad($en
                                     <td class="td-center"><?= htmlspecialchars($lb['blok'] ?? '—') ?></td>
                                     <td class="td-center"><?= htmlspecialchars($lb['luas_ha'] ?? '—') ?></td>
                                 <?php else: ?>
-                                    <td class="td-empty" colspan="5">—</td>
+                                    <td class="td-empty">—</td><td class="td-empty">—</td><td class="td-empty">—</td><td class="td-empty">—</td>
                                 <?php endif; ?>
 
                                 <!-- Tipe T2: Perawatan -->
@@ -703,7 +719,7 @@ $periode_label = str_pad($start_day, 2, '0', STR_PAD_LEFT) . " - " . str_pad($en
                                     <td class="td-center"><?= htmlspecialchars($lb['blok'] ?? '—') ?></td>
                                     <td class="td-center"><?= htmlspecialchars($lb['luas_ha'] ?? '—') ?></td>
                                 <?php else: ?>
-                                    <td class="td-empty" colspan="3">—</td>
+                                    <td class="td-empty">—</td><td class="td-empty">—</td><td class="td-empty">—</td>
                                 <?php endif; ?>
 
                                 <!-- Tipe T3: Panen / Potong Buah -->
@@ -716,7 +732,7 @@ $periode_label = str_pad($start_day, 2, '0', STR_PAD_LEFT) . " - " . str_pad($en
                                     <td class="td-center"><?= htmlspecialchars($lb['blok'] ?? '—') ?></td>
                                     <td class="td-center"><?= htmlspecialchars($lb['luas_ha'] ?? '—') ?></td>
                                 <?php else: ?>
-                                    <td class="td-empty" colspan="6">—</td>
+                                    <td class="td-empty">—</td><td class="td-empty">—</td><td class="td-empty">—</td><td class="td-empty">—</td><td class="td-empty">—</td><td class="td-empty">—</td>
                                 <?php endif; ?>
 
                                 <!-- Tipe T4: Kutip Brondolan -->
@@ -728,7 +744,7 @@ $periode_label = str_pad($start_day, 2, '0', STR_PAD_LEFT) . " - " . str_pad($en
                                     <td class="td-center"><?= htmlspecialchars($lb['blok'] ?? '—') ?></td>
                                     <td class="td-center"><?= htmlspecialchars($lb['luas_ha'] ?? '—') ?></td>
                                 <?php else: ?>
-                                    <td class="td-empty" colspan="5">—</td>
+                                    <td class="td-empty">—</td><td class="td-empty">—</td><td class="td-empty">—</td><td class="td-empty">—</td>
                                 <?php endif; ?>
 
                                 <!-- Tipe T5: Muat TBS -->
@@ -739,9 +755,10 @@ $periode_label = str_pad($start_day, 2, '0', STR_PAD_LEFT) . " - " . str_pad($en
                                     <td class="td-center"><?= htmlspecialchars($lb['blok'] ?? '—') ?></td>
                                     <td class="td-center"><?= htmlspecialchars($lb['luas_ha'] ?? '—') ?></td>
                                 <?php else: ?>
-                                    <td class="td-empty" colspan="4">—</td>
+                                    <td class="td-empty">—</td><td class="td-empty">—</td><td class="td-empty">—</td><td class="td-empty">—</td>
                                 <?php endif; ?>
                             <?php endif; ?>
+                            <td class="td-center"><span style="display:inline-block;padding:4px 9px;border-radius:999px;font-weight:800;font-size:11px;<?= $aksi_style ?>"><?= $aksi_label ?></span></td>
                         </tr>
                     <?php endfor; ?>
                 </tbody>
@@ -780,6 +797,7 @@ $periode_label = str_pad($start_day, 2, '0', STR_PAD_LEFT) . " - " . str_pad($en
                             <td>—</td>
                             <td>—</td>
                         <?php endif; ?>
+                        <td>-</td>
                     </tr>
                 </tfoot>
             </table>
