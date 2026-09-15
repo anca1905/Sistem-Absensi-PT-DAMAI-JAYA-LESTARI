@@ -825,11 +825,21 @@ $total_tenaga   = $total_tenaga_l + $total_tenaga_w;
 
         const localSelected = selections[currentModalRow][currentModalGender];
 
+        // Sort list so that checked items appear at the top
+        let sortedList = [...list].sort((a, b) => {
+            let aChecked = localSelected.includes(parseInt(a.id)) ? 1 : 0;
+            let bChecked = localSelected.includes(parseInt(b.id)) ? 1 : 0;
+            if (aChecked !== bChecked) {
+                return bChecked - aChecked; // 1 before 0
+            }
+            return a.name.localeCompare(b.name);
+        });
+
         // Hitung kuota: apakah sudah penuh untuk baris ini?
         let quotaReached = localSelected.length >= currentModalQuota;
         let html = '';
 
-        list.forEach(k => {
+        sortedList.forEach(k => {
             if (searchQ && !k.name.toLowerCase().includes(searchQ)) return;
 
             let id = parseInt(k.id);
