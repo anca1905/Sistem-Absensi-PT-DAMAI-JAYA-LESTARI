@@ -679,7 +679,12 @@ $list_karyawan_page = array_slice($list_karyawan, $offset, $per_page);
                         <?php endif; ?>
                         <td class="td-center">
                             <a href="laporan_individu.php?user_id=<?= $uid ?>&bulan=<?= $bulan ?>&tahun=<?= $tahun ?>&objek=<?= urlencode($objek) ?>" class="btn-detail-aksi" title="Detail <?= htmlspecialchars($user['name']) ?>">
-                                <i class="fa-solid fa-table-cells" style="font-size:14px;"></i>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="3" y="3" width="7" height="7"></rect>
+                                    <rect x="14" y="3" width="7" height="7"></rect>
+                                    <rect x="14" y="14" width="7" height="7"></rect>
+                                    <rect x="3" y="14" width="7" height="7"></rect>
+                                </svg>
                             </a>
                         </td>
                     </tr>

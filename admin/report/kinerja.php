@@ -54,7 +54,7 @@ while ($user = mysqli_fetch_assoc($query_users)) {
     if ($cat === 'langsir' || strpos($obj, 'langsir') !== false || strpos($obj, 'membabat') !== false) {
         $detail = "Hasil: {$user['hasil_ton']} Ton {$user['hasil_kg']} Kg"; // Prestasi: {$user['prestasi_ton']} Ton {$user['prestasi_kg']} Kg
     } elseif ($cat === 'potong_buah' || strpos($obj, 'potong') !== false || strpos($obj, 'panen') !== false) {
-        $detail = "TBS: {$user['tbs']} | Kosong: {$user['tandan_kosong']} | Brondol: {$user['tandan_brondol']} | Total: {$user['total_tandan']}";
+        $detail = "TBS: {$user['tbs']} | TS: {$user['tandan_kosong']} | TBB: {$user['tandan_brondol']} | Total: {$user['total_tandan']}";
     } elseif ($cat === 'muat_tbs' || strpos($obj, 'muat') !== false) {
         $detail = "Langsir: {$user['hasil_langsir_kg']} Kg | Jam: {$user['jumlah_jam_kerja']}";
     } elseif ($cat === 'jaga' || strpos($obj, 'jaga') !== false) {
@@ -476,7 +476,7 @@ $teks_afdeling = !empty($afdeling_user) ? "Afd " . htmlspecialchars($afdeling_us
             <th style="${thStyle}" colspan="4">Data Janjangan</th><th style="${thStyle}">Status</th>
         </tr><tr>
             <th style="${thStyle}"></th><th style="${thStyle}"></th><th style="${thStyle}"></th>
-            <th style="${thStyle}">TBS</th><th style="${thStyle}">Kosong</th><th style="${thStyle}">Brondol</th><th style="${thStyle}">Total</th>
+            <th style="${thStyle}">TBS</th><th style="${thStyle}">TS</th><th style="${thStyle}">TBB</th><th style="${thStyle}">Total</th>
             <th style="${thStyle}"></th>
         </tr>`;
             tbody = `<tr>

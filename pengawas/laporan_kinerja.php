@@ -682,7 +682,7 @@ while ($row = mysqli_fetch_assoc($query_logbook)) {
             <th style="${ths}" colspan="4">Janjangan</th><th style="${ths}">Status</th>
         </tr><tr>
             <th style="${ths}"></th><th style="${ths}"></th><th style="${ths}"></th>
-            <th style="${ths}">TBS</th><th style="${ths}">Kosong</th><th style="${ths}">Brondol</th><th style="${ths}">Total</th>
+            <th style="${ths}">TBS</th><th style="${ths}">TS</th><th style="${ths}">TBB</th><th style="${ths}">Total</th>
             <th style="${ths}"></th>
         </tr>`;
             tbody = `<tr>

@@ -408,8 +408,8 @@ foreach ($all_tasks as $t) {
                                 </tr>
                                 <tr>
                                     <th>TBS</th>
-                                    <th>Kosong</th>
-                                    <th>Brondol</th>
+                                    <th>TS</th>
+                                    <th>TBB</th>
                                     <th>Total</th>
                                 </tr>
                             </thead>

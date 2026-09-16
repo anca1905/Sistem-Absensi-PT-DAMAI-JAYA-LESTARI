@@ -306,9 +306,9 @@ $is_tomorrow = $tanggal === date('Y-m-d', strtotime('+1 day'));
             <thead>
                 <tr>
                     <th>Nama Mandor</th>
-                    <th>TBS (kg)</th>
-                    <th>TS</th>
                     <th>TBS</th>
+                    <th>TS</th>
+                    <th>TBB</th>
                     <th>Total Tandan</th>
                     <th>Blok</th>
                     <th>Luas Ha</th>
@@ -317,9 +317,9 @@ $is_tomorrow = $tanggal === date('Y-m-d', strtotime('+1 day'));
             <tbody>
                 <tr>
                     <td><?= htmlspecialchars($tugas['nama_mandor'] ?? '—') ?></td>
-                    <td><?= !empty($tugas['hasil_ton']) ? '<span class="val-num">'.number_format($tugas['hasil_ton'],0).'</span>' : '<span class="val-empty">—</span>' ?></td>
-                    <td><?= !empty($tugas['tandan_kosong']) ? '<span class="val-num">'.$tugas['tandan_kosong'].'</span>' : '<span class="val-empty">—</span>' ?></td>
                     <td><?= !empty($tugas['tbs']) ? '<span class="val-num">'.$tugas['tbs'].'</span>' : '<span class="val-empty">—</span>' ?></td>
+                    <td><?= !empty($tugas['tandan_kosong']) ? '<span class="val-num">'.$tugas['tandan_kosong'].'</span>' : '<span class="val-empty">—</span>' ?></td>
+                    <td><?= !empty($tugas['tandan_brondol']) ? '<span class="val-num">'.$tugas['tandan_brondol'].'</span>' : '<span class="val-empty">—</span>' ?></td>
                     <td><?= !empty($tugas['total_tandan']) ? '<span class="val-num">'.$tugas['total_tandan'].'</span>' : '<span class="val-empty">—</span>' ?></td>
                     <td><?= htmlspecialchars($tugas['blok'] ?? '—') ?></td>
                     <td><?= !empty($tugas['luas_ha']) ? $tugas['luas_ha'] : '—' ?></td>

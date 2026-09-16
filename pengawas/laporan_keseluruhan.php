@@ -507,13 +507,208 @@ $periode_label = "01 - {$jumlah_hari} " . $nama_bulan[$bulan] . " {$tahun}";
                         <th rowspan="2" width="60">TANGGAL</th>
                         <!-- O1 -->
                         <th colspan="1" class="th-o1">KEHADIRAN</th>
+}
+
+    .th-o1 {
+        background: #0f4c81 !important;
+    }
+
+    .th-o2 {
+        background: #166534 !important;
+    }
+
+    .td-date {
+        font-weight: 700;
+        text-align: center;
+        color: var(--text-dark);
+    }
+
+    .td-center {
+        text-align: center;
+    }
+
+    .td-num {
+        text-align: right;
+        font-weight: 700;
+        color: #1e293b;
+    }
+
+    .td-empty {
+        color: #cbd5e1;
+        text-align: center;
+        font-style: italic;
+        font-size: 11px;
+    }
+
+    /* Status badge kehadiran */
+    .badge-hadir {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 4px 10px;
+        border-radius: 20px;
+        background: #dcfce7;
+        color: #166534;
+        font-weight: 800;
+        font-size: 11px;
+    }
+
+    .badge-sakit {
+        padding: 4px 10px;
+        border-radius: 20px;
+        background: #ede9fe;
+        color: #5b21b6;
+        font-weight: 800;
+        font-size: 11px;
+        display: inline-block;
+    }
+
+    .badge-izin {
+        padding: 4px 10px;
+        border-radius: 20px;
+        background: #e0f2fe;
+        color: #075985;
+        font-weight: 800;
+        font-size: 11px;
+        display: inline-block;
+    }
+
+    .badge-alpha {
+        padding: 4px 10px;
+        border-radius: 20px;
+        background: #fee2e2;
+        color: #991b1b;
+        font-weight: 800;
+        font-size: 11px;
+        display: inline-block;
+    }
+
+    .badge-cuti {
+        padding: 4px 10px;
+        border-radius: 20px;
+        background: #ffedd5;
+        color: #9a3412;
+        font-weight: 800;
+        font-size: 11px;
+        display: inline-block;
+    }
+
+    .badge-none {
+        padding: 4px 10px;
+        border-radius: 20px;
+        background: #f1f5f9;
+        color: #94a3b8;
+        font-weight: 700;
+        font-size: 11px;
+        display: inline-block;
+    }
+
+    .lk-footer-info {
+        padding: 14px 24px;
+        border-top: 1px solid #e2e8f0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: #f8fafc;
+        font-size: 12px;
+        color: var(--text-muted);
+        font-weight: 600;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    /* Summary row */
+    .lk-table tfoot td {
+        background: #1e293b;
+        color: white;
+        font-weight: 800;
+        font-size: 12px;
+        border-color: #334155;
+    }
+
+    .btn-back {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: #64748b;
+        text-decoration: none;
+        font-weight: 700;
+        font-size: 14px;
+        margin-bottom: 20px;
+        background: white;
+        padding: 8px 16px;
+        border-radius: 20px;
+        border: 1px solid #e2e8f0;
+    }
+</style>
+
+<div class="animate-up">
+    <a href="index.php" class="btn-back">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        Kembali
+    </a>
+
+    <h1 class="page-title" style="text-align: left;">Laporan Keseluruhan</h1>
+
+    <!-- Toolbar Filter -->
+    <div class="lk-toolbar no-print">
+        <form method="GET" id="filterForm" class="lk-filter-group" onchange="this.submit()">
+            <select name="bulan" class="lk-select">
+                <?php foreach ($nama_bulan as $num => $nm): ?>
+                    <option value="<?= $num ?>" <?= $bulan == $num ? 'selected' : '' ?>><?= $nm ?></option>
+                <?php endforeach; ?>
+            </select>
+            <select name="tahun" class="lk-select">
+                <?php for ($y = date('Y') - 2; $y <= date('Y') + 1; $y++): ?>
+                    <option value="<?= $y ?>" <?= $tahun == $y ? 'selected' : '' ?>><?= $y ?></option>
+                <?php endfor; ?>
+            </select>
+            <select name="objek" class="lk-select" style="min-width:200px;">
+                <?php foreach ($list_objek as $obj): ?>
+                    <option value="<?= htmlspecialchars($obj) ?>" <?= $objek == $obj ? 'selected' : '' ?>><?= htmlspecialchars($obj) ?></option>
+                <?php endforeach; ?>
+            </select>
+            <button type="submit" class="btn-filter-go" style="display: none;">Tampilkan</button>
+        </form>
+        <button class="btn-print-lk" onclick="cetakLaporan()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polyline points="6 9 6 2 18 2 18 9"></polyline>
+                <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                <rect x="6" y="14" width="12" height="8"></rect>
+            </svg>
+            Cetak PDF
+        </button>
+    </div>
+
+    <!-- Card Laporan -->
+    <div class="lk-card print-area">
+        <div class="lk-header-main">
+            <p class="lk-title">Laporan Absensi dan Hasil Kinerja</p>
+            <p class="lk-subtitle">
+                Objek: <?= htmlspecialchars($objek) ?> &nbsp;|&nbsp;
+                Periode: <?= $periode_label ?> &nbsp;|&nbsp;
+                <span class="tipe-badge <?= strtolower($tipe) ?>"><?= $label_tipe[$tipe] ?></span>
+            </p>
+        </div>
+
+        <div class="lk-table-wrap">
+            <table class="lk-table">
+                <thead>
+                    <!-- Baris 1: Group header -->
+                    <tr>
+                        <th rowspan="2" width="60">TANGGAL</th>
+                        <!-- O1 -->
+                        <th colspan="1" class="th-o1">KEHADIRAN</th>
                         <!-- berbeda setiap tipe -->
                         <?php if ($tipe === 'T1'): ?>
                             <th colspan="5" class="th-o2">HASIL KERJA (LANGSIR)</th>
                         <?php elseif ($tipe === 'T2'): ?>
                             <th colspan="4" class="th-o2">DATA KERJA</th>
                         <?php elseif ($tipe === 'T3'): ?>
-                            <th colspan="7" class="th-o2">HASIL PANEN</th>
+                            <th colspan="8" class="th-o2">HASIL PANEN</th>
                         <?php elseif ($tipe === 'T4'): ?>
                             <th colspan="5" class="th-o2">HASIL KUTIP BRONDOLAN</th>
                         <?php elseif ($tipe === 'T5'): ?>
@@ -538,8 +733,9 @@ $periode_label = "01 - {$jumlah_hari} " . $nama_bulan[$bulan] . " {$tahun}";
                         <?php elseif ($tipe === 'T3'): ?>
                             <th class="th-o2">NAMA MANDOR</th>
 
-                            <th class="th-o2">TS</th>
                             <th class="th-o2">TBS</th>
+                            <th class="th-o2">TS</th>
+                            <th class="th-o2">TBB</th>
                             <th class="th-o2">TOTAL TANDAN</th>
                             <th class="th-o2">BLOK</th>
                             <th class="th-o2">LUAS (Ha)</th>
@@ -567,6 +763,7 @@ $periode_label = "01 - {$jumlah_hari} " . $nama_bulan[$bulan] . " {$tahun}";
                     $sum_hasil = 0;
                     $sum_tbs_kg = 0;
                     $sum_ts = 0;
+                    $sum_tbb = 0;
                     $sum_tbs = 0;
                     $sum_total_tandan = 0;
 
@@ -638,6 +835,7 @@ $periode_label = "01 - {$jumlah_hari} " . $nama_bulan[$bulan] . " {$tahun}";
                             $sum_hasil        += (float)($lb['hasil_kg'] ?? 0);
                             $sum_tbs_kg       += (float)($lb['hasil_ton'] ?? 0);
                             $sum_ts           += (int)($lb['tandan_kosong'] ?? 0);
+                            $sum_tbb          += (int)($lb['tandan_brondol'] ?? 0);
                             $sum_tbs          += (int)($lb['tbs'] ?? 0);
                             $sum_total_tandan += (int)($lb['total_tandan'] ?? 0);
                         }
@@ -676,13 +874,14 @@ $periode_label = "01 - {$jumlah_hari} " . $nama_bulan[$bulan] . " {$tahun}";
                             <?php elseif ($tipe === 'T3'): ?>
                                 <?php if ($has_data): ?>
                                     <td><?= htmlspecialchars($lb['nama_mandor'] ?? '—') ?></td>
-                                    <td class="td-num"><?= number_format($lb['tandan_kosong'] ?? 0, 0) ?></td>
                                     <td class="td-num"><?= number_format($lb['tbs'] ?? 0, 0) ?></td>
+                                    <td class="td-num"><?= number_format($lb['tandan_kosong'] ?? 0, 0) ?></td>
+                                    <td class="td-num"><?= number_format($lb['tandan_brondol'] ?? 0, 0) ?></td>
                                     <td class="td-num"><?= number_format($lb['total_tandan'] ?? 0, 0) ?></td>
                                     <td class="td-center"><?= htmlspecialchars($lb['blok'] ?? '—') ?></td>
                                     <td class="td-center"><?= htmlspecialchars($lb['luas_ha'] ?? '—') ?></td>
                                 <?php else: ?>
-                                    <td class="td-empty" colspan="6">—</td>
+                                    <td class="td-empty" colspan="7">—</td>
                                 <?php endif; ?>
 
                                 <!-- Tipe T4: Kutip Brondolan -->
@@ -730,8 +929,9 @@ $periode_label = "01 - {$jumlah_hari} " . $nama_bulan[$bulan] . " {$tahun}";
                             <td>—</td>
                         <?php elseif ($tipe === 'T3'): ?>
                             <td>—</td>
-                            <td style="text-align:right;"><?= number_format($sum_ts, 0) ?></td>
                             <td style="text-align:right;"><?= number_format($sum_tbs, 0) ?></td>
+                            <td style="text-align:right;"><?= number_format($sum_ts, 0) ?></td>
+                            <td style="text-align:right;"><?= number_format($sum_tbb, 0) ?></td>
                             <td style="text-align:right;"><?= number_format($sum_total_tandan, 0) ?></td>
                             <td>—</td>
                             <td>—</td>

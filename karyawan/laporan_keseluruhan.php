@@ -531,7 +531,7 @@ $periode_label = "01 - {$jumlah_hari} " . $nama_bulan[$bulan] . " {$tahun}";
                         <?php elseif ($tipe === 'T2'): ?>
                             <th colspan="4" class="th-o2">DATA KERJA</th>
                         <?php elseif ($tipe === 'T3'): ?>
-                            <th colspan="7" class="th-o2">HASIL PANEN</th>
+                            <th colspan="8" class="th-o2">HASIL PANEN</th>
                         <?php elseif ($tipe === 'T4'): ?>
                             <th colspan="6" class="th-o2">HASIL KUTIP BRONDOLAN</th>
                         <?php elseif ($tipe === 'T5'): ?>
@@ -556,8 +556,9 @@ $periode_label = "01 - {$jumlah_hari} " . $nama_bulan[$bulan] . " {$tahun}";
                         <?php elseif ($tipe === 'T3'): ?>
                             <th class="th-o2">NAMA MANDOR</th>
 
-                            <th class="th-o2">TS</th>
                             <th class="th-o2">TBS</th>
+                            <th class="th-o2">TS</th>
+                            <th class="th-o2">TBB</th>
                             <th class="th-o2">TOTAL TANDAN</th>
                             <th class="th-o2">BLOK</th>
                             <th class="th-o2">LUAS (Ha)</th>
@@ -585,6 +586,7 @@ $periode_label = "01 - {$jumlah_hari} " . $nama_bulan[$bulan] . " {$tahun}";
                     $sum_hasil = 0;
                     $sum_tbs_kg = 0;
                     $sum_ts = 0;
+                    $sum_tbb = 0;
                     $sum_tbs = 0;
                     $sum_total_tandan = 0;
 
@@ -656,6 +658,7 @@ $periode_label = "01 - {$jumlah_hari} " . $nama_bulan[$bulan] . " {$tahun}";
                             $sum_hasil        += (float)($lb['hasil_kg'] ?? 0);
                             $sum_tbs_kg       += (float)($lb['hasil_ton'] ?? 0);
                             $sum_ts           += (int)($lb['tandan_kosong'] ?? 0);
+                            $sum_tbb          += (int)($lb['tandan_brondol'] ?? 0);
                             $sum_tbs          += (int)($lb['tbs'] ?? 0);
                             $sum_total_tandan += (int)($lb['total_tandan'] ?? 0);
                         }
@@ -694,13 +697,14 @@ $periode_label = "01 - {$jumlah_hari} " . $nama_bulan[$bulan] . " {$tahun}";
                             <?php elseif ($tipe === 'T3'): ?>
                                 <?php if ($has_data): ?>
                                     <td><?= htmlspecialchars($lb['nama_mandor'] ?? '—') ?></td>
-                                    <td class="td-num"><?= number_format($lb['tandan_kosong'] ?? 0, 0) ?></td>
                                     <td class="td-num"><?= number_format($lb['tbs'] ?? 0, 0) ?></td>
+                                    <td class="td-num"><?= number_format($lb['tandan_kosong'] ?? 0, 0) ?></td>
+                                    <td class="td-num"><?= number_format($lb['tandan_brondol'] ?? 0, 0) ?></td>
                                     <td class="td-num"><?= number_format($lb['total_tandan'] ?? 0, 0) ?></td>
                                     <td class="td-center"><?= htmlspecialchars($lb['blok'] ?? '—') ?></td>
                                     <td class="td-center"><?= htmlspecialchars($lb['luas_ha'] ?? '—') ?></td>
                                 <?php else: ?>
-                                    <td class="td-empty" colspan="6">—</td>
+                                    <td class="td-empty" colspan="7">—</td>
                                 <?php endif; ?>
 
                                 <!-- Tipe T4: Kutip Brondolan -->
@@ -748,8 +752,9 @@ $periode_label = "01 - {$jumlah_hari} " . $nama_bulan[$bulan] . " {$tahun}";
                             <td>—</td>
                         <?php elseif ($tipe === 'T3'): ?>
                             <td>—</td>
-                            <td style="text-align:right;"><?= number_format($sum_ts, 0) ?></td>
                             <td style="text-align:right;"><?= number_format($sum_tbs, 0) ?></td>
+                            <td style="text-align:right;"><?= number_format($sum_ts, 0) ?></td>
+                            <td style="text-align:right;"><?= number_format($sum_tbb, 0) ?></td>
                             <td style="text-align:right;"><?= number_format($sum_total_tandan, 0) ?></td>
                             <td>—</td>
                             <td>—</td>

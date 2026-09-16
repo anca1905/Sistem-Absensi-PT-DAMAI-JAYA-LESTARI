@@ -198,8 +198,8 @@ $query_log = mysqli_query($conn, "SELECT l.*, u.name as mandor_name FROM logbook
                                 Aksi: <b><?= strtoupper($row['aksi']) ?></b> <br>
                                 <?= $row['jumlah_jam_kerja'] > 0 ? "Jam Kerja: <b>{$row['jumlah_jam_kerja']} Jam</b>" : "" ?>
                             <?php elseif ($row['kategori_task'] == 'potong_buah'): ?>
-                                TBS: <b><?= $row['tbs'] ?></b>, Kosong: <b><?= $row['tandan_kosong'] ?></b><br>
-                                Brondol: <b><?= $row['tandan_brondol'] ?></b>, Total: <b><?= $row['total_tandan'] ?></b>
+                                TBS: <b><?= $row['tbs'] ?></b>, TS: <b><?= $row['tandan_kosong'] ?></b><br>
+                                TBB: <b><?= $row['tandan_brondol'] ?></b>, Total: <b><?= $row['total_tandan'] ?></b>
                             <?php elseif ($row['kategori_task'] == 'langsir'): ?>
                                 Hasil: <b><?= $row['hasil_ton'] ?> Ton / <?= $row['hasil_kg'] ?> Kg</b>
                                 <!-- <br>Prestasi: <b><?= $row['prestasi_ton'] ?> Ton / <?= $row['prestasi_kg'] ?> Kg</b> -->
