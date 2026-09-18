@@ -134,7 +134,7 @@ $q_logbook = mysqli_query($conn, "
 $logbook_assignments = [];
 while ($lb = mysqli_fetch_assoc($q_logbook)) {
     $jk = ($lb['jenis_kelamin'] === 'Perempuan') ? 'W' : 'L';
-    $logbook_assignments[$lb['rencana_id']][$jk][] = $lb['user_id'];
+    $logbook_assignments[$lb['rencana_id']][$jk][] = (int)$lb['user_id'];
 }
 
 $rows_rencana = [];
