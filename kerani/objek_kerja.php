@@ -839,7 +839,13 @@ $total_tenaga   = $total_tenaga_l + $total_tenaga_w;
 
         // Hitung kuota: apakah sudah penuh untuk baris ini?
         let quotaReached = localSelected.length >= currentModalQuota;
-        let html = '';
+        
+        // DEBUG BANNER
+        let html = `<div style="background:#fef08a; padding:10px; margin-bottom:10px; border-radius:8px; font-size:11px; color:#854d0e; word-break:break-all;">
+            <b>INFO DEBUG (Tolong screenshot ini):</b><br>
+            localSelected: ${JSON.stringify(localSelected)}<br>
+            list_IDs: ${JSON.stringify(list.map(x => ({id: x.id, name: x.name})))}
+        </div>`;
 
         sortedList.forEach(k => {
             if (searchQ && !k.name.toLowerCase().includes(searchQ)) return;
