@@ -9,6 +9,22 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['id'])) {
     $status = $_POST['status'] == 'ya' ? 'disetujui' : 'ditolak';
     mysqli_query($conn, "UPDATE perizinan SET status='$status' WHERE id=$id");
     
+    if ($status == 'disetujui') {
+        $q_izin = mysqli_query($conn, "SELECT user_id, tanggal_izin, jenis FROM perizinan WHERE id=$id");
+        if ($d_izin = mysqli_fetch_assoc($q_izin)) {
+            $uid = $d_izin['user_id'];
+            $tgl = $d_izin['tanggal_izin'];
+            $jenis = strtolower($d_izin['jenis']);
+            
+            $c_abs = mysqli_query($conn, "SELECT id FROM absensis WHERE user_id='$uid' AND tanggal='$tgl'");
+            if (mysqli_num_rows($c_abs) > 0) {
+                mysqli_query($conn, "UPDATE absensis SET status_kehadiran='$jenis' WHERE user_id='$uid' AND tanggal='$tgl'");
+            } else {
+                mysqli_query($conn, "INSERT INTO absensis (user_id, tanggal, waktu_masuk, status_kehadiran) VALUES ('$uid', '$tgl', '00:00:00', '$jenis')");
+            }
+        }
+    }
+    
     // --- INTEGRASI WHATSAPP CHATBOT (FONNTE API) ---
     $q_wa = mysqli_query($conn, "SELECT u.name, u.no_hp, p.jenis, p.tanggal_izin FROM perizinan p JOIN users u ON p.user_id = u.id WHERE p.id=$id");
     if($row_wa = mysqli_fetch_assoc($q_wa)) {

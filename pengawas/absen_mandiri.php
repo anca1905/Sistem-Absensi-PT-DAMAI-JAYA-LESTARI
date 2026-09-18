@@ -23,7 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if (isset($_POST['absen_masuk'])) {
         if (!$dataAbsen) {
             if ($now >= '06:00:00' && $now <= '15:00:00') {
-                $status = 'hadir';
+                $status = ($now > $jamMasuk) ? 'alpha' : 'hadir';
                 $insert = mysqli_query($conn, "INSERT INTO absensis (user_id, tanggal, waktu_masuk, status_kehadiran) VALUES ('$user_id', '$today', '$now', '$status')");
                 if ($insert) {
                     $pesan = "Berhasil absen masuk pada $now";

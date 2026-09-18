@@ -28,6 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['nik'])) {
         } else {
             // Cek apakah waktu saat ini antara 06:00 dan 15:00 untuk absen MASUK
             if ($waktu >= '06:00:00' && $waktu <= '15:00:00') {
+                $status_kehadiran = ($waktu > $jamMasuk) ? 'alpha' : 'hadir';
                 // Insert absen masuk
                 mysqli_query($conn, "INSERT INTO absensis (user_id, tanggal, waktu_masuk, status_kehadiran) VALUES ($scan_user_id, '$tanggal', '$waktu', '$status_kehadiran')");
                 swalRedirect('Absen MASUK berhasil dicatat!', 'scanner.php', 'success');

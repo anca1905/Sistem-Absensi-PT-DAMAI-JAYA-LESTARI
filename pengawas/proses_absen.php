@@ -53,7 +53,7 @@ $dataAbsen = mysqli_fetch_assoc($cekAbsen);
 
 if (!$dataAbsen) {
     // -- ABSEN MASUK --
-    $status = 'hadir';
+    $status = ($now > $jamMasuk) ? 'alpha' : 'hadir';
     $insert = mysqli_query($conn, "INSERT INTO absensis (user_id, tanggal, waktu_masuk, status_kehadiran) VALUES ('$userId', '$today', '$now', '$status')");
 
     if ($insert) {
