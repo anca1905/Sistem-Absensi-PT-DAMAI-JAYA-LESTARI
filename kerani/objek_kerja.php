@@ -780,6 +780,16 @@ $total_tenaga   = $total_tenaga_l + $total_tenaga_w;
     // initial allocations
     const selections = <?= json_encode($logbook_assignments) ?> || {};
 
+    // BERSIHKAN SELECTIONS DARI ID YANG SUDAH HILANG (Karyawan dipindah/dihapus/ubah role)
+    for (let rowId in selections) {
+        if (selections[rowId].L) {
+            selections[rowId].L = selections[rowId].L.filter(id => karyawanL.some(k => parseInt(k.id) === parseInt(id)));
+        }
+        if (selections[rowId].W) {
+            selections[rowId].W = selections[rowId].W.filter(id => karyawanW.some(k => parseInt(k.id) === parseInt(id)));
+        }
+    }
+
     let currentModalRow = null;
     let currentModalGender = null;
     let currentModalQuota = 0;
@@ -813,11 +823,9 @@ $total_tenaga   = $total_tenaga_l + $total_tenaga_w;
         // Update the counter on button
         if (currentModalRow && currentModalGender) {
             const localSelected = selections[currentModalRow]?.[currentModalGender] || [];
-            const list = currentModalGender === 'L' ? karyawanL : karyawanW;
-            const validSelected = localSelected.filter(item => list.some(k => parseInt(k.id) === parseInt(item)));
             
             const span = document.getElementById(`count-${currentModalGender.toLowerCase()}-${currentModalRow}`);
-            if (span) span.innerText = validSelected.length;
+            if (span) span.innerText = localSelected.length;
         }
     }
 
@@ -828,30 +836,27 @@ $total_tenaga   = $total_tenaga_l + $total_tenaga_w;
 
         const localSelected = selections[currentModalRow][currentModalGender];
 
-        // Filter selected items to only include those that actually exist in the current list
-        let validSelected = localSelected.filter(item => list.some(k => parseInt(k.id) === parseInt(item)));
-
         // Sort list so that checked items appear at the top
         let sortedList = [...list].sort((a, b) => {
             let aId = parseInt(a.id);
             let bId = parseInt(b.id);
-            let aChecked = validSelected.some(item => parseInt(item) === aId) ? 1 : 0;
-            let bChecked = validSelected.some(item => parseInt(item) === bId) ? 1 : 0;
+            let aChecked = localSelected.some(item => parseInt(item) === aId) ? 1 : 0;
+            let bChecked = localSelected.some(item => parseInt(item) === bId) ? 1 : 0;
             if (aChecked !== bChecked) {
                 return bChecked - aChecked; // 1 before 0
             }
             return a.name.localeCompare(b.name);
         });
 
-        // Hitung kuota berdasarkan karyawan yang valid saja
-        let quotaReached = validSelected.length >= currentModalQuota;
+        // Hitung kuota
+        let quotaReached = localSelected.length >= currentModalQuota;
         let html = '';
 
         sortedList.forEach(k => {
             if (searchQ && !k.name.toLowerCase().includes(searchQ)) return;
 
             let id = parseInt(k.id);
-            let isChecked = validSelected.some(item => parseInt(item) === id);
+            let isChecked = localSelected.some(item => parseInt(item) === id);
             // Hanya disabled jika quota penuh DAN belum dipilih di baris ini
             let isDisabled = !isChecked && quotaReached;
 
@@ -876,7 +881,7 @@ $total_tenaga   = $total_tenaga_l + $total_tenaga_w;
         if (html === '') html = '<div style="text-align:center; padding: 20px; color:#94a3b8; font-size:14px; font-weight:600;">Tidak ada Karyawan relevan ditemukan.</div>';
 
         container.innerHTML = html;
-        document.getElementById('modalQuotaText').innerText = `${validSelected.length} / ${currentModalQuota} Terpilih`;
+        document.getElementById('modalQuotaText').innerText = `${localSelected.length} / ${currentModalQuota} Terpilih`;
     }
 
     function toggleKaryawan(e, el, id) {
