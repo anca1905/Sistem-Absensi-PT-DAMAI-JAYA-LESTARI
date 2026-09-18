@@ -827,8 +827,10 @@ $total_tenaga   = $total_tenaga_l + $total_tenaga_w;
 
         // Sort list so that checked items appear at the top
         let sortedList = [...list].sort((a, b) => {
-            let aChecked = localSelected.includes(parseInt(a.id)) ? 1 : 0;
-            let bChecked = localSelected.includes(parseInt(b.id)) ? 1 : 0;
+            let aId = parseInt(a.id);
+            let bId = parseInt(b.id);
+            let aChecked = localSelected.some(item => parseInt(item) === aId) ? 1 : 0;
+            let bChecked = localSelected.some(item => parseInt(item) === bId) ? 1 : 0;
             if (aChecked !== bChecked) {
                 return bChecked - aChecked; // 1 before 0
             }
@@ -843,7 +845,7 @@ $total_tenaga   = $total_tenaga_l + $total_tenaga_w;
             if (searchQ && !k.name.toLowerCase().includes(searchQ)) return;
 
             let id = parseInt(k.id);
-            let isChecked = localSelected.includes(id);
+            let isChecked = localSelected.some(item => parseInt(item) === id);
             // Hanya disabled jika quota penuh DAN belum dipilih di baris ini
             let isDisabled = !isChecked && quotaReached;
 
@@ -881,13 +883,14 @@ $total_tenaga   = $total_tenaga_l + $total_tenaga_w;
 
         ensureRowState(currentModalRow);
         let list = selections[currentModalRow][currentModalGender];
-        let idx = list.indexOf(id);
+        let idNum = parseInt(id);
+        let idx = list.findIndex(item => parseInt(item) === idNum);
 
         if (idx > -1) {
             list.splice(idx, 1);
         } else {
             if (list.length < currentModalQuota) {
-                list.push(id);
+                list.push(idNum);
             }
         }
 
