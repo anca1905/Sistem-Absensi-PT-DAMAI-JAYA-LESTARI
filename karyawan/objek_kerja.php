@@ -4,42 +4,51 @@ require '../config/config.php';
 // --- Handler: Kirim Komentar via WA ke Kerani ---
 if (isset($_POST['kirim_komentar'])) {
     header('Content-Type: application/json');
-    $uid     = $_SESSION['user_id'];
-    $tanggal = mysqli_real_escape_string($conn, $_POST['tanggal'] ?? date('Y-m-d', strtotime('+1 day')));
-    $komentar = mysqli_real_escape_string($conn, trim($_POST['komentar'] ?? ''));
-    $objek    = mysqli_real_escape_string($conn, $_POST['objek'] ?? '');
+    $uid      = $_SESSION['user_id'];
+    $logbook_id = (int)($_POST['logbook_id'] ?? 0);
+    $komentar   = trim(mysqli_real_escape_string($conn, $_POST['komentar'] ?? ''));
+    $objek      = mysqli_real_escape_string($conn, $_POST['objek'] ?? '');
 
-    if (empty($komentar)) { echo json_encode(['success'=>false,'msg'=>'Komentar tidak boleh kosong.']); exit; }
+    if (!$logbook_id) { echo json_encode(['success' => false, 'msg' => 'ID tugas tidak valid.']); exit; }
+    if (empty($komentar)) { echo json_encode(['success' => false, 'msg' => 'Komentar tidak boleh kosong.']); exit; }
 
-    // Simpan komentar ke logbook_kinerja (jika kolom komentar sudah ada)
-    $cek_col = mysqli_query($conn, "SHOW COLUMNS FROM logbook_kinerja LIKE 'komentar'");
-    if (mysqli_num_rows($cek_col) == 0) {
-        mysqli_query($conn, "ALTER TABLE logbook_kinerja ADD COLUMN komentar TEXT NULL AFTER status");
-    }
-    mysqli_query($conn, "UPDATE logbook_kinerja SET komentar='$komentar' WHERE user_id=$uid AND tanggal='$tanggal'");
+    // Simpan ke tabel komentar_objek_kerja
+    mysqli_query($conn, "INSERT INTO komentar_objek_kerja (logbook_id, user_id, komentar, dibaca) 
+                          VALUES ($logbook_id, $uid, '$komentar', 0)");
+
+    // Ambil tanggal tugas dari logbook
+    $q_lk = mysqli_query($conn, "SELECT tanggal FROM logbook_kinerja WHERE id=$logbook_id AND user_id=$uid");
+    $lk_row = mysqli_fetch_assoc($q_lk);
+    $tanggal = $lk_row['tanggal'] ?? date('Y-m-d');
 
     // Kirim WA ke Kerani afdeling yang sama
     $afdeling_user = isset($_SESSION['afdeling']) ? mysqli_real_escape_string($conn, $_SESSION['afdeling']) : '';
     $nama_karyawan = htmlspecialchars($_SESSION['nama'] ?? 'Karyawan');
-    $q_kerani = mysqli_query($conn, "SELECT no_hp FROM users WHERE role='kerani'" . (!empty($afdeling_user) ? " AND afdeling='$afdeling_user'" : "") . " LIMIT 1");
-    
+    $q_kerani = mysqli_query($conn, "SELECT no_hp FROM users WHERE role='kerani'" .
+        (!empty($afdeling_user) ? " AND afdeling='$afdeling_user'" : "") . " LIMIT 1");
+
     $sent = 0;
     if ($q_kerani && mysqli_num_rows($q_kerani) > 0) {
         $kerani = mysqli_fetch_assoc($q_kerani);
         if (!empty($kerani['no_hp'])) {
-            $tgl_fmt = date('d/m/Y', strtotime($tanggal));
-            $pesan = "💬 *Komentar dari Karyawan*\n\n";
-            $pesan .= "Halo, ada pesan dari *{$nama_karyawan}* untuk tanggal *{$tgl_fmt}*:\n\n";
-            $pesan .= "📋 *Objek Kerja:* {$objek}\n";
-            $pesan .= "💬 *Pesan:* {$komentar}\n\n";
-            $pesan .= "_Mohon ditindaklanjuti jika diperlukan._\n_Sistem PT DJL_";
+            $tgl_fmt  = date('d/m/Y', strtotime($tanggal));
+            $link_ok  = BASE_URL . 'kerani/objek_kerja.php?tanggal=' . urlencode($tanggal);
+            $pesan    = "Komentar dari Karyawan\n\n";
+            $pesan   .= "Dari: *{$nama_karyawan}*\n";
+            $pesan   .= "Tanggal: *{$tgl_fmt}*\n";
+            $pesan   .= "Objek Kerja: *{$objek}*\n\n";
+            $pesan   .= "*Pesan:*\n_{$komentar}_\n\n";
+            $pesan   .= "Lihat di: {$link_ok}\n";
+            $pesan   .= "_Sistem PT DJL_";
             sendWA($kerani['no_hp'], $pesan);
             $sent = 1;
         }
     }
-    echo json_encode(['success'=>true, 'sent'=>$sent]);
+    echo json_encode(['success' => true, 'sent' => $sent]);
     exit;
 }
+
+
 
 include 'templates/header.php';
 
@@ -412,7 +421,7 @@ function kirimKomentar(logbookId, objek) {
     }
     const fd = new FormData();
     fd.append('kirim_komentar', 1);
-    fd.append('tanggal', tanggal);
+    fd.append('logbook_id', logbookId);
     fd.append('komentar', komentar);
     fd.append('objek', objek);
     fetch('objek_kerja.php', { method:'POST', body:fd })

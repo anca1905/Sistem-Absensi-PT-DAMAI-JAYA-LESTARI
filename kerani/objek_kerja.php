@@ -66,35 +66,76 @@ if (isset($_POST['simpan_tenaga'])) {
     exit;
 }
 
-// --- Handler: Kirim WA ke Mandor & Karyawan ---
+// --- Handler: Kirim WA ke Karyawan (dengan link komentar) ---
 if (isset($_POST['kirim_pesan'])) {
     $tanggal_tugas = mysqli_real_escape_string($conn, $_POST['tanggal_tugas']);
     $tgl_fmt = date('d/m/Y', strtotime($tanggal_tugas));
-    $afdeling_kerani = isset($_SESSION['afdeling']) ? mysqli_real_escape_string($conn, $_SESSION['afdeling']) : '';
 
-    $q = mysqli_query($conn, "SELECT r.*, m.name AS nama_mandor, m.no_hp AS hp_mandor
-                               FROM rencana_kerja_pengawas r
-                               LEFT JOIN users m ON r.mandor_id = m.id
-                               WHERE r.tanggal = '$tanggal_tugas'
-                               ORDER BY m.name ASC");
+    // Ambil semua karyawan yang sudah diassign di logbook_kinerja untuk tanggal ini
+    $q = mysqli_query($conn, "
+        SELECT lk.id AS logbook_id, lk.objek_kerja, lk.blok, lk.luas_ha,
+               u.name AS nama_karyawan, u.no_hp AS hp_karyawan,
+               m.name AS nama_mandor
+        FROM logbook_kinerja lk
+        JOIN users u ON lk.user_id = u.id
+        LEFT JOIN users m ON lk.mandor_id = m.id
+        WHERE lk.tanggal = '$tanggal_tugas'
+        ORDER BY u.name ASC
+    ");
 
     $sent = 0;
+    $skipped = 0;
     while ($row = mysqli_fetch_assoc($q)) {
-        if (!empty($row['hp_mandor'])) {
-            $pesan  = "📋 *Rencana Kerja - {$tgl_fmt}*\n\n";
-            $pesan .= "Halo *{$row['nama_mandor']}*,\nBerikut rencana kerja besok:\n\n";
-            $pesan .= "🔧 *Objek Kerja:* {$row['objek_kerja']}\n";
-            $pesan .= "📍 *Blok:* {$row['blok']} | *Luas:* {$row['luas_ha']} Ha\n";
-            $pesan .= "👥 *Tenaga:* L {$row['tenaga_l']} | W {$row['tenaga_w']}\n\n";
-            $pesan .= "_Pesan otomatis dari Sistem Kerani PT DJL._";
-            sendWA($row['hp_mandor'], $pesan);
-            $sent++;
+        if (empty($row['hp_karyawan'])) {
+            $skipped++;
+            continue;
         }
+
+        // Generate token unik untuk link komentar
+        $token = md5($row['logbook_id'] . APP_SECRET);
+        $link_komentar = BASE_URL . 'karyawan/komentar.php?id=' . $row['logbook_id'] . '&token=' . $token;
+
+        $pesan  = "📋 *Penugasan Kerja - {$tgl_fmt}*\n\n";
+        $pesan .= "Halo *{$row['nama_karyawan']}*,\n";
+        $pesan .= "Berikut tugas kamu untuk besok:\n\n";
+        $pesan .= "🔧 *Objek Kerja:* {$row['objek_kerja']}\n";
+        $pesan .= "📍 *Blok:* {$row['blok']} | *Luas:* {$row['luas_ha']} Ha\n";
+        $pesan .= "👷 *Mandor:* {$row['nama_mandor']}\n\n";
+        $pesan .= "Jika ada komplain atau ingin ganti tugas, klik link di bawah:\n";
+        $pesan .= "👇 {$link_komentar}\n\n";
+        $pesan .= "_Pesan otomatis dari Sistem Kerani PT DJL._";
+
+        sendWA($row['hp_karyawan'], $pesan);
+        $sent++;
     }
 
-    echo json_encode(['success' => true, 'sent' => $sent]);
+    echo json_encode(['success' => true, 'sent' => $sent, 'skipped' => $skipped]);
     exit;
 }
+
+// --- Handler: Ambil komentar untuk satu logbook (AJAX) ---
+if (isset($_GET['get_komentar'])) {
+    header('Content-Type: application/json');
+    $logbook_id = (int)($_GET['logbook_id'] ?? 0);
+    if (!$logbook_id) { echo json_encode(['success' => false]); exit; }
+
+    $q = mysqli_query($conn, "
+        SELECT k.id, k.komentar, k.dibaca, k.created_at, u.name AS nama
+        FROM komentar_objek_kerja k
+        JOIN users u ON k.user_id = u.id
+        WHERE k.logbook_id = $logbook_id
+        ORDER BY k.created_at DESC
+    ");
+    $list = [];
+    while ($r = mysqli_fetch_assoc($q)) $list[] = $r;
+
+    // Tandai sudah dibaca
+    mysqli_query($conn, "UPDATE komentar_objek_kerja SET dibaca=1 WHERE logbook_id=$logbook_id");
+
+    echo json_encode(['success' => true, 'data' => $list]);
+    exit;
+}
+
 
 include 'templates/header.php';
 
@@ -126,15 +167,34 @@ while ($k = mysqli_fetch_assoc($q_karyawan)) {
 
 // Ambil assignment yang sudah ada di logbook_kinerja berdasarkan rencana_id
 $q_logbook = mysqli_query($conn, "
-    SELECT l.id, l.rencana_id, l.user_id, u.jenis_kelamin 
+    SELECT l.id AS logbook_id, l.rencana_id, l.user_id, u.jenis_kelamin 
     FROM logbook_kinerja l
     JOIN users u ON l.user_id = u.id
     WHERE l.tanggal = '$tgl_safe' AND l.rencana_id IS NOT NULL
 ");
 $logbook_assignments = [];
+$logbook_ids_by_rencana = []; // logbook_id[] per rencana_id
 while ($lb = mysqli_fetch_assoc($q_logbook)) {
     $jk = ($lb['jenis_kelamin'] === 'Perempuan') ? 'W' : 'L';
     $logbook_assignments[$lb['rencana_id']][$jk][] = (int)$lb['user_id'];
+    $logbook_ids_by_rencana[$lb['rencana_id']][] = (int)$lb['logbook_id'];
+}
+
+// Ambil jumlah komentar belum dibaca per rencana
+$komentar_count = []; // rencana_id => ['total' => N, 'unread' => N]
+$all_logbook_ids = array_merge([], ...array_values($logbook_ids_by_rencana ?: [[]]));
+if (!empty($all_logbook_ids)) {
+    $ids_in = implode(',', $all_logbook_ids);
+    $q_kom = mysqli_query($conn, "
+        SELECT lk.rencana_id, COUNT(k.id) AS total, SUM(k.dibaca=0) AS unread
+        FROM komentar_objek_kerja k
+        JOIN logbook_kinerja lk ON k.logbook_id = lk.id
+        WHERE k.logbook_id IN ($ids_in)
+        GROUP BY lk.rencana_id
+    ");
+    while ($km = mysqli_fetch_assoc($q_kom)) {
+        $komentar_count[$km['rencana_id']] = ['total' => (int)$km['total'], 'unread' => (int)$km['unread']];
+    }
 }
 
 $rows_rencana = [];
@@ -594,6 +654,31 @@ $total_tenaga   = $total_tenaga_l + $total_tenaga_w;
     .alert-full {
         color: #94a3b8;
     }
+
+    /* Tombol komentar di tabel */
+    .btn-komentar-row {
+        padding: 6px 10px; border-radius: 8px; border: 1.5px solid #e0e7ff;
+        background: #f5f3ff; color: #7c3aed; font-size: 13px; cursor: pointer;
+        transition: all .2s; position: relative; display: inline-flex; align-items: center; gap: 4px;
+    }
+    .btn-komentar-row:hover { background: #ede9fe; border-color: #c4b5fd; }
+    .badge-km {
+        position: absolute; top: -6px; right: -6px;
+        border-radius: 50%; width: 18px; height: 18px;
+        font-size: 10px; font-weight: 800; display: flex; align-items: center; justify-content: center;
+        border: 2px solid white;
+    }
+    .badge-unread { background: #ef4444; color: white; }
+    .badge-read   { background: #94a3b8; color: white; }
+
+    /* Item komentar dalam modal */
+    .km-item {
+        background: #f8fafc; border-radius: 10px; padding: 12px 14px;
+        margin-bottom: 8px; border-left: 3px solid #7c3aed;
+    }
+    .km-nama { font-size: 12px; font-weight: 800; color: #7c3aed; margin-bottom: 4px; }
+    .km-text { font-size: 13px; color: #334155; font-weight: 600; line-height: 1.5; }
+    .km-time { font-size: 11px; color: #94a3b8; margin-top: 4px; }
 </style>
 
 <!-- Notice -->
@@ -615,7 +700,7 @@ $total_tenaga   = $total_tenaga_l + $total_tenaga_w;
     </div>
     <button class="btn-wa" id="btnKirimWA" <?= count($rows_rencana) == 0 ? 'disabled' : '' ?> onclick="kirimPesanWA()">
         <i class="fa-brands fa-whatsapp" style="font-size:16px;"></i>
-        Kirim Pesan ke Mandor
+        Kirim Tugas ke Karyawan via WA
     </button>
 </div>
 
@@ -678,12 +763,16 @@ $total_tenaga   = $total_tenaga_l + $total_tenaga_w;
                     <th width="90">Blok</th>
                     <th width="90">Luas (Ha)</th>
                     <th width="200" style="text-align:center;">Tenaga (Isi disini)</th>
+                    <th width="110" style="text-align:center;">Komentar</th>
                 </tr>
             </thead>
             <tbody id="tbodyOK">
                 <?php if (count($rows_rencana) > 0): ?>
                     <?php $no = 1;
-                    foreach ($rows_rencana as $row): ?>
+                    foreach ($rows_rencana as $row): 
+                        $km_info = $komentar_count[$row['id']] ?? ['total' => 0, 'unread' => 0];
+                        $logbook_ids_row = $logbook_ids_by_rencana[$row['id']] ?? [];
+                    ?>
                         <tr class="row-ok" data-id="<?= $row['id'] ?>">
                             <td class="row-no"><?= $no++ ?></td>
                             <td>
@@ -723,11 +812,28 @@ $total_tenaga   = $total_tenaga_l + $total_tenaga_w;
                                 }
                                 ?>
                             </td>
+                            <td style="text-align:center;">
+                                <?php if (!empty($logbook_ids_row)): ?>
+                                <button type="button" class="btn-komentar-row" 
+                                        onclick="lihatKomentar(<?= $row['id'] ?>, <?= json_encode($logbook_ids_row) ?>)"
+                                        title="Lihat Komentar Karyawan"
+                                        style="position:relative;">
+                                    <i class="fa-solid fa-comments"></i>
+                                    <?php if ($km_info['total'] > 0): ?>
+                                        <span class="badge-km <?= $km_info['unread'] > 0 ? 'badge-unread' : 'badge-read' ?>">
+                                            <?= $km_info['total'] ?>
+                                        </span>
+                                    <?php endif; ?>
+                                </button>
+                                <?php else: ?>
+                                <span style="color:#cbd5e1;font-size:12px;">—</span>
+                                <?php endif; ?>
+                            </td>
                         </tr>
                     <?php endforeach; ?>
                 <?php else: ?>
                     <tr id="emptyRow">
-                        <td colspan="6">
+                        <td colspan="7">
                             <div class="empty-state">
                                 <i class="fa-solid fa-file-circle-exclamation"></i>
                                 <p>Belum ada rencana kerja dari Pengawas</p>
@@ -749,6 +855,24 @@ $total_tenaga   = $total_tenaga_l + $total_tenaga_w;
         </div>
     <?php endif; ?>
 </div>
+
+<!-- Modal Komentar Karyawan -->
+<div id="modalKomentar" style="display:none;position:fixed;z-index:9998;left:0;top:0;width:100%;height:100%;background:rgba(15,23,42,.6);align-items:center;justify-content:center;backdrop-filter:blur(4px);">
+    <div style="background:white;border-radius:16px;width:90%;max-width:500px;box-shadow:0 20px 40px rgba(0,0,0,.2);overflow:hidden;max-height:90vh;display:flex;flex-direction:column;">
+        <div style="padding:16px 20px;border-bottom:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;background:#f8fafc;">
+            <h4 style="margin:0;font-size:16px;font-weight:800;color:#0f172a;">💬 Komentar Karyawan</h4>
+            <button onclick="document.getElementById('modalKomentar').style.display='none'" style="background:none;border:none;font-size:24px;cursor:pointer;color:#64748b;padding:0;line-height:1;">&times;</button>
+        </div>
+        <div id="komentar-body" style="padding:16px;overflow-y:auto;flex:1;">
+            <div style="text-align:center;color:#94a3b8;padding:20px;">Memuat...</div>
+        </div>
+        <div style="padding:14px 20px;border-top:1px solid #e2e8f0;background:#f8fafc;display:flex;justify-content:flex-end;">
+            <button class="btn-filter" onclick="document.getElementById('modalKomentar').style.display='none'">Tutup</button>
+        </div>
+    </div>
+</div>
+
+
 
 <!-- Modal Pilih Karyawan (Single Page App style) -->
 <div id="modalKaryawan" class="custom-modal">
@@ -964,8 +1088,8 @@ $total_tenaga   = $total_tenaga_l + $total_tenaga_w;
     function kirimPesanWA() {
         Swal.fire({
             icon: 'question',
-            title: 'Kirim Pesan WhatsApp?',
-            html: `Pesan rencana kerja akan dikirim ke semua <b>mandor</b> untuk tanggal <b>${new Date(tanggalTugas + 'T00:00:00').toLocaleDateString('id-ID', {day:'2-digit',month:'long',year:'numeric'})}</b>.`,
+            title: 'Kirim Tugas ke Karyawan?',
+            html: `Pesan penugasan kerja (beserta <b>link komentar</b>) akan dikirim ke semua <b>karyawan</b> yang sudah diassign untuk tanggal <b>${new Date(tanggalTugas + 'T00:00:00').toLocaleDateString('id-ID', {day:'2-digit',month:'long',year:'numeric'})}</b>.`,
             showCancelButton: true,
             confirmButtonText: '✅ Ya, Kirim',
             cancelButtonText: 'Batal',
@@ -993,7 +1117,7 @@ $total_tenaga   = $total_tenaga_l + $total_tenaga_w;
                     Swal.fire({
                         icon: 'success',
                         title: 'Pesan Terkirim!',
-                        text: `${data.sent} pesan WhatsApp berhasil dikirim ke mandor.`
+                        text: `${data.sent} pesan WhatsApp berhasil dikirim ke karyawan.` + (data.skipped > 0 ? ` (${data.skipped} karyawan tidak memiliki nomor WA)` : '')
                     });
                 }).catch(() => {
                     Swal.fire({
@@ -1002,6 +1126,53 @@ $total_tenaga   = $total_tenaga_l + $total_tenaga_w;
                         text: 'Terjadi kesalahan saat mengirim pesan.'
                     });
                 });
+        });
+    }
+
+    // ============= LIHAT KOMENTAR =============
+    function lihatKomentar(rencanaId, logbookIds) {
+        const modal = document.getElementById('modalKomentar');
+        const body  = document.getElementById('komentar-body');
+        modal.style.display = 'flex';
+        body.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:30px;"><i class="fa-solid fa-spinner fa-spin" style="font-size:24px;"></i><br><br>Memuat komentar...</div>';
+
+        // Ambil komentar untuk semua logbook dalam rencana ini
+        const promises = logbookIds.map(lid =>
+            fetch(`objek_kerja.php?get_komentar=1&logbook_id=${lid}`).then(r => r.json())
+        );
+
+        Promise.all(promises).then(results => {
+            let allKomentar = [];
+            results.forEach(res => {
+                if (res.success && res.data.length > 0) {
+                    allKomentar = allKomentar.concat(res.data);
+                }
+            });
+
+            // Urutkan berdasarkan waktu terbaru
+            allKomentar.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+            if (allKomentar.length === 0) {
+                body.innerHTML = '<div style="text-align:center;padding:30px;color:#94a3b8;font-weight:600;"><i class="fa-solid fa-comment-slash" style="font-size:32px;opacity:.4;margin-bottom:12px;display:block;"></i>Belum ada komentar dari karyawan.</div>';
+                return;
+            }
+
+            let html = '';
+            allKomentar.forEach(k => {
+                const tgl = new Date(k.created_at).toLocaleString('id-ID', {day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+                html += `<div class="km-item">
+                    <div class="km-nama">👤 ${k.nama}</div>
+                    <div class="km-text">${k.komentar.replace(/\n/g, '<br>')}</div>
+                    <div class="km-time">🕐 ${tgl}</div>
+                </div>`;
+            });
+            body.innerHTML = html;
+
+            // Update badge di tabel jadi abu-abu (sudah dibaca)
+            const btn = document.querySelector(`tr[data-id="${rencanaId}"] .btn-komentar-row .badge-km`);
+            if (btn) { btn.classList.remove('badge-unread'); btn.classList.add('badge-read'); }
+        }).catch(() => {
+            body.innerHTML = '<div style="text-align:center;padding:30px;color:#ef4444;">Gagal memuat komentar.</div>';
         });
     }
 </script>
