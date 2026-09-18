@@ -813,8 +813,11 @@ $total_tenaga   = $total_tenaga_l + $total_tenaga_w;
         // Update the counter on button
         if (currentModalRow && currentModalGender) {
             const localSelected = selections[currentModalRow]?.[currentModalGender] || [];
+            const list = currentModalGender === 'L' ? karyawanL : karyawanW;
+            const validSelected = localSelected.filter(item => list.some(k => parseInt(k.id) === parseInt(item)));
+            
             const span = document.getElementById(`count-${currentModalGender.toLowerCase()}-${currentModalRow}`);
-            if (span) span.innerText = localSelected.length;
+            if (span) span.innerText = validSelected.length;
         }
     }
 
@@ -825,33 +828,30 @@ $total_tenaga   = $total_tenaga_l + $total_tenaga_w;
 
         const localSelected = selections[currentModalRow][currentModalGender];
 
+        // Filter selected items to only include those that actually exist in the current list
+        let validSelected = localSelected.filter(item => list.some(k => parseInt(k.id) === parseInt(item)));
+
         // Sort list so that checked items appear at the top
         let sortedList = [...list].sort((a, b) => {
             let aId = parseInt(a.id);
             let bId = parseInt(b.id);
-            let aChecked = localSelected.some(item => parseInt(item) === aId) ? 1 : 0;
-            let bChecked = localSelected.some(item => parseInt(item) === bId) ? 1 : 0;
+            let aChecked = validSelected.some(item => parseInt(item) === aId) ? 1 : 0;
+            let bChecked = validSelected.some(item => parseInt(item) === bId) ? 1 : 0;
             if (aChecked !== bChecked) {
                 return bChecked - aChecked; // 1 before 0
             }
             return a.name.localeCompare(b.name);
         });
 
-        // Hitung kuota: apakah sudah penuh untuk baris ini?
-        let quotaReached = localSelected.length >= currentModalQuota;
-        
-        // DEBUG BANNER
-        let html = `<div style="background:#fef08a; padding:10px; margin-bottom:10px; border-radius:8px; font-size:11px; color:#854d0e; word-break:break-all;">
-            <b>INFO DEBUG (Tolong screenshot ini):</b><br>
-            localSelected: ${JSON.stringify(localSelected)}<br>
-            list_IDs: ${JSON.stringify(list.map(x => ({id: x.id, name: x.name})))}
-        </div>`;
+        // Hitung kuota berdasarkan karyawan yang valid saja
+        let quotaReached = validSelected.length >= currentModalQuota;
+        let html = '';
 
         sortedList.forEach(k => {
             if (searchQ && !k.name.toLowerCase().includes(searchQ)) return;
 
             let id = parseInt(k.id);
-            let isChecked = localSelected.some(item => parseInt(item) === id);
+            let isChecked = validSelected.some(item => parseInt(item) === id);
             // Hanya disabled jika quota penuh DAN belum dipilih di baris ini
             let isDisabled = !isChecked && quotaReached;
 
@@ -876,7 +876,7 @@ $total_tenaga   = $total_tenaga_l + $total_tenaga_w;
         if (html === '') html = '<div style="text-align:center; padding: 20px; color:#94a3b8; font-size:14px; font-weight:600;">Tidak ada Karyawan relevan ditemukan.</div>';
 
         container.innerHTML = html;
-        document.getElementById('modalQuotaText').innerText = `${localSelected.length} / ${currentModalQuota} Terpilih`;
+        document.getElementById('modalQuotaText').innerText = `${validSelected.length} / ${currentModalQuota} Terpilih`;
     }
 
     function toggleKaryawan(e, el, id) {
