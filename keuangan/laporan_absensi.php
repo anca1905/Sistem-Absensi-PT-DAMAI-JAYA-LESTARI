@@ -70,31 +70,15 @@ while ($a = mysqli_fetch_assoc($q_absen)) {
 
 
 // --- LOGIKA TANDA TANGAN BERDASARKAN FILTER AFDELING ---
-$nama_kerani = '-';
-$nama_pengawas = '-';
-$teks_afdeling = 'Semua Afdeling';
-
+$teks_afdeling = empty($afdeling) ? "Semua Afdeling" : "Afd " . htmlspecialchars($afdeling);
 if (!empty($afdeling)) {
-    $afd_esc = mysqli_real_escape_string($conn, $afdeling);
-    $teks_afdeling = "Afd " . htmlspecialchars($afdeling);
-    
-    // Cari nama Pengawas di afdeling yang difilter
-    $q_pengawas = mysqli_query($conn, "SELECT name FROM users WHERE (role = 'pengawas' OR jabatan = 'pengawas') AND afdeling = '$afd_esc' LIMIT 1");
-    if ($q_pengawas && mysqli_num_rows($q_pengawas) > 0) {
-        $pengawas = mysqli_fetch_assoc($q_pengawas);
-        $nama_pengawas = $pengawas['name'];
-    }
-
-    // Cari nama Kerani di afdeling yang difilter
-    $q_kerani = mysqli_query($conn, "SELECT name FROM users WHERE (role = 'kerani' OR jabatan = 'kerani') AND afdeling = '$afd_esc' LIMIT 1");
-    if ($q_kerani && mysqli_num_rows($q_kerani) > 0) {
-        $kerani = mysqli_fetch_assoc($q_kerani);
-        $nama_kerani = $kerani['name'];
-    }
+    $penandatangan = getReportSignatories($conn, $afdeling);
+    $nama_pengawas = $penandatangan["pengawas"];
+    $nama_kerani = $penandatangan["kerani"];
 } else {
-    // Jika filter 'Semua Afdeling', tampilkan garis titik-titik untuk diisi manual jika dicetak
-    $nama_kerani = '( ................................... )';
-    $nama_pengawas = '( ................................... )';
+    // Jika filter Semua Afdeling, tampilkan garis titik-titik untuk diisi manual jika dicetak
+    $nama_kerani = "( ................................... )";
+    $nama_pengawas = "( ................................... )";
 }
 // -------------------------------------------------------
 

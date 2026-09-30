@@ -61,19 +61,12 @@ $nama_karyawan = htmlspecialchars($_SESSION['nama'] ?? 'Karyawan');
 $afdeling_karyawan = $_SESSION['afdeling'] ?? '';
 
 // --- LOGIKA MENCARI NAMA KERANI BERDASARKAN AFDELING KARYAWAN ---
-$nama_kerani = '( ................................... )';
-$teks_afdeling = 'Afdeling';
-
+$teks_afdeling = empty($afdeling_karyawan) ? "Afdeling" : "Afd " . htmlspecialchars($afdeling_karyawan);
 if (!empty($afdeling_karyawan)) {
-    $teks_afdeling = "Afd " . htmlspecialchars($afdeling_karyawan);
-    $afd_esc = mysqli_real_escape_string($conn, $afdeling_karyawan);
-    
-    // Cari nama Kerani di afdeling karyawan ini
-    $q_kerani = mysqli_query($conn, "SELECT name FROM users WHERE (role = 'kerani' OR jabatan = 'kerani') AND afdeling = '$afd_esc' LIMIT 1");
-    if ($q_kerani && mysqli_num_rows($q_kerani) > 0) {
-        $kerani = mysqli_fetch_assoc($q_kerani);
-        $nama_kerani = $kerani['name'];
-    }
+    $penandatangan = getReportSignatories($conn, $afdeling_karyawan);
+    $nama_kerani = $penandatangan["kerani"];
+} else {
+    $nama_kerani = "( ................................... )";
 }
 // ----------------------------------------------------------------
 
