@@ -696,7 +696,9 @@ $list_karyawan_page = array_slice($list_karyawan, $offset, $per_page);
                     <tr class="<?= $row_class ?>">
                         <td class="td-no"><?= $no_global++ ?></td>
                         <td class="td-name">
-                            <?= htmlspecialchars($user['name']) ?>
+                            <a href="laporan_individu.php?user_id=<?= $uid ?>&bulan=<?= $bulan ?>&tahun=<?= $tahun ?>&objek=<?= urlencode($objek) ?>">
+                                <?= htmlspecialchars($user['name']) ?>
+                            </a>
                         </td>
                         <td class="td-center" style="font-size:12px; color:#64748b;">
                             <?= htmlspecialchars($user['afdeling'] ?? '-') ?>

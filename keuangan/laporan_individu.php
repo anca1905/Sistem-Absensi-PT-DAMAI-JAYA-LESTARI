@@ -1,205 +1,829 @@
 <?php
-require '../config/config.php';
-include 'templates/header.php';
+require __DIR__ . '/../config/config.php';
+include __DIR__ . '/templates/header.php';
 
-$nama_bulan = [
-    '01' => 'Januari', '02' => 'Februari', '03' => 'Maret', '04' => 'April',
-    '05' => 'Mei', '06' => 'Juni', '07' => 'Juli', '08' => 'Agustus',
-    '09' => 'September', '10' => 'Oktober', '11' => 'November', '12' => 'Desember'
+// --- Konstanta Data Real ---
+$list_objek = [
+    'Panen',
+    'Penunasan',
+    'Racun piringan',
+    'Perawatan',
+    'Muat TBS ke truk',
+    'Muat TBS ke jonder'
 ];
-$list_objek = ['Panen', 'Penunasan', 'Racun piringan', 'Perawatan', 'Muat TBS ke truk', 'Muat TBS ke jonder'];
 
-$bulan = isset($_GET['bulan']) ? str_pad((int) $_GET['bulan'], 2, '0', STR_PAD_LEFT) : date('m');
-$tahun = isset($_GET['tahun']) ? (int) $_GET['tahun'] : (int) date('Y');
-$objek = isset($_GET['objek']) ? trim($_GET['objek']) : 'Panen';
-$user_id = isset($_GET['user_id']) ? (int) $_GET['user_id'] : 0;
+// Tipe tabel berdasarkan objek kerja
+function getTableType($objek)
+{
+    if ($objek === 'Panen') return 'T3';
+    if (in_array($objek, ['Penunasan', 'Racun piringan', 'Perawatan'])) return 'T2';
+    if (in_array($objek, ['Muat TBS ke truk', 'Muat TBS ke jonder'])) return 'T5';
+    return 'T2';
+}
+
+// Label tipe tabel
+$label_tipe = [
+    'T1' => 'Langsir',
+    'T2' => 'Pemeliharaan',
+    'T3' => 'Panen',
+    'T4' => 'Kutip Brondolan',
+    'T5' => 'Muat TBS'
+];
+
+// Nama bulan
+$nama_bulan = [
+    '01' => 'Januari',
+    '02' => 'Februari',
+    '03' => 'Maret',
+    '04' => 'April',
+    '05' => 'Mei',
+    '06' => 'Juni',
+    '07' => 'Juli',
+    '08' => 'Agustus',
+    '09' => 'September',
+    '10' => 'Oktober',
+    '11' => 'November',
+    '12' => 'Desember'
+];
+
+// --- Filter ---
+$bulan     = isset($_GET['bulan'])      ? str_pad($_GET['bulan'], 2, '0', STR_PAD_LEFT) : date('m');
+$tahun     = isset($_GET['tahun'])      ? (int)$_GET['tahun']  : (int)date('Y');
+$objek     = isset($_GET['objek'])      ? $_GET['objek']        : 'Panen';
+
 if (!in_array($objek, $list_objek, true)) $objek = 'Panen';
+$tipe = getTableType($objek);
 
-$q_user = mysqli_query($conn, "SELECT id, nik, name, afdeling FROM users WHERE id=$user_id AND (role IN ('karyawan', 'kerani', 'mandor', 'pengawas') OR jabatan IN ('karyawan', 'kerani', 'mandor', 'pengawas')) LIMIT 1");
-$personel = $q_user ? mysqli_fetch_assoc($q_user) : null;
-if (!$personel) {
-    header('Location: lap_keseluruhan.php');
+$objek_safe   = mysqli_real_escape_string($conn, $objek);
+$bulan_int    = (int)$bulan;
+
+$uid = isset($_GET['user_id']) ? (int)$_GET['user_id'] : 0;
+$penandatangan = getReportSignatories($conn, $_SESSION['afdeling'] ?? '');
+if ($uid === 0) {
+    header("Location: lap_keseluruhan.php");
     exit;
 }
-
-$jumlah_hari = (int) date('t', mktime(0, 0, 0, (int) $bulan, 1, $tahun));
-$objek_safe = mysqli_real_escape_string($conn, $objek);
-$periode_label = '01 - ' . $jumlah_hari . ' ' . $nama_bulan[$bulan] . ' ' . $tahun;
-
-function statusObjekKerja(?string $status): array
-{
-    $status = strtolower(trim((string) $status));
-    if ($status === 'diterima' || $status === 'selesai') return ['Diterima', 'status-diterima'];
-    if ($status === 'ditolak') return ['Ditolak', 'status-ditolak'];
-    if ($status === 'pending' || $status === 'ditinjau') return ['Ditinjau', 'status-ditinjau'];
-    return ['Belum ada objek', 'status-kosong'];
+$q_user = mysqli_query($conn, "SELECT name FROM users WHERE id=$uid AND (role IN ('karyawan', 'kerani', 'mandor', 'pengawas') OR jabatan IN ('karyawan', 'kerani', 'mandor', 'pengawas'))");
+$u_data = mysqli_fetch_assoc($q_user);
+if (!$u_data) {
+    header("Location: lap_keseluruhan.php");
+    exit;
 }
+$nama_karyawan = $u_data['name'];
 
-function statusKehadiran(?string $status): array
-{
-    $status = strtolower(trim((string) $status));
-    if (in_array($status, ['hadir', 'tepat_waktu', 'terlambat'], true)) return ['Hadir', 'hadir'];
-    if ($status === 'izin') return ['Izin', 'izin'];
-    if ($status === 'sakit') return ['Sakit', 'sakit'];
-    if ($status === 'cuti') return ['Cuti', 'cuti'];
-    if (in_array($status, ['alpha', 'alpa', 'alfa'], true)) return ['Alpha', 'alpha'];
-    return ['—', 'kosong'];
-}
+$jumlah_hari = (int)date('t', mktime(0, 0, 0, $bulan_int, 1, $tahun));
+$periode_label = "01 - {$jumlah_hari} " . $nama_bulan[$bulan] . " {$tahun}";
 ?>
-
 <style>
-    .detail-toolbar { display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap; align-items:center; margin-bottom:20px; }
-    .detail-filter { display:flex; gap:9px; flex-wrap:wrap; align-items:center; }
-    .detail-select, .detail-btn { min-height:40px; padding:9px 13px; border:1px solid #cbd5e1; border-radius:9px; background:#fff; color:#334155; font:600 13px inherit; }
-    .detail-btn { cursor:pointer; text-decoration:none; display:inline-flex; align-items:center; gap:7px; }
-    .detail-btn:hover { border-color:#10b981; color:#047857; }
-    
-    .detail-card { overflow:hidden; background:#fff; border:1px solid #e2e8f0; border-radius:14px; box-shadow:0 4px 15px rgba(0,0,0,.03); }
-    .detail-heading { padding:22px 24px; text-align:center; background:#f8fafc; border-bottom:1px solid #e2e8f0; }
-    .detail-heading h2 { margin:0; color:#064e3b; font-size:18px; }
-    .detail-heading p { margin:6px 0 0; color:#64748b; font-size:13px; }
-    
-    .detail-table-wrap { overflow-x:auto; }
-    .detail-table { width:100%; border-collapse:collapse; min-width:860px; font-size:13px; }
-    .detail-table th { padding:13px 12px; background:#065f46; color:#fff; text-align:center; font-size:11px; letter-spacing:.2px; }
-    .detail-table td { padding:12px; border-bottom:1px solid #eef2f7; color:#334155; vertical-align:middle; }
-    .detail-table tbody tr:nth-child(even) { background:#f6fdf9; }
-    .detail-table tbody tr:hover { background:#eefbf5; }
-    
-    .text-center { text-align:center; }
-    
-    .status-badge, .attendance-badge { display:inline-flex; align-items:center; justify-content:center; min-width:72px; padding:5px 9px; border-radius:999px; font-weight:800; font-size:11px; }
-    .status-diterima { background:#dcfce7; color:#166534; }
-    .status-ditolak { background:#fee2e2; color:#991b1b; }
-    .status-ditinjau { background:#fef3c7; color:#92400e; }
-    .status-kosong, .kosong { background:#f1f5f9; color:#94a3b8; }
-    
-    .hadir { background:#dcfce7; color:#166534; }
-    .izin { background:#dbeafe; color:#1d4ed8; }
-    .sakit { background:#ede9fe; color:#6d28d9; }
-    .cuti { background:#ffedd5; color:#c2410c; }
-    .alpha { background:#fee2e2; color:#b91c1c; }
-    
-    .detail-footer { padding:14px 20px; color:#64748b; font-size:12px; background:#f8fafc; }
+    @media print {
+        @page {
+            size: landscape;
+            margin: 10mm;
+        }
+
+        body * {
+            visibility: hidden;
+        }
+
+        .main-content {
+            margin-left: 0 !important;
+        }
+
+        .mobile-header,
+        .no-print,
+        .btn-back {
+            display: none !important;
+        }
+
+        .print-area,
+        .print-area * {
+            visibility: visible;
+        }
+
+        .print-area {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+        }
+
+        .lk-card {
+            border: none !important;
+            box-shadow: none !important;
+            margin: 0 !important;
+        }
+
+        .lk-header-main {
+            border-bottom: 2px solid #000 !important;
+            padding: 10px 0 !important;
+        }
+
+        /* Mencegah tabel terpotong saat print */
+        .lk-table-wrap {
+            overflow: visible !important;
+            width: 100% !important;
+        }
+
+        .lk-table {
+            font-size: 10px !important;
+            width: 100% !important;
+            page-break-inside: auto;
+        }
+
+        .lk-table tr {
+            page-break-inside: avoid;
+            page-break-after: auto;
+        }
+
+        .lk-table th,
+        .lk-table td {
+            padding: 4px 6px !important;
+        }
+    }
+
+    .lk-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+    }
+
+    .lk-filter-group {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+
+    .lk-select {
+        padding: 9px 14px;
+        border: 1.5px solid #cbd5e1;
+        border-radius: 9px;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-dark);
+        background: white;
+        outline: none;
+        cursor: pointer;
+        font-family: inherit;
+        transition: border-color .2s;
+    }
+
+    .lk-select:focus {
+        border-color: var(--primary-start);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, .12);
+    }
+
+    .btn-filter-go {
+        padding: 9px 18px;
+        background: var(--primary-start);
+        color: white;
+        border: none;
+        border-radius: 9px;
+        font-weight: 700;
+        font-size: 13px;
+        cursor: pointer;
+        transition: background .2s;
+    }
+
+    .btn-filter-go:hover {
+        background: var(--primary-end);
+    }
+
+    .btn-print-lk {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 9px 18px;
+        background: white;
+        color: var(--text-dark);
+        border: 1.5px solid #cbd5e1;
+        border-radius: 9px;
+        font-weight: 700;
+        font-size: 13px;
+        cursor: pointer;
+        transition: all .2s;
+    }
+
+    .btn-print-lk:hover {
+        background: #f8fafc;
+        border-color: #94a3b8;
+    }
+
+    /* Tipe badge */
+    .tipe-badge {
+        display: inline-block;
+        padding: 3px 10px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: .5px;
+    }
+
+    .t1 {
+        background: #fef3c7;
+        color: #d97706;
+    }
+
+    .t2 {
+        background: #f0fdf4;
+        color: #16a34a;
+    }
+
+    .t3 {
+        background: #fee2e2;
+        color: #dc2626;
+    }
+
+    .t4 {
+        background: #eff6ff;
+        color: #3b82f6;
+    }
+
+    .t5 {
+        background: #f5f3ff;
+        color: #7c3aed;
+    }
+
+    /* Card */
+    .lk-card {
+        background: white;
+        border-radius: 14px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, .02);
+        overflow: hidden;
+        margin-bottom: 30px;
+    }
+
+    .lk-header-main {
+        padding: 20px 24px;
+        border-bottom: 1.5px solid #e2e8f0;
+        background: #f8fafc;
+        text-align: center;
+    }
+
+    .lk-title {
+        font-size: 17px;
+        font-weight: 800;
+        color: var(--text-dark);
+        margin: 0;
+    }
+
+    .lk-subtitle {
+        font-size: 13px;
+        color: var(--text-muted);
+        margin-top: 4px;
+    }
+
+    /* Tabel */
+    .lk-table-wrap {
+        width: 100%;
+        overflow-x: auto;
+    }
+
+    .lk-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 12.5px;
+        white-space: nowrap;
+    }
+
+    .lk-table th,
+    .lk-table td {
+        padding: 11px 12px;
+        border: 1px solid #e2e8f0;
+        vertical-align: middle;
+    }
+
+    .lk-table thead tr:first-child th {
+        background: #1e293b;
+        color: white;
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 11px;
+        letter-spacing: .5px;
+    }
+
+    .lk-table thead tr:nth-child(2) th {
+        background: #334155;
+        color: #cbd5e1;
+        font-weight: 700;
+        font-size: 10.5px;
+        text-transform: uppercase;
+    }
+
+    .lk-table tbody tr:hover {
+        background: #f8fafc;
+    }
+
+    .lk-table tbody tr.absent-row {
+        background: #fff5f5;
+    }
+
+    .lk-table tbody tr.absent-row:hover {
+        background: #fee2e2;
+    }
+
+    .th-o1 {
+        background: #0f4c81 !important;
+    }
+
+    .th-o2 {
+        background: #166534 !important;
+    }
+
+    .td-date {
+        font-weight: 700;
+        text-align: center;
+        color: var(--text-dark);
+    }
+
+    .td-center {
+        text-align: center;
+    }
+
+    .td-num {
+        text-align: right;
+        font-weight: 700;
+        color: #1e293b;
+    }
+
+    .td-empty {
+        color: #cbd5e1;
+        text-align: center;
+        font-style: italic;
+        font-size: 11px;
+    }
+
+    /* Status badge kehadiran */
+    .badge-hadir {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 4px 10px;
+        border-radius: 20px;
+        background: #dcfce7;
+        color: #166534;
+        font-weight: 800;
+        font-size: 11px;
+    }
+
+    .badge-sakit {
+        padding: 4px 10px;
+        border-radius: 20px;
+        background: #ede9fe;
+        color: #5b21b6;
+        font-weight: 800;
+        font-size: 11px;
+        display: inline-block;
+    }
+
+    .badge-izin {
+        padding: 4px 10px;
+        border-radius: 20px;
+        background: #e0f2fe;
+        color: #075985;
+        font-weight: 800;
+        font-size: 11px;
+        display: inline-block;
+    }
+
+    .badge-alpha {
+        padding: 4px 10px;
+        border-radius: 20px;
+        background: #fee2e2;
+        color: #991b1b;
+        font-weight: 800;
+        font-size: 11px;
+        display: inline-block;
+    }
+
+    .badge-cuti {
+        padding: 4px 10px;
+        border-radius: 20px;
+        background: #ffedd5;
+        color: #9a3412;
+        font-weight: 800;
+        font-size: 11px;
+        display: inline-block;
+    }
+
+    .badge-none {
+        padding: 4px 10px;
+        border-radius: 20px;
+        background: #f1f5f9;
+        color: #94a3b8;
+        font-weight: 700;
+        font-size: 11px;
+        display: inline-block;
+    }
+
+    .lk-footer-info {
+        padding: 14px 24px;
+        border-top: 1px solid #e2e8f0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: #f8fafc;
+        font-size: 12px;
+        color: var(--text-muted);
+        font-weight: 600;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    /* Summary row */
+    .lk-table tfoot td {
+        background: #1e293b;
+        color: white;
+        font-weight: 800;
+        font-size: 12px;
+        border-color: #334155;
+    }
+
+    .btn-back {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: #64748b;
+        text-decoration: none;
+        font-weight: 700;
+        font-size: 14px;
+        margin-bottom: 20px;
+        background: white;
+        padding: 8px 16px;
+        border-radius: 20px;
+        border: 1px solid #e2e8f0;
+    }
 </style>
 
-<div class="detail-toolbar no-print">
-    <form method="GET" class="detail-filter" onchange="this.submit()">
-        <input type="hidden" name="user_id" value="<?= $personel['id'] ?>">
-        <select name="bulan" class="detail-select">
-            <?php foreach ($nama_bulan as $nomor => $nama): ?>
-                <option value="<?= $nomor ?>" <?= $bulan === $nomor ? 'selected' : '' ?>><?= $nama ?></option>
-            <?php endforeach; ?>
-        </select>
-        <select name="tahun" class="detail-select">
-            <?php for ($y = date('Y') - 2; $y <= date('Y') + 1; $y++): ?>
-                <option value="<?= $y ?>" <?= $tahun === $y ? 'selected' : '' ?>><?= $y ?></option>
-            <?php endfor; ?>
-        </select>
-        <select name="objek" class="detail-select">
-            <?php foreach ($list_objek as $item): ?>
-                <option value="<?= htmlspecialchars($item) ?>" <?= $objek === $item ? 'selected' : '' ?>><?= htmlspecialchars($item) ?></option>
-            <?php endforeach; ?>
-        </select>
-    </form>
-    <div style="display:flex;gap:9px;">
-        <a href="lap_keseluruhan.php?bulan=<?= $bulan ?>&tahun=<?= $tahun ?>&objek=<?= urlencode($objek) ?>" class="detail-btn">← Kembali</a>
-        <!-- Tombol cetak memanggil fungsi JS -->
-        <button type="button" class="detail-btn" onclick="cetakLaporanIndividu()">▣ Cetak PDF</button>
-    </div>
-</div>
+<div class="animate-up">
+    <a href="lap_keseluruhan.php?bulan=<?= $bulan ?>&tahun=<?= $tahun ?>&objek=<?= urlencode($objek) ?>" class="btn-back">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        Kembali
+    </a>
 
-<!-- Beri ID pada wrapper card agar mudah diambil oleh JS -->
-<div class="detail-card" id="print-area">
-    <div class="detail-heading">
-        <h2>Rincian Harian: <?= htmlspecialchars($personel['name']) ?></h2>
-        <p>NIK: <?= htmlspecialchars($personel['nik']) ?> &nbsp;|&nbsp; Afdeling: <?= htmlspecialchars($personel['afdeling'] ?: '-') ?></p>
-        <p>Objek: <?= htmlspecialchars($objek) ?> &nbsp;|&nbsp; Periode: <?= $periode_label ?></p>
-    </div>
-    <div class="detail-table-wrap">
-        <table class="detail-table">
-            <thead>
-                <tr>
-                    <th>TANGGAL</th>
-                    <th>KEHADIRAN</th>
-                    <th>NAMA MANDOR</th>
-                    <th>BLOK</th>
-                    <th>LUAS (HA)</th>
-                    <th>HASIL KERJA</th>
-                    <th>STATUS OBJEK</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php for ($hari = 1; $hari <= $jumlah_hari; $hari++):
-                    $tanggal = sprintf('%04d-%02d-%02d', $tahun, (int) $bulan, $hari);
-                    $q_absen = mysqli_query($conn, "SELECT status_kehadiran FROM absensis WHERE user_id={$personel['id']} AND tanggal='$tanggal' LIMIT 1");
-                    $absen = $q_absen ? mysqli_fetch_assoc($q_absen) : null;
-                    [$label_absen, $kelas_absen] = statusKehadiran($absen['status_kehadiran'] ?? null);
-                    
-                    $q_logbook = mysqli_query($conn, "SELECT lk.*, m.name AS nama_mandor FROM logbook_kinerja lk LEFT JOIN users m ON m.id=lk.mandor_id WHERE lk.user_id={$personel['id']} AND lk.objek_kerja='$objek_safe' AND lk.tanggal='$tanggal' LIMIT 1");
-                    $logbook = $q_logbook ? mysqli_fetch_assoc($q_logbook) : null;
-                    [$label_status, $kelas_status] = statusObjekKerja($logbook['status'] ?? null);
-                    
-                    $hasil = '—';
-                    if ($logbook) {
-                        if ($objek === 'Panen') $hasil = number_format((float) ($logbook['total_tandan'] ?? 0), 0) . ' tandan';
-                        elseif (!empty($logbook['hasil_langsir_kg'])) $hasil = number_format((float) $logbook['hasil_langsir_kg'], 2) . ' kg';
-                        elseif (!empty($logbook['hasil_kg'])) $hasil = number_format((float) $logbook['hasil_kg'], 2) . ' kg';
-                        elseif (!empty($logbook['jumlah_jam_kerja'])) $hasil = number_format((float) $logbook['jumlah_jam_kerja'], 1) . ' jam';
-                    }
-                ?>
-                    <tr>
-                        <td class="text-center"><strong><?= str_pad($hari, 2, '0', STR_PAD_LEFT) ?> <?= $nama_bulan[$bulan] ?></strong></td>
-                        <td class="text-center"><span class="attendance-badge <?= $kelas_absen ?>"><?= $label_absen ?></span></td>
-                        <td><?= htmlspecialchars($logbook['nama_mandor'] ?? '—') ?></td>
-                        <td class="text-center"><?= htmlspecialchars($logbook['blok'] ?? '—') ?></td>
-                        <td class="text-center"><?= $logbook && $logbook['luas_ha'] !== null ? htmlspecialchars($logbook['luas_ha']) : '—' ?></td>
-                        <td class="text-center"><strong><?= $hasil ?></strong></td>
-                        <td class="text-center"><span class="status-badge <?= $kelas_status ?>"><?= $label_status ?></span></td>
-                    </tr>
+    <h1 class="page-title" style="text-align: left;">Rincian Harian: <?= htmlspecialchars($nama_karyawan) ?></h1>
+
+    <!-- Toolbar Filter -->
+    <div class="lk-toolbar no-print">
+        <form method="GET" id="filterForm" class="lk-filter-group" onchange="this.submit()">
+            <input type="hidden" name="user_id" value="<?= $uid ?>">
+            <select name="bulan" class="lk-select">
+                <?php foreach ($nama_bulan as $num => $nm): ?>
+                    <option value="<?= $num ?>" <?= $bulan == $num ? 'selected' : '' ?>><?= $nm ?></option>
+                <?php endforeach; ?>
+            </select>
+            <select name="tahun" class="lk-select">
+                <?php for ($y = date('Y') - 2; $y <= date('Y') + 1; $y++): ?>
+                    <option value="<?= $y ?>" <?= $tahun == $y ? 'selected' : '' ?>><?= $y ?></option>
                 <?php endfor; ?>
-            </tbody>
-        </table>
+            </select>
+            <select name="objek" class="lk-select" style="min-width:200px;">
+                <?php foreach ($list_objek as $obj): ?>
+                    <option value="<?= htmlspecialchars($obj) ?>" <?= $objek == $obj ? 'selected' : '' ?>><?= htmlspecialchars($obj) ?></option>
+                <?php endforeach; ?>
+            </select>
+            <button type="submit" class="btn-filter-go" style="display: none;">Tampilkan</button>
+        </form>
+        <button class="btn-print-lk" onclick="cetakLaporan()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polyline points="6 9 6 2 18 2 18 9"></polyline>
+                <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                <rect x="6" y="14" width="12" height="8"></rect>
+            </svg>
+            Cetak PDF
+        </button>
     </div>
-    <div class="detail-footer">Status objek kerja: <strong>Diterima</strong> berarti telah diverifikasi, <strong>Ditinjau</strong> masih menunggu pemeriksaan, dan <strong>Ditolak</strong> perlu tindak lanjut.</div>
+
+    <!-- Card Laporan -->
+    <div class="lk-card print-area">
+        <div class="lk-header-main">
+            <p class="lk-title">Laporan Absensi dan Hasil Kinerja</p>
+            <p class="lk-subtitle">
+                Objek: <?= htmlspecialchars($objek) ?> &nbsp;|&nbsp;
+                Periode: <?= $periode_label ?> &nbsp;|&nbsp;
+                <span class="tipe-badge <?= strtolower($tipe) ?>"><?= $label_tipe[$tipe] ?></span>
+            </p>
+        </div>
+
+        <div class="lk-table-wrap">
+            <table class="lk-table">
+                <thead>
+                    <!-- Baris 1: Group header -->
+                    <tr>
+                        <th rowspan="2" width="60">TANGGAL</th>
+                        <!-- O1 -->
+                        <th colspan="1" class="th-o1">KEHADIRAN</th>
+                        <!-- berbeda setiap tipe -->
+                        <?php if ($tipe === 'T1'): ?>
+                            <th colspan="6" class="th-o2">HASIL KERJA (LANGSIR)</th>
+                        <?php elseif ($tipe === 'T2'): ?>
+                            <th colspan="4" class="th-o2">DATA KERJA</th>
+                        <?php elseif ($tipe === 'T3'): ?>
+                            <th colspan="8" class="th-o2">HASIL PANEN</th>
+                        <?php elseif ($tipe === 'T4'): ?>
+                            <th colspan="5" class="th-o2">HASIL KUTIP BRONDOLAN</th>
+                        <?php elseif ($tipe === 'T5'): ?>
+                            <th colspan="5" class="th-o2">HASIL MUAT TBS</th>
+                        <?php endif; ?>
+                    </tr>
+                    <!-- Baris 2: Detail kolom -->
+                    <tr>
+                        <!-- O1 detail -->
+                        <th class="th-o1">STATUS</th>
+                        <!-- O2 detail -->
+                        <?php if ($tipe === 'T1'): ?>
+                            <th class="th-o2">NAMA MANDOR</th>
+                            <th class="th-o2">HASIL LANGSIR (Tandan)</th>
+                            <th class="th-o2">HASIL LANGSIR (Kg)</th>
+                            <!-- <th class="th-o2">PRESTASI (Tandan)</th> -->
+                            <!-- <th class="th-o2">PRESTASI (Kg)</th> -->
+                            <th class="th-o2">BLOK</th>
+                            <th class="th-o2">LUAS (Ha)</th>
+                        <?php elseif ($tipe === 'T2'): ?>
+                            <th class="th-o2">NAMA MANDOR</th>
+                            <th class="th-o2">BLOK</th>
+                            <th class="th-o2">LUAS (Ha)</th>
+                        <?php elseif ($tipe === 'T3'): ?>
+                            <th class="th-o2">NAMA MANDOR</th>
+
+                            <th class="th-o2">TBS</th>
+                            <th class="th-o2">TS</th>
+                            <th class="th-o2">TBB</th>
+                            <th class="th-o2">TOTAL TANDAN</th>
+                            <th class="th-o2">BLOK</th>
+                            <th class="th-o2">LUAS (Ha)</th>
+                        <?php elseif ($tipe === 'T4'): ?>
+                            <th class="th-o2">NAMA MANDOR</th>
+                            <th class="th-o2">HASIL (kg)</th>
+                            <!-- <th class="th-o2">PRESTASI (kg)</th> -->
+                            <th class="th-o2">BLOK</th>
+                            <th class="th-o2">LUAS (Ha)</th>
+                        <?php elseif ($tipe === 'T5'): ?>
+                            <th class="th-o2">NAMA MANDOR</th>
+                            <th class="th-o2">HASIL (kg)</th>
+                            <th class="th-o2">BLOK</th>
+                            <th class="th-o2">LUAS (Ha)</th>
+                        <?php endif; ?>
+                        <th class="th-o2">STATUS OBJEK</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php
+                    $total_hadir = 0;
+                    // Totals untuk footer
+                    $sum_langsir = 0;
+                    $sum_langsir_tandan = 0;
+                    $sum_prestasi = 0;
+                    $sum_prestasi_tandan = 0;
+                    $sum_hasil = 0;
+                    $sum_tbs_kg = 0;
+                    $sum_ts = 0;
+                    $sum_tbb = 0;
+                    $sum_tbs = 0;
+                    $sum_total_tandan = 0;
+
+                    for ($d = 1; $d <= $jumlah_hari; $d++):
+                        $tanggal_loop = sprintf('%04d-%02d-%02d', $tahun, $bulan, $d);
+
+                        // --- O1: Kehadiran ---
+                        $q_abs = mysqli_query($conn, "SELECT status_kehadiran FROM absensis WHERE user_id=$uid AND tanggal='$tanggal_loop' LIMIT 1");
+                        $abs = $q_abs ? mysqli_fetch_assoc($q_abs) : null;
+
+                        if ($abs) {
+                            $s = strtolower($abs['status_kehadiran']);
+                            if ($s == 'hadir') {
+                                $badge_class = 'badge-hadir';
+                                $badge_text = 'Hadir';
+                                $total_hadir++;
+                            } elseif ($s == 'sakit') {
+                                $badge_class = 'badge-sakit';
+                                $badge_text = 'Sakit';
+                            } elseif ($s == 'izin') {
+                                $badge_class = 'badge-izin';
+                                $badge_text = 'Izin';
+                            } elseif ($s == 'cuti') {
+                                $badge_class = 'badge-cuti';
+                                $badge_text = 'Cuti';
+                            } elseif ($s == 'alpha') {
+                                $badge_class = 'badge-alpha';
+                                $badge_text = 'Alpha';
+                            } else {
+                                $badge_class = 'badge-none';
+                                $badge_text = '—';
+                            }
+                        } else {
+                            $badge_class = 'badge-none';
+                            $badge_text = '—';
+                        }
+
+                        // --- O2: Logbook kinerja untuk objek ini ---
+                        $q_lb = mysqli_query($conn, "
+                        SELECT lk.*, m.name AS nama_mandor
+                        FROM logbook_kinerja lk
+                        LEFT JOIN users m ON lk.mandor_id = m.id
+                        WHERE lk.user_id = $uid
+                          AND lk.objek_kerja = '$objek_safe'
+                          AND lk.tanggal = '$tanggal_loop'
+                        LIMIT 1
+                    ");
+                        $lb = $q_lb ? mysqli_fetch_assoc($q_lb) : null;
+                        $has_data = $lb != null;
+                        $status_objek = strtolower((string)($lb['status'] ?? ''));
+                        if (!$has_data) {
+                            $status_label = 'Belum ada objek';
+                            $status_style = 'background:#f1f5f9;color:#94a3b8;';
+                        } elseif ($status_objek === 'diterima' || $status_objek === 'selesai') {
+                            $status_label = 'Diterima';
+                            $status_style = 'background:#dcfce7;color:#166534;';
+                        } elseif ($status_objek === 'ditolak') {
+                            $status_label = 'Ditolak';
+                            $status_style = 'background:#fee2e2;color:#991b1b;';
+                        } else {
+                            $status_label = 'Ditinjau';
+                            $status_style = 'background:#fef3c7;color:#92400e;';
+                        }
+
+                        // Akumulasi totals
+                        if ($has_data) {
+                            $sum_langsir         += (float)($lb['hasil_kg'] ?? 0);
+                            $sum_langsir_tandan  += (float)($lb['hasil_ton'] ?? 0);
+                            $sum_prestasi        += (float)($lb['prestasi_kg'] ?? 0);
+                            $sum_prestasi_tandan += (float)($lb['prestasi_ton'] ?? 0);
+                            $sum_hasil           += (float)($lb['hasil_kg'] ?? 0);
+                            $sum_tbs_kg          += (float)($lb['hasil_ton'] ?? 0);
+                            $sum_ts              += (int)($lb['tandan_kosong'] ?? 0);
+                            $sum_tbb             += (int)($lb['tandan_brondol'] ?? 0);
+                            $sum_tbs             += (int)($lb['tbs'] ?? 0);
+                            $sum_total_tandan    += (int)($lb['total_tandan'] ?? 0);
+                        }
+
+                        $row_class = ($badge_text == 'Alpha' || $badge_text == '—') ? 'absent-row' : '';
+                    ?>
+                        <tr class="<?= $row_class ?>">
+                            <td class="td-date"><?= str_pad($d, 2, '0', STR_PAD_LEFT) ?> <?= $nama_bulan[$bulan] ?></td>
+
+                            <!-- O1 -->
+                            <td class="td-center"><span class="<?= $badge_class ?>"><?= $badge_text ?></span></td>
+
+                            <!-- Tipe T1: Langsir -->
+                            <?php if ($tipe === 'T1'): ?>
+                                <?php if ($has_data): ?>
+                                    <td><?= htmlspecialchars($lb['nama_mandor'] ?? '—') ?></td>
+                                    <td class="td-num"><?= number_format($lb['hasil_kg'] ?? 0, 2) ?></td>
+                                    <!-- <td class="td-num"><?= number_format($lb['prestasi_ton'] ?? 0, 0) ?></td> -->
+                                    <!-- <td class="td-num"><?= number_format($lb['prestasi_kg'] ?? 0, 2) ?></td> -->
+                                    <td class="td-center"><?= htmlspecialchars($lb['blok'] ?? '—') ?></td>
+                                    <td class="td-center"><?= htmlspecialchars($lb['luas_ha'] ?? '—') ?></td>
+                                <?php else: ?>
+                                    <td class="td-empty" colspan="6">—</td>
+                                <?php endif; ?>
+
+                                <!-- Tipe T2: Perawatan -->
+                            <?php elseif ($tipe === 'T2'): ?>
+                                <?php if ($has_data): ?>
+                                    <td><?= htmlspecialchars($lb['nama_mandor'] ?? '—') ?></td>
+                                    <td class="td-center"><?= htmlspecialchars($lb['blok'] ?? '—') ?></td>
+                                    <td class="td-center"><?= htmlspecialchars($lb['luas_ha'] ?? '—') ?></td>
+                                <?php else: ?>
+                                    <td class="td-empty" colspan="3">—</td>
+                                <?php endif; ?>
+
+                                <!-- Tipe T3: Panen / Potong Buah -->
+                            <?php elseif ($tipe === 'T3'): ?>
+                                <?php if ($has_data): ?>
+                                    <td><?= htmlspecialchars($lb['nama_mandor'] ?? '—') ?></td>
+                                    <td class="td-num"><?= number_format($lb['tbs'] ?? 0, 0) ?></td>
+                                    <td class="td-num"><?= number_format($lb['tandan_kosong'] ?? 0, 0) ?></td>
+                                    <td class="td-num"><?= number_format($lb['tandan_brondol'] ?? 0, 0) ?></td>
+                                    <td class="td-num"><?= number_format($lb['total_tandan'] ?? 0, 0) ?></td>
+                                    <td class="td-center"><?= htmlspecialchars($lb['blok'] ?? '—') ?></td>
+                                    <td class="td-center"><?= htmlspecialchars($lb['luas_ha'] ?? '—') ?></td>
+                                <?php else: ?>
+                                    <td class="td-empty" colspan="7">—</td>
+                                <?php endif; ?>
+
+                                <!-- Tipe T4: Kutip Brondolan -->
+                            <?php elseif ($tipe === 'T4'): ?>
+                                <?php if ($has_data): ?>
+                                    <td><?= htmlspecialchars($lb['nama_mandor'] ?? '—') ?></td>
+                                    <td class="td-num"><?= number_format($lb['hasil_kg'] ?? 0, 2) ?></td>
+                                    <!-- <td class="td-num"><?= number_format($lb['prestasi_kg'] ?? 0, 2) ?></td> -->
+                                    <td class="td-center"><?= htmlspecialchars($lb['blok'] ?? '—') ?></td>
+                                    <td class="td-center"><?= htmlspecialchars($lb['luas_ha'] ?? '—') ?></td>
+                                <?php else: ?>
+                                    <td class="td-empty" colspan="5">—</td>
+                                <?php endif; ?>
+
+                                <!-- Tipe T5: Muat TBS -->
+                            <?php elseif ($tipe === 'T5'): ?>
+                                <?php if ($has_data): ?>
+                                    <td><?= htmlspecialchars($lb['nama_mandor'] ?? '—') ?></td>
+                                    <td class="td-num"><?= number_format($lb['hasil_kg'] ?? 0, 0) ?></td>
+                                    <td class="td-center"><?= htmlspecialchars($lb['blok'] ?? '—') ?></td>
+                                    <td class="td-center"><?= htmlspecialchars($lb['luas_ha'] ?? '—') ?></td>
+                                <?php else: ?>
+                                    <td class="td-empty" colspan="4">—</td>
+                                <?php endif; ?>
+                            <?php endif; ?>
+                            <td class="td-center"><span style="display:inline-block;padding:4px 9px;border-radius:999px;font-weight:800;font-size:11px;<?= $status_style ?>"><?= $status_label ?></span></td>
+                        </tr>
+                    <?php endfor; ?>
+                </tbody>
+
+                <!-- Footer / Total -->
+                <tfoot>
+                    <tr>
+                        <td style="text-align:right;">TOTAL HADIR</td>
+                        <td class="td-center"><?= $total_hadir ?> hr</td>
+                        <?php if ($tipe === 'T1'): ?>
+                            <td>—</td>
+                            <td style="text-align:right;"><?= number_format($sum_langsir_tandan, 0) ?></td>
+                            <td style="text-align:right;"><?= number_format($sum_langsir, 2) ?></td>
+                            <!-- <td style="text-align:right;"><?= number_format($sum_prestasi_tandan, 0) ?></td> -->
+                            <!-- <td style="text-align:right;"><?= number_format($sum_prestasi, 2) ?></td> -->
+                            <td>—</td>
+                            <td>—</td>
+                        <?php elseif ($tipe === 'T2'): ?>
+                            <td>—</td>
+                            <td>—</td>
+                            <td>—</td>
+                        <?php elseif ($tipe === 'T3'): ?>
+                            <td>—</td>
+                            <td style="text-align:right;"><?= number_format($sum_tbs, 0) ?></td>
+                            <td style="text-align:right;"><?= number_format($sum_ts, 0) ?></td>
+                            <td style="text-align:right;"><?= number_format($sum_tbb, 0) ?></td>
+                            <td style="text-align:right;"><?= number_format($sum_total_tandan, 0) ?></td>
+                            <td>—</td>
+                            <td>—</td>
+                        <?php elseif ($tipe === 'T4'): ?>
+                            <td>—</td>
+                            <td style="text-align:right;"><?= number_format($sum_hasil, 2) ?></td>
+                            <!-- <td style="text-align:right;"><?= number_format($sum_prestasi, 2) ?></td> -->
+                            <td>—</td>
+                            <td>—</td>
+                        <?php elseif ($tipe === 'T5'): ?>
+                            <td>—</td>
+                            <td style="text-align:right;"><?= number_format($sum_hasil, 0) ?></td>
+                            <td>—</td>
+                            <td>—</td>
+                        <?php endif; ?>
+                        <td>-</td>
+                    </tr>
+                </tfoot>
+
+        <div class="lk-footer-info">
+            <span>Nama: <strong><?= $nama_karyawan ?></strong> &nbsp;|&nbsp; Total Hadir: <strong><?= $total_hadir ?></strong> hari</span>
+            <span>Dicetak: <?= date('d/m/Y H:i') ?> &nbsp;|&nbsp; PT Damai Jaya Lestari</span>
+        </div>
+    </div>
 </div>
 
 <script>
-    function cetakLaporanIndividu() {
-        const tableHTML = document.getElementById('print-area').innerHTML;
-        const win = window.open('', '_blank', 'width=900,height=700');
-        
+    function cetakLaporan() {
+        const tableHTML = document.querySelector('.lk-table-wrap').innerHTML;
+        const win = window.open('', '_blank', 'width=1100,height=800');
         win.document.write(`<!DOCTYPE html>
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<title>Cetak Laporan Individu</title>
+<title>Cetak Laporan Keseluruhan</title>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
   body { font-family: 'Times New Roman', Times, serif; color: #000; padding: 10mm; }
-  
-  .kop { display:flex; align-items:center; border-bottom:3px solid #000; padding-bottom:10px; margin-bottom:20px; }
+  .kop { display:flex; align-items:center; border-bottom:3px solid #000; padding-bottom:10px; margin-bottom:15px; }
   .kop img { width:70px; margin-right:15px; }
   .kop-text { flex:1; text-align:center; }
   .kop-text h1 { font-size:18pt; font-weight:bold; text-transform:uppercase; margin:0; }
   .kop-text p { font-size:11pt; margin:3px 0 0 0; }
   
-  .detail-heading { text-align: center; margin-bottom: 20px; }
-  .detail-heading h2 { font-size: 14pt; margin-bottom: 5px; text-transform: uppercase; text-decoration: underline; }
-  .detail-heading p { font-size: 11pt; margin-bottom: 3px; }
+  .info-laporan { text-align: center; margin-bottom: 15px; }
+  .info-laporan h2 { font-size: 14pt; margin-bottom: 5px; text-decoration: underline; text-transform: uppercase; }
+  .info-laporan p { font-size: 11pt; margin-bottom: 5px; }
+  .info-karyawan { font-size: 11pt; font-weight: bold; margin-bottom: 15px; text-align: center; }
   
   table { width:100%; border-collapse:collapse; margin-bottom:20px; font-size: 10pt; }
   th, td { border:1px solid #000; padding:6px 8px; }
   th { background:#f0f0f0 !important; font-weight:bold; text-align:center; text-transform:uppercase; }
+  .td-date, .td-no, .td-center { text-align: center; }
+  .td-num { text-align: right; }
   
-  .text-center { text-align: center; }
+  /* Reset badge styling for print to just text */
+  span[class^="badge-"] { font-weight: bold; color: #000 !important; background: transparent !important; padding: 0 !important; }
+  .absent-row td { color: #555; }
   
-  /* Hilangkan background warna warni badge saat print, ubah jadi teks tebal */
-  span[class*="-badge"] { font-weight: bold; color: #000 !important; background: transparent !important; padding: 0 !important; }
+  .footer-ttd { display:flex; justify-content:space-between; margin-top:40px; text-align:center; font-size:11pt; }
+  .ttd-col { flex:1; }
+  .ttd-col p { margin-bottom:60px; }
+  .ttd-line { border-top:1px solid #000; padding-top:5px; font-weight:bold; display:inline-block; min-width:150px; }
   
-  .detail-footer { font-size: 10pt; margin-top: 15px; font-style: italic; }
-  
-  @page { size: A4 portrait; margin: 10mm; }
+  @page { size: A4 landscape; margin: 10mm; }
 </style>
 </head>
 <body>
@@ -210,12 +834,29 @@ function statusKehadiran(?string $status): array
       <p>Perkebunan Kelapa Sawit & Pabrik Minyak Kelapa Sawit</p>
     </div>
   </div>
+  
+  <div class="info-laporan">
+    <h2>LAPORAN ABSENSI DAN HASIL KINERJA</h2>
+    <p>Objek: <?= htmlspecialchars($objek) ?> &nbsp;|&nbsp; Periode: <?= $periode_label ?></p>
+    <div class="info-karyawan">Nama: <?= htmlspecialchars($nama_karyawan) ?></div>
+  </div>
 
   ${tableHTML}
   
+  <div class="footer-ttd">
+    <div class="ttd-col">
+      <p>Diketahui oleh,</p>
+      <div class="ttd-line"><?= htmlspecialchars($penandatangan['pengawas']) ?></div>
+      <div style="font-weight:bold; margin-top:4px;">Pengawas Afdeling <?= htmlspecialchars($penandatangan['afdeling']) ?></div>
+    </div>
+    <div class="ttd-col">
+      <p>Disusun oleh,</p>
+      <div class="ttd-line"><?= htmlspecialchars($penandatangan['kerani']) ?></div>
+      <div style="font-weight:bold; margin-top:4px;">Kerani Afdeling <?= htmlspecialchars($penandatangan['afdeling']) ?></div>
+    </div>
+  </div>
 </body>
 </html>`);
-        
         win.document.close();
         win.focus();
         setTimeout(() => {
