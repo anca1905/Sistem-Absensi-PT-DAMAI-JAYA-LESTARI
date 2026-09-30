@@ -64,7 +64,7 @@ $afdeling_pengawas = isset($_SESSION['afdeling']) ? mysqli_real_escape_string($c
 // --- Fetch List Karyawan ---
 $where_karyawan = "role='karyawan'";
 if (!empty($afdeling_pengawas)) $where_karyawan .= " AND afdeling='$afdeling_pengawas'";
-$q_users = mysqli_query($conn, "SELECT id, name FROM users WHERE $where_karyawan ORDER BY name ASC");
+$q_users = mysqli_query($conn, "SELECT id, name, afdeling FROM users WHERE $where_karyawan ORDER BY name ASC");
 $list_karyawan = [];
 while ($u = mysqli_fetch_assoc($q_users)) $list_karyawan[] = $u;
 
@@ -74,12 +74,16 @@ if ($karyawan_id == 0 && count($list_karyawan) > 0) {
 
 $uid          = $karyawan_id;
 $nama_karyawan = 'Pilih Karyawan';
+$afdeling_karyawan = '';
 foreach ($list_karyawan as $lk) {
     if ($lk['id'] == $karyawan_id) {
         $nama_karyawan = htmlspecialchars($lk['name']);
+        $afdeling_karyawan = $lk['afdeling'];
         break;
     }
 }
+
+$penandatangan = getReportSignatories($conn, $afdeling_karyawan);
 
 $jumlah_hari = (int)date('t', mktime(0, 0, 0, $bulan_int, 1, $tahun));
 
@@ -875,12 +879,14 @@ $periode_label = str_pad($start_day, 2, '0', STR_PAD_LEFT) . " - " . str_pad($en
   
   <div class="footer-ttd">
     <div class="ttd-col">
-      <p>Pengawas,</p>
-      <div class="ttd-line"><?= htmlspecialchars($nama_karyawan) ?></div>
+      <p>Diketahui oleh,</p>
+      <div class="ttd-line"><?= htmlspecialchars($penandatangan['pengawas']) ?></div>
+      <div style="font-weight:bold; margin-top:4px;">Pengawas Afdeling <?= htmlspecialchars($penandatangan['afdeling']) ?></div>
     </div>
     <div class="ttd-col">
-      <p>Kerani Afdeling,</p>
-      <div class="ttd-line">____________________</div>
+      <p>Disusun oleh,</p>
+      <div class="ttd-line"><?= htmlspecialchars($penandatangan['kerani']) ?></div>
+      <div style="font-weight:bold; margin-top:4px;">Kerani Afdeling <?= htmlspecialchars($penandatangan['afdeling']) ?></div>
     </div>
   </div>
 </body>

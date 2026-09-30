@@ -5,6 +5,7 @@ include 'templates/header.php';
 $tanggal          = isset($_GET['tanggal']) ? $_GET['tanggal'] : date('Y-m-d');
 $pengawas_id      = $_SESSION['user_id'];
 $afdeling_pengawas = isset($_SESSION['afdeling']) ? mysqli_real_escape_string($conn, $_SESSION['afdeling']) : '';
+$penandatangan    = getReportSignatories($conn, $afdeling_pengawas);
 
 $nama_bulan_id = [
     '01' => 'Januari',
@@ -618,16 +619,7 @@ while ($row = mysqli_fetch_assoc($query_logbook)) {
                     <div class="ttd-jabatan">Manager / Askep</div>
                     <div class="ttd-line">(__________________)</div>
                 </div>
-                <div class="doc-ttd-col">
-                    <div class="ttd-label">Diperiksa,</div>
-                    <div class="ttd-jabatan">Pengawas Lapangan</div>
-                    <div class="ttd-line">(__________________)</div>
-                </div>
-                <div class="doc-ttd-col">
-                    <div class="ttd-label">Dibuat Oleh,</div>
-                    <div class="ttd-jabatan">Kerani / Admin</div>
-                    <div class="ttd-line">(__________________)</div>
-                </div>
+                <div class="doc-ttd-col"><div class="ttd-label">Diperiksa,</div><div class="ttd-jabatan">Pengawas <?= htmlspecialchars($penandatangan['afdeling']) ?></div><div class="ttd-line"><?= htmlspecialchars($penandatangan['pengawas']) ?></div></div><div class="doc-ttd-col"><div class="ttd-label">Dibuat Oleh,</div><div class="ttd-jabatan">Kerani <?= htmlspecialchars($penandatangan['afdeling']) ?></div><div class="ttd-line"><?= htmlspecialchars($penandatangan['kerani']) ?></div></div>
             </div>
 
             <div class="doc-footer-note">

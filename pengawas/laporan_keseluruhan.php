@@ -57,7 +57,9 @@ $tipe = getTableType($objek);
 $objek_safe   = mysqli_real_escape_string($conn, $objek);
 $bulan_int    = (int)$bulan;
 $uid          = $_SESSION['user_id'];
-$nama_karyawan = htmlspecialchars($_SESSION['nama'] ?? 'Karyawan');
+$nama_pengawas = htmlspecialchars($_SESSION['nama'] ?? 'Pengawas');
+$afdeling_pengawas = $_SESSION['afdeling'] ?? '';
+$penandatangan = getReportSignatories($conn, $afdeling_pengawas);
 
 $jumlah_hari = (int)date('t', mktime(0, 0, 0, $bulan_int, 1, $tahun));
 $periode_label = "01 - {$jumlah_hari} " . $nama_bulan[$bulan] . " {$tahun}";
@@ -1020,12 +1022,14 @@ $periode_label = "01 - {$jumlah_hari} " . $nama_bulan[$bulan] . " {$tahun}";
   
   <div class="footer-ttd">
     <div class="ttd-col">
-      <p>Pengawas,</p>
-      <div class="ttd-line"><?= htmlspecialchars($nama_karyawan) ?></div>
+      <p>Diketahui oleh,</p>
+      <div class="ttd-line"><?= htmlspecialchars($penandatangan['pengawas']) ?></div>
+      <div style="font-weight:bold; margin-top:4px;">Pengawas Afdeling <?= htmlspecialchars($penandatangan['afdeling']) ?></div>
     </div>
     <div class="ttd-col">
-      <p>Kerani Afdeling,</p>
-      <div class="ttd-line">____________________</div>
+      <p>Disusun oleh,</p>
+      <div class="ttd-line"><?= htmlspecialchars($penandatangan['kerani']) ?></div>
+      <div style="font-weight:bold; margin-top:4px;">Kerani Afdeling <?= htmlspecialchars($penandatangan['afdeling']) ?></div>
     </div>
   </div>
 </body>
