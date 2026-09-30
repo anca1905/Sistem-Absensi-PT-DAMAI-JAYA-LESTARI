@@ -14,9 +14,9 @@ session_start();
 date_default_timezone_set('Asia/Makassar'); // Set ke WITA (+08:00) sesuai zona waktu user
 
 // Load Functions
-require_once 'functions.php';
-require_once 'wa_helper.php';
-require_once 'alert_helper.php';
+require_once __DIR__ . '/functions.php';
+require_once __DIR__ . '/wa_helper.php';
+require_once __DIR__ . '/alert_helper.php';
 
 // URL dasar aplikasi (ganti sesuai environment)
 // Production: https://portal-djl.skillance.cloud/

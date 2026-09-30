@@ -1,6 +1,6 @@
-﻿<?php
-require '../config/config.php';
-include 'templates/header.php';
+<?php
+require __DIR__ . '/../config/config.php';
+include __DIR__ . '/templates/header.php';
 ?>
 <style type="text/css" media="print">
     @page {
