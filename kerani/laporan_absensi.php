@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require '../config/config.php';
 include 'templates/header.php';
 ?>
@@ -180,7 +180,12 @@ $penandatangan = getReportSignatories($conn, $_SESSION['afdeling'] ?? '');
         color: #9a3412;
     }
 
-    /* Print styles are handled by print.css */
+    
+    .status-t {
+        background-color: #fef9c3;
+        color: #854d0e;
+    }
+/* Print styles are handled by print.css */
 </style>
 
 <div class="header-actions">
@@ -228,7 +233,8 @@ $penandatangan = getReportSignatories($conn, $_SESSION['afdeling'] ?? '');
                     <th rowspan="2" class="text-left">NIK</th>
                     <th rowspan="2" class="text-left" width="200">NAMA LENGKAP</th>
                     <th colspan="<?= $jumlah_hari ?>">TGL</th>
-                    <th rowspan="2" width="30">H</th>
+                    <th rowspan="2" width="30" title="Hadir">H</th>
+                    <th rowspan="2" width="30" style="color:#854d0e;" title="Terlambat">T</th>
                     <th rowspan="2" width="30">I</th>
                     <th rowspan="2" width="30">A</th>
                     <th rowspan="2" width="30">S</th>
@@ -267,6 +273,7 @@ $penandatangan = getReportSignatories($conn, $_SESSION['afdeling'] ?? '');
 
                         <?php
                         $t_hadir = 0;
+                        $t_terlambat = 0;
                         $t_izin = 0;
                         $t_sakit = 0;
                         $t_cuti = 0;
@@ -280,22 +287,16 @@ $penandatangan = getReportSignatories($conn, $_SESSION['afdeling'] ?? '');
                                 $row_abs = mysqli_fetch_assoc($cek_absen);
                                 $status = strtolower($row_abs['status_kehadiran']);
                                 $user_absen_data[$i] = $status;
-                                if (in_array($status, ['alpha', 'alpa', 'alfa'])) {
-                                    $t_alpha++;
-                                    echo '<td><span class="status-badge status-a">A</span></td>';
-                                } elseif ($status == 'izin') {
-                                    $t_izin++;
-                                    echo '<td><span class="status-badge status-i">I</span></td>';
-                                } elseif ($status == 'sakit') {
-                                    $t_sakit++;
-                                    echo '<td><span class="status-badge status-s">S</span></td>';
-                                } elseif ($status == 'cuti') {
-                                    $t_cuti++;
-                                    echo '<td><span class="status-badge status-c">C</span></td>';
-                                } else {
-                                    $t_hadir++;
-                                    echo '<td><span class="status-badge status-h">H</span></td>';
+                                $info = getStatusInfo($status);
+                                switch($info['kode']) {
+                                    case 'H': $t_hadir++; break;
+                                    case 'T': $t_terlambat++; break;
+                                    case 'I': $t_izin++; break;
+                                    case 'S': $t_sakit++; break;
+                                    case 'C': $t_cuti++; break;
+                                    case 'A': $t_alpha++; break;
                                 }
+                                echo '<td>' . getStatusBadge($status) . '</td>';
                             } else {
                                 $user_absen_data[$i] = null;
                                 echo '<td><span style="color: #cbd5e1;">-</span></td>';
@@ -316,6 +317,7 @@ $penandatangan = getReportSignatories($conn, $_SESSION['afdeling'] ?? '');
                         ?>
 
                         <td style="font-weight: 700; color: #166534;"><?= $t_hadir ?></td>
+                        <td style="font-weight: 700; color: #854d0e;"><?= $t_terlambat ?></td>
                         <td style="font-weight: 700; color: #075985;"><?= $t_izin ?></td>
                         <td style="font-weight: 700; color: #991b1b;"><?= $t_alpha ?></td>
                         <td style="font-weight: 700; color: #5b21b6;"><?= $t_sakit ?></td>

@@ -109,3 +109,47 @@ function getReportSignatories($conn, $afdeling = '')
 
     return $result;
 }
+
+
+/**
+ * Fungsi terpusat: ubah nilai status_kehadiran dari DB jadi info tampilan.
+ * Kode: H = Hadir, T = Terlambat, A = Alpha, I = Izin, S = Sakit, C = Cuti
+ */
+function getStatusInfo($status) {
+    $s = strtolower(trim((string)$status));
+    switch ($s) {
+        case 'hadir':
+        case 'tepat_waktu':
+            return ['kode' => 'H', 'label' => 'Hadir',    'class' => 'status-h'];
+        case 'terlambat':
+            return ['kode' => 'T', 'label' => 'Terlambat','class' => 'status-t'];
+        case 'izin':
+            return ['kode' => 'I', 'label' => 'Izin',     'class' => 'status-i'];
+        case 'sakit':
+            return ['kode' => 'S', 'label' => 'Sakit',    'class' => 'status-s'];
+        case 'cuti':
+            return ['kode' => 'C', 'label' => 'Cuti',     'class' => 'status-c'];
+        case 'alpha':
+        case 'alpa':
+        case 'alfa':
+            return ['kode' => 'A', 'label' => 'Alpha',    'class' => 'status-a'];
+        default:
+            return ['kode' => '', 'label' => '', 'class' => ''];
+    }
+}
+
+function isHadir($status) {
+    $s = strtolower(trim((string)$status));
+    return in_array($s, ['hadir', 'tepat_waktu', 'terlambat']);
+}
+
+function getStatusBadge($status) {
+    if ($status === null || $status === '') {
+        return '<span style="color:#cbd5e1;">-</span>';
+    }
+    $info = getStatusInfo($status);
+    if ($info['kode'] === '') {
+        return '<span style="color:#cbd5e1;">-</span>';
+    }
+    return '<span class="status-badge ' . $info['class'] . '">' . $info['kode'] . '</span>';
+}
