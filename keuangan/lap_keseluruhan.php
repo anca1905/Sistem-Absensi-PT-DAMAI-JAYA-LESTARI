@@ -740,7 +740,7 @@ $list_karyawan_page = array_slice($list_karyawan, $offset, $per_page);
 
                 <?php if (empty($list_karyawan)): ?>
                     <tr>
-                        <td colspan="<?= $colspan_empty ?>" style="text-align:center;padding:50px;color:#94a3b8;font-size:14px;">Belum ada data <?= strtolower($daftar_jabatan[$jabatan]) ?> untuk filter ini.</td>
+                        <?php for($i=0; $i< $colspan_empty ; $i++): ?><td class="td-empty">-</td><?php endfor; ?>
                     </tr>
                 <?php endif; ?>
             </tbody>

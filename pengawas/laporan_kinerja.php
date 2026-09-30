@@ -548,7 +548,7 @@ while ($row = mysqli_fetch_assoc($query_logbook)) {
                     else:
                         ?>
                         <tr>
-                            <td colspan="8" style="text-align:center; padding:30px; color:var(--text-muted);">Belum ada laporan kinerja untuk tanggal ini.</td>
+                            <td class="td-empty">-</td><td class="td-empty">-</td><td class="td-empty">-</td><td class="td-empty">-</td><td class="td-empty">-</td><td class="td-empty">-</td><td class="td-empty">-</td><td class="td-empty">-</td>
                         </tr>
                     <?php endif; ?>
                 </tbody>
@@ -861,7 +861,7 @@ while ($row = mysqli_fetch_assoc($query_logbook)) {
         <th>Jam Kerja</th><th>Mandor</th><th>Status</th>
       </tr>
     </thead>
-    <tbody>${rows.length > 0 ? tableRows : '<tr><td colspan="9" style="text-align:center;padding:14pt;">Tidak ada data.</td></tr>'}</tbody>
+    <tbody>${rows.length > 0 ? tableRows : '<tr><td class="td-empty">-</td><td class="td-empty">-</td><td class="td-empty">-</td><td class="td-empty">-</td><td class="td-empty">-</td><td class="td-empty">-</td><td class="td-empty">-</td><td class="td-empty">-</td><td class="td-empty">-</td></tr>'}</tbody>
   </table>
   <div class="ttd">
     <div class="ttd-col"><p>Mengetahui,<br><small>Manager / Askep</small></p><span class="garis">(__________________)</span></div>

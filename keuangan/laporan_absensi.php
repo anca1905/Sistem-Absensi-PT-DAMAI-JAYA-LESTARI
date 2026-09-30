@@ -553,7 +553,7 @@ if (!empty($afdeling)) {
             <?php endforeach; ?>
             <?php if (empty($list_karyawan)): ?>
                 <tr>
-                    <td colspan="<?= $jumlah_hari + 9 ?>" class="text-center" style="padding:16px;">Tidak ada data.</td>
+                    <?php for($i=0; $i< $jumlah_hari + 9 ; $i++): ?><td class="td-empty">-</td><?php endfor; ?>
                 </tr>
             <?php endif; ?>
         </tbody>

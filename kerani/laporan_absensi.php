@@ -328,7 +328,7 @@ $penandatangan = getReportSignatories($conn, $_SESSION['afdeling'] ?? '');
 
                 <?php if (empty($all_users_data)): ?>
                     <tr>
-                        <td colspan="<?= $jumlah_hari + 9 ?>" style="text-align:center; padding:20px;">Belum ada data personil.</td>
+                        <?php for($i=0; $i< $jumlah_hari + 9 ; $i++): ?><td class="td-empty">-</td><?php endfor; ?>
                     </tr>
                 <?php endif; ?>
             </tbody>
@@ -428,7 +428,7 @@ $penandatangan = getReportSignatories($conn, $_SESSION['afdeling'] ?? '');
             <?php endforeach; ?>
             <?php if (empty($all_users_data)): ?>
                 <tr>
-                    <td colspan="<?= $jumlah_hari + 9 ?>" class="text-center" style="padding:16px;">Tidak ada data.</td>
+                    <?php for($i=0; $i< $jumlah_hari + 9 ; $i++): ?><td class="td-empty">-</td><?php endfor; ?>
                 </tr>
             <?php endif; ?>
         </tbody>
