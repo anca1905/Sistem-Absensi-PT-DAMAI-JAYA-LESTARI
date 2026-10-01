@@ -669,7 +669,7 @@ $periode_label = "01 - {$jumlah_hari} " . $nama_bulan[$bulan] . " {$tahun}";
                                     <td class="td-center"><?= htmlspecialchars($lb['blok'] ?? '—') ?></td>
                                     <td class="td-center"><?= htmlspecialchars($lb['luas_ha'] ?? '—') ?></td>
                                 <?php else: ?>
-                                    <td class="td-empty" colspan="5">—</td>
+                                    <td class="td-empty">—</td><td class="td-empty">—</td><td class="td-empty">—</td><td class="td-empty">—</td><td class="td-empty">—</td>
                                 <?php endif; ?>
 
                                 <!-- Tipe T2: Perawatan -->
@@ -679,7 +679,7 @@ $periode_label = "01 - {$jumlah_hari} " . $nama_bulan[$bulan] . " {$tahun}";
                                     <td class="td-center"><?= htmlspecialchars($lb['blok'] ?? '—') ?></td>
                                     <td class="td-center"><?= htmlspecialchars($lb['luas_ha'] ?? '—') ?></td>
                                 <?php else: ?>
-                                    <td class="td-empty" colspan="3">—</td>
+                                    <td class="td-empty">—</td><td class="td-empty">—</td><td class="td-empty">—</td>
                                 <?php endif; ?>
 
                                 <!-- Tipe T3: Panen / Potong Buah -->
@@ -693,7 +693,7 @@ $periode_label = "01 - {$jumlah_hari} " . $nama_bulan[$bulan] . " {$tahun}";
                                     <td class="td-center"><?= htmlspecialchars($lb['blok'] ?? '—') ?></td>
                                     <td class="td-center"><?= htmlspecialchars($lb['luas_ha'] ?? '—') ?></td>
                                 <?php else: ?>
-                                    <td class="td-empty" colspan="7">—</td>
+                                    <td class="td-empty">—</td><td class="td-empty">—</td><td class="td-empty">—</td><td class="td-empty">—</td><td class="td-empty">—</td><td class="td-empty">—</td><td class="td-empty">—</td>
                                 <?php endif; ?>
 
                                 <!-- Tipe T4: Kutip Brondolan -->
@@ -705,7 +705,7 @@ $periode_label = "01 - {$jumlah_hari} " . $nama_bulan[$bulan] . " {$tahun}";
                                     <td class="td-center"><?= htmlspecialchars($lb['blok'] ?? '—') ?></td>
                                     <td class="td-center"><?= htmlspecialchars($lb['luas_ha'] ?? '—') ?></td>
                                 <?php else: ?>
-                                    <td class="td-empty" colspan="5">—</td>
+                                    <td class="td-empty">—</td><td class="td-empty">—</td><td class="td-empty">—</td><td class="td-empty">—</td><td class="td-empty">—</td>
                                 <?php endif; ?>
 
                                 <!-- Tipe T5: Muat TBS -->
@@ -716,7 +716,7 @@ $periode_label = "01 - {$jumlah_hari} " . $nama_bulan[$bulan] . " {$tahun}";
                                     <td class="td-center"><?= htmlspecialchars($lb['blok'] ?? '—') ?></td>
                                     <td class="td-center"><?= htmlspecialchars($lb['luas_ha'] ?? '—') ?></td>
                                 <?php else: ?>
-                                    <td class="td-empty" colspan="4">—</td>
+                                    <td class="td-empty">—</td><td class="td-empty">—</td><td class="td-empty">—</td><td class="td-empty">—</td>
                                 <?php endif; ?>
                             <?php endif; ?>
                             <td class="td-center"><span style="display:inline-block;padding:4px 9px;border-radius:999px;font-weight:800;font-size:11px;<?= $status_style ?>"><?= $status_label ?></span></td>

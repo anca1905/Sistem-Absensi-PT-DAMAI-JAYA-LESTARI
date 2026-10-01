@@ -58,14 +58,15 @@ $objek_safe   = mysqli_real_escape_string($conn, $objek);
 $bulan_int    = (int)$bulan;
 
 $uid = isset($_GET['user_id']) ? (int)$_GET['user_id'] : 0;
-$penandatangan = getReportSignatories($conn, $_SESSION['afdeling'] ?? '');
 if ($uid === 0) {
     header("Location: laporan_keseluruhan.php");
     exit;
 }
-$q_user = mysqli_query($conn, "SELECT name FROM users WHERE id=$uid");
+$q_user = mysqli_query($conn, "SELECT name, afdeling FROM users WHERE id=$uid");
 $u_data = mysqli_fetch_assoc($q_user);
 $nama_karyawan = $u_data ? $u_data['name'] : 'Karyawan';
+$afdeling_karyawan = $u_data['afdeling'] ?? ($_SESSION['afdeling'] ?? '');
+$penandatangan = getReportSignatories($conn, $afdeling_karyawan);
 
 $jumlah_hari = (int)date('t', mktime(0, 0, 0, $bulan_int, 1, $tahun));
 $periode_label = "01 - {$jumlah_hari} " . $nama_bulan[$bulan] . " {$tahun}";
@@ -518,7 +519,7 @@ $periode_label = "01 - {$jumlah_hari} " . $nama_bulan[$bulan] . " {$tahun}";
                         <th colspan="1" class="th-o1">KEHADIRAN</th>
                         <!-- berbeda setiap tipe -->
                         <?php if ($tipe === 'T1'): ?>
-                            <th colspan="6" class="th-o2">HASIL KERJA (LANGSIR)</th>
+                            <th colspan="5" class="th-o2">HASIL KERJA (LANGSIR)</th>
                         <?php elseif ($tipe === 'T2'): ?>
                             <th colspan="4" class="th-o2">DATA KERJA</th>
                         <?php elseif ($tipe === 'T3'): ?>
@@ -536,7 +537,6 @@ $periode_label = "01 - {$jumlah_hari} " . $nama_bulan[$bulan] . " {$tahun}";
                         <!-- O2 detail -->
                         <?php if ($tipe === 'T1'): ?>
                             <th class="th-o2">NAMA MANDOR</th>
-                            <th class="th-o2">HASIL LANGSIR (Tandan)</th>
                             <th class="th-o2">HASIL LANGSIR (Kg)</th>
                             <!-- <th class="th-o2">PRESTASI (Tandan)</th> -->
                             <!-- <th class="th-o2">PRESTASI (Kg)</th> -->
@@ -678,7 +678,7 @@ $periode_label = "01 - {$jumlah_hari} " . $nama_bulan[$bulan] . " {$tahun}";
                                     <td class="td-center"><?= htmlspecialchars($lb['blok'] ?? '—') ?></td>
                                     <td class="td-center"><?= htmlspecialchars($lb['luas_ha'] ?? '—') ?></td>
                                 <?php else: ?>
-                                    <td class="td-empty" colspan="6">—</td>
+                                    <td class="td-empty">—</td><td class="td-empty">—</td><td class="td-empty">—</td><td class="td-empty">—</td>
                                 <?php endif; ?>
 
                                 <!-- Tipe T2: Perawatan -->
@@ -688,7 +688,7 @@ $periode_label = "01 - {$jumlah_hari} " . $nama_bulan[$bulan] . " {$tahun}";
                                     <td class="td-center"><?= htmlspecialchars($lb['blok'] ?? '—') ?></td>
                                     <td class="td-center"><?= htmlspecialchars($lb['luas_ha'] ?? '—') ?></td>
                                 <?php else: ?>
-                                    <td class="td-empty" colspan="3">—</td>
+                                    <td class="td-empty">—</td><td class="td-empty">—</td><td class="td-empty">—</td>
                                 <?php endif; ?>
 
                                 <!-- Tipe T3: Panen / Potong Buah -->
@@ -702,7 +702,7 @@ $periode_label = "01 - {$jumlah_hari} " . $nama_bulan[$bulan] . " {$tahun}";
                                     <td class="td-center"><?= htmlspecialchars($lb['blok'] ?? '—') ?></td>
                                     <td class="td-center"><?= htmlspecialchars($lb['luas_ha'] ?? '—') ?></td>
                                 <?php else: ?>
-                                    <td class="td-empty" colspan="7">—</td>
+                                    <td class="td-empty">—</td><td class="td-empty">—</td><td class="td-empty">—</td><td class="td-empty">—</td><td class="td-empty">—</td><td class="td-empty">—</td><td class="td-empty">—</td>
                                 <?php endif; ?>
 
                                 <!-- Tipe T4: Kutip Brondolan -->
@@ -714,7 +714,7 @@ $periode_label = "01 - {$jumlah_hari} " . $nama_bulan[$bulan] . " {$tahun}";
                                     <td class="td-center"><?= htmlspecialchars($lb['blok'] ?? '—') ?></td>
                                     <td class="td-center"><?= htmlspecialchars($lb['luas_ha'] ?? '—') ?></td>
                                 <?php else: ?>
-                                    <td class="td-empty" colspan="5">—</td>
+                                    <td class="td-empty">—</td><td class="td-empty">—</td><td class="td-empty">—</td><td class="td-empty">—</td>
                                 <?php endif; ?>
 
                                 <!-- Tipe T5: Muat TBS -->
@@ -725,7 +725,7 @@ $periode_label = "01 - {$jumlah_hari} " . $nama_bulan[$bulan] . " {$tahun}";
                                     <td class="td-center"><?= htmlspecialchars($lb['blok'] ?? '—') ?></td>
                                     <td class="td-center"><?= htmlspecialchars($lb['luas_ha'] ?? '—') ?></td>
                                 <?php else: ?>
-                                    <td class="td-empty" colspan="4">—</td>
+                                    <td class="td-empty">—</td><td class="td-empty">—</td><td class="td-empty">—</td><td class="td-empty">—</td>
                                 <?php endif; ?>
                             <?php endif; ?>
                             <td class="td-center"><span style="display:inline-block;padding:4px 9px;border-radius:999px;font-weight:800;font-size:11px;<?= $status_style ?>"><?= $status_label ?></span></td>
@@ -740,7 +740,6 @@ $periode_label = "01 - {$jumlah_hari} " . $nama_bulan[$bulan] . " {$tahun}";
                         <td class="td-center"><?= $total_hadir ?> hr</td>
                         <?php if ($tipe === 'T1'): ?>
                             <td>—</td>
-                            <td style="text-align:right;"><?= number_format($sum_langsir_tandan, 0) ?></td>
                             <td style="text-align:right;"><?= number_format($sum_langsir, 2) ?></td>
                             <!-- <td style="text-align:right;"><?= number_format($sum_prestasi_tandan, 0) ?></td> -->
                             <!-- <td style="text-align:right;"><?= number_format($sum_prestasi, 2) ?></td> -->
@@ -843,12 +842,12 @@ $periode_label = "01 - {$jumlah_hari} " . $nama_bulan[$bulan] . " {$tahun}";
     <div class="ttd-col">
       <p>Diketahui oleh,</p>
       <div class="ttd-line"><?= htmlspecialchars($penandatangan['pengawas']) ?></div>
-      <div style="font-weight:bold; margin-top:4px;">Pengawas Afdeling <?= htmlspecialchars($penandatangan['afdeling']) ?></div>
+      <div style="font-weight:bold; margin-top:4px;">Pengawas <?= htmlspecialchars($penandatangan['label_afdeling'] ?: 'Afdeling') ?></div>
     </div>
     <div class="ttd-col">
       <p>Disusun oleh,</p>
       <div class="ttd-line"><?= htmlspecialchars($penandatangan['kerani']) ?></div>
-      <div style="font-weight:bold; margin-top:4px;">Kerani Afdeling <?= htmlspecialchars($penandatangan['afdeling']) ?></div>
+      <div style="font-weight:bold; margin-top:4px;">Kerani <?= htmlspecialchars($penandatangan['label_afdeling'] ?: 'Afdeling') ?></div>
     </div>
   </div>
 </body>
