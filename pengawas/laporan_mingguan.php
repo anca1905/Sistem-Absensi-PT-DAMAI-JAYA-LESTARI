@@ -63,7 +63,15 @@ $afdeling_pengawas = isset($_SESSION['afdeling']) ? mysqli_real_escape_string($c
 
 // --- Fetch List Karyawan ---
 $where_karyawan = "role='karyawan'";
-if (!empty($afdeling_pengawas)) $where_karyawan .= " AND afdeling='$afdeling_pengawas'";
+if (!empty($afdeling_pengawas)) {
+    $num_p = preg_replace('/[^0-9]/', '', $afdeling_pengawas);
+    $afd_p_safe = mysqli_real_escape_string($conn, $afdeling_pengawas);
+    if ($num_p !== '') {
+        $where_karyawan .= " AND (afdeling='$afd_p_safe' OR afdeling='Afd $num_p' OR afdeling='Afdeling $num_p' OR afdeling='$num_p' OR afdeling='Afd. $num_p' OR afdeling LIKE '% $num_p' OR afdeling LIKE '%$num_p%')";
+    } else {
+        $where_karyawan .= " AND (afdeling='$afd_p_safe' OR afdeling LIKE '%$afd_p_safe%')";
+    }
+}
 $q_users = mysqli_query($conn, "SELECT id, name, afdeling FROM users WHERE $where_karyawan ORDER BY name ASC");
 $list_karyawan = [];
 while ($u = mysqli_fetch_assoc($q_users)) $list_karyawan[] = $u;
@@ -81,6 +89,22 @@ foreach ($list_karyawan as $lk) {
         $afdeling_karyawan = $lk['afdeling'];
         break;
     }
+}
+
+// Fallback jika karyawan_id dipilih tapi tidak masuk dalam list_karyawan
+if ($karyawan_id > 0 && ($nama_karyawan === 'Pilih Karyawan' || empty($afdeling_karyawan))) {
+    $q_k = mysqli_query($conn, "SELECT name, afdeling FROM users WHERE id = $karyawan_id LIMIT 1");
+    if ($q_k && ($dk = mysqli_fetch_assoc($q_k))) {
+        $nama_karyawan = htmlspecialchars($dk['name']);
+        if (empty($afdeling_karyawan)) {
+            $afdeling_karyawan = $dk['afdeling'];
+        }
+    }
+}
+
+// Fallback jika afdeling karyawan kosong di db, gunakan afdeling pengawas
+if (empty($afdeling_karyawan) && !empty($afdeling_pengawas)) {
+    $afdeling_karyawan = $afdeling_pengawas;
 }
 
 $penandatangan = getReportSignatories($conn, $afdeling_karyawan);
@@ -881,12 +905,12 @@ $periode_label = str_pad($start_day, 2, '0', STR_PAD_LEFT) . " - " . str_pad($en
     <div class="ttd-col">
       <p>Diketahui oleh,</p>
       <div class="ttd-line"><?= htmlspecialchars($penandatangan['pengawas']) ?></div>
-      <div style="font-weight:bold; margin-top:4px;">Pengawas Afdeling <?= htmlspecialchars($penandatangan['afdeling']) ?></div>
+      <div style="font-weight:bold; margin-top:4px;">Pengawas <?= htmlspecialchars($penandatangan['label_afdeling'] ?: 'Afdeling') ?></div>
     </div>
     <div class="ttd-col">
       <p>Disusun oleh,</p>
       <div class="ttd-line"><?= htmlspecialchars($penandatangan['kerani']) ?></div>
-      <div style="font-weight:bold; margin-top:4px;">Kerani Afdeling <?= htmlspecialchars($penandatangan['afdeling']) ?></div>
+      <div style="font-weight:bold; margin-top:4px;">Kerani <?= htmlspecialchars($penandatangan['label_afdeling'] ?: 'Afdeling') ?></div>
     </div>
   </div>
 </body>

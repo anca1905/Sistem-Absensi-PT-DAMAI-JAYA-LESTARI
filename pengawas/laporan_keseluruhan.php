@@ -1015,7 +1015,7 @@ $periode_label = "01 - {$jumlah_hari} " . $nama_bulan[$bulan] . " {$tahun}";
   <div class="info-laporan">
     <h2>LAPORAN ABSENSI DAN HASIL KINERJA</h2>
     <p>Objek: <?= htmlspecialchars($objek) ?> &nbsp;|&nbsp; Periode: <?= $periode_label ?></p>
-    <div class="info-karyawan">Nama: <?= htmlspecialchars($nama_karyawan) ?></div>
+    <div class="info-karyawan">Afdeling: <?= htmlspecialchars($penandatangan['label_afdeling'] ?: 'Semua Afdeling') ?></div>
   </div>
 
   ${tableHTML}
@@ -1024,12 +1024,12 @@ $periode_label = "01 - {$jumlah_hari} " . $nama_bulan[$bulan] . " {$tahun}";
     <div class="ttd-col">
       <p>Diketahui oleh,</p>
       <div class="ttd-line"><?= htmlspecialchars($penandatangan['pengawas']) ?></div>
-      <div style="font-weight:bold; margin-top:4px;">Pengawas Afdeling <?= htmlspecialchars($penandatangan['afdeling']) ?></div>
+      <div style="font-weight:bold; margin-top:4px;">Pengawas <?= htmlspecialchars($penandatangan['label_afdeling'] ?: 'Afdeling') ?></div>
     </div>
     <div class="ttd-col">
       <p>Disusun oleh,</p>
       <div class="ttd-line"><?= htmlspecialchars($penandatangan['kerani']) ?></div>
-      <div style="font-weight:bold; margin-top:4px;">Kerani Afdeling <?= htmlspecialchars($penandatangan['afdeling']) ?></div>
+      <div style="font-weight:bold; margin-top:4px;">Kerani <?= htmlspecialchars($penandatangan['label_afdeling'] ?: 'Afdeling') ?></div>
     </div>
   </div>
 </body>

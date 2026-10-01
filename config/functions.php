@@ -78,33 +78,60 @@ function getReportSignatories($conn, $afdeling = '')
         $afdeling = trim((string) $_SESSION['afdeling']);
     }
 
+    $num = preg_replace('/[^0-9]/', '', $afdeling);
+    $afdeling_safe = mysqli_real_escape_string($conn, $afdeling);
+
+    if ($num !== '') {
+        $clean_afdeling = $num;
+        $label_afdeling = "Afdeling $num";
+        $where_afd = "(afdeling = '$afdeling_safe' OR afdeling = 'Afd $num' OR afdeling = 'Afdeling $num' OR afdeling = '$num' OR afdeling = 'Afd. $num' OR afdeling LIKE '% $num' OR afdeling LIKE '%$num%')";
+    } elseif ($afdeling !== '') {
+        $clean_afdeling = (stripos($afdeling, 'Afd') === 0 ? trim(substr($afdeling, 3)) : $afdeling);
+        $label_afdeling = (stripos($afdeling, 'Afd') !== false ? $afdeling : "Afdeling $afdeling");
+        $where_afd = "(afdeling = '$afdeling_safe' OR afdeling LIKE '%$afdeling_safe%')";
+    } else {
+        $clean_afdeling = '';
+        $label_afdeling = "Afdeling";
+        $where_afd = "1=0";
+    }
+
     $result = [
-        'afdeling' => $afdeling,
-        'kerani' => '-',
-        'pengawas' => '-',
+        'afdeling' => $clean_afdeling,
+        'label_afdeling' => $label_afdeling,
+        'teks_afdeling' => $label_afdeling,
+        'kerani' => '( ................................... )',
+        'pengawas' => '( ................................... )',
     ];
 
-    if ($afdeling === '') {
-        return $result;
-    }
-
-    if (($_SESSION['role'] ?? '') === 'kerani'
-        && !empty($_SESSION['nama'])
-        && trim((string) ($_SESSION['afdeling'] ?? '')) === $afdeling) {
-        $result['kerani'] = $_SESSION['nama'];
-    }
-
-    $afdeling_safe = mysqli_real_escape_string($conn, $afdeling);
-    if ($result['kerani'] === '-') {
-        $q_kerani = mysqli_query($conn, "SELECT name FROM users WHERE (role='kerani' OR jabatan='kerani') AND afdeling='$afdeling_safe' ORDER BY id ASC LIMIT 1");
-        if ($q_kerani && ($data_kerani = mysqli_fetch_assoc($q_kerani))) {
-            $result['kerani'] = $data_kerani['name'];
+    // Cek session pengawas
+    $sess_num = preg_replace('/[^0-9]/', '', $_SESSION['afdeling'] ?? '');
+    if (($_SESSION['role'] ?? '') === 'pengawas' && !empty($_SESSION['nama'])) {
+        if (empty($_SESSION['afdeling']) || ($num !== '' && $sess_num === $num) || trim($_SESSION['afdeling']) === $afdeling || stripos($_SESSION['afdeling'], $afdeling) !== false) {
+            $result['pengawas'] = $_SESSION['nama'];
         }
     }
 
-    $q_pengawas = mysqli_query($conn, "SELECT name FROM users WHERE (role='pengawas' OR jabatan='pengawas') AND afdeling='$afdeling_safe' ORDER BY id ASC LIMIT 1");
-    if ($q_pengawas && ($data_pengawas = mysqli_fetch_assoc($q_pengawas))) {
-        $result['pengawas'] = $data_pengawas['name'];
+    // Cek session kerani
+    if (($_SESSION['role'] ?? '') === 'kerani' && !empty($_SESSION['nama'])) {
+        if (empty($_SESSION['afdeling']) || ($num !== '' && $sess_num === $num) || trim($_SESSION['afdeling']) === $afdeling || stripos($_SESSION['afdeling'], $afdeling) !== false) {
+            $result['kerani'] = $_SESSION['nama'];
+        }
+    }
+
+    // Cari pengawas di DB jika belum didapat dari session
+    if ($result['pengawas'] === '( ................................... )' && $where_afd !== "1=0") {
+        $q_pengawas = mysqli_query($conn, "SELECT name FROM users WHERE (role='pengawas' OR jabatan LIKE '%pengawas%') AND $where_afd ORDER BY (role='pengawas') DESC, id ASC LIMIT 1");
+        if ($q_pengawas && ($data_pengawas = mysqli_fetch_assoc($q_pengawas))) {
+            $result['pengawas'] = $data_pengawas['name'];
+        }
+    }
+
+    // Cari kerani di DB jika belum didapat dari session
+    if ($result['kerani'] === '( ................................... )' && $where_afd !== "1=0") {
+        $q_kerani = mysqli_query($conn, "SELECT name FROM users WHERE (role='kerani' OR jabatan LIKE '%kerani%') AND $where_afd ORDER BY (role='kerani') DESC, id ASC LIMIT 1");
+        if ($q_kerani && ($data_kerani = mysqli_fetch_assoc($q_kerani))) {
+            $result['kerani'] = $data_kerani['name'];
+        }
     }
 
     return $result;

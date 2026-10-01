@@ -70,13 +70,14 @@ while ($a = mysqli_fetch_assoc($q_absen)) {
 
 
 // --- LOGIKA TANDA TANGAN BERDASARKAN FILTER AFDELING ---
-$teks_afdeling = empty($afdeling) ? "Semua Afdeling" : "Afd " . htmlspecialchars($afdeling);
 if (!empty($afdeling)) {
     $penandatangan = getReportSignatories($conn, $afdeling);
     $nama_pengawas = $penandatangan["pengawas"];
     $nama_kerani = $penandatangan["kerani"];
+    $teks_afdeling = $penandatangan["label_afdeling"] ?: "Afdeling";
 } else {
     // Jika filter Semua Afdeling, tampilkan garis titik-titik untuk diisi manual jika dicetak
+    $teks_afdeling = "Semua Afdeling";
     $nama_kerani = "( ................................... )";
     $nama_pengawas = "( ................................... )";
 }

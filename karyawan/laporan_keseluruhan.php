@@ -61,13 +61,9 @@ $nama_karyawan = htmlspecialchars($_SESSION['nama'] ?? 'Karyawan');
 $afdeling_karyawan = $_SESSION['afdeling'] ?? '';
 
 // --- LOGIKA MENCARI NAMA KERANI BERDASARKAN AFDELING KARYAWAN ---
-$teks_afdeling = empty($afdeling_karyawan) ? "Afdeling" : "Afd " . htmlspecialchars($afdeling_karyawan);
-if (!empty($afdeling_karyawan)) {
-    $penandatangan = getReportSignatories($conn, $afdeling_karyawan);
-    $nama_kerani = $penandatangan["kerani"];
-} else {
-    $nama_kerani = "( ................................... )";
-}
+$penandatangan = getReportSignatories($conn, $afdeling_karyawan);
+$nama_kerani = $penandatangan["kerani"];
+$teks_afdeling = $penandatangan["label_afdeling"] ?: "Afdeling";
 // ----------------------------------------------------------------
 
 $jumlah_hari = (int)date('t', mktime(0, 0, 0, $bulan_int, 1, $tahun));
