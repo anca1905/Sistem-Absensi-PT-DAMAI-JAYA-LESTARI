@@ -417,7 +417,7 @@ include 'templates/header.php';
     <style>
         @media print {
             @page {
-                size: portrait;
+                size: landscape;
                 margin: 10mm;
             }
         }
@@ -449,12 +449,13 @@ include 'templates/header.php';
         <thead>
             <tr>
                 <th style="width: 35px;">No</th>
-                <th style="width: 95px;">NIK</th>
+                <th style="width: 100px;">NIK</th>
                 <th style="text-align: left;">Nama Lengkap</th>
-                <th style="text-align: left;">Email / No HP</th>
-                <th style="width: 85px;">Afdeling</th>
-                <th style="width: 85px;">Jabatan</th>
-                <th style="width: 60px;">L/P</th>
+                <th style="text-align: left; width: 220px;">Email</th>
+                <th style="width: 130px;">No. HP / WA</th>
+                <th style="width: 100px;">Afdeling</th>
+                <th style="width: 110px;">Jabatan</th>
+                <th style="width: 90px;">Jenis Kelamin</th>
             </tr>
         </thead>
         <tbody>
@@ -464,10 +465,8 @@ include 'templates/header.php';
                         <td class="text-center"><?= $pno++ ?></td>
                         <td class="text-center" style="font-weight: bold;"><?= htmlspecialchars($p['nik']) ?></td>
                         <td class="text-left" style="font-weight: 600;"><?= htmlspecialchars($p['name']) ?></td>
-                        <td class="text-left">
-                            <?= htmlspecialchars($p['email']) ?>
-                            <?= !empty($p['no_hp']) ? '<br><small style="color:#555;">' . htmlspecialchars($p['no_hp']) . '</small>' : '' ?>
-                        </td>
+                        <td class="text-left"><?= htmlspecialchars($p['email'] ?: '-') ?></td>
+                        <td class="text-center"><?= htmlspecialchars($p['no_hp'] ?: '-') ?></td>
                         <td class="text-center"><?= htmlspecialchars($p['afdeling'] ?: '-') ?></td>
                         <td class="text-center" style="text-transform: capitalize;"><?= htmlspecialchars($p['role'] ?: ($p['jabatan'] ?? '-')) ?></td>
                         <td class="text-center"><?= htmlspecialchars($p['jenis_kelamin'] ?: '-') ?></td>
@@ -475,7 +474,7 @@ include 'templates/header.php';
                 <?php endforeach; ?>
             <?php else: ?>
                 <tr>
-                    <td colspan="7" class="text-center" style="padding: 20px;">Tidak ada data personil.</td>
+                    <td colspan="8" class="text-center" style="padding: 20px;">Tidak ada data personil.</td>
                 </tr>
             <?php endif; ?>
         </tbody>
