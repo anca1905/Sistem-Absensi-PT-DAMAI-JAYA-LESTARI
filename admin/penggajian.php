@@ -66,7 +66,7 @@ if (!empty($afdeling)) {
     $afd_safe = mysqli_real_escape_string($conn, $afdeling);
     $query_str = "
         SELECT u.id, u.nik, u.name, u.role, p.hk_dibayar, p.tarif_hk, p.uang_lembur, p.uang_premi, p.potongan_bpjs, p.potongan_koperasi, p.gaji_kotor, p.gaji_bersih, p.status,
-               (SELECT COUNT(id) FROM absensis a WHERE a.user_id = u.id AND MONTH(a.tanggal) = '$bulan' AND YEAR(a.tanggal) = '$tahun' AND a.status_kehadiran IN ('hadir', 'terlambat')) AS auto_hk
+               (SELECT COUNT(id) FROM absensis a WHERE a.user_id = u.id AND MONTH(a.tanggal) = '$bulan' AND YEAR(a.tanggal) = '$tahun' AND a.status_kehadiran IN ('hadir', 'tepat_waktu')) AS auto_hk
         FROM users u 
         LEFT JOIN penggajian p ON u.id = p.user_id AND p.periode_bulan = '$bulan' AND p.periode_tahun = '$tahun'
         WHERE u.afdeling = '$afd_safe' AND u.role IN ('karyawan', 'mandor', 'pengawas', 'kerani')

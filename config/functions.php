@@ -149,17 +149,16 @@ function getStatusInfo($status) {
         case 'tepat_waktu':
             return ['kode' => 'H', 'label' => 'Hadir',    'class' => 'status-h'];
         case 'terlambat':
-            return ['kode' => 'T', 'label' => 'Terlambat','class' => 'status-t'];
+        case 'alpha':
+        case 'alpa':
+        case 'alfa':
+            return ['kode' => 'A', 'label' => 'Alpha',    'class' => 'status-a'];
         case 'izin':
             return ['kode' => 'I', 'label' => 'Izin',     'class' => 'status-i'];
         case 'sakit':
             return ['kode' => 'S', 'label' => 'Sakit',    'class' => 'status-s'];
         case 'cuti':
             return ['kode' => 'C', 'label' => 'Cuti',     'class' => 'status-c'];
-        case 'alpha':
-        case 'alpa':
-        case 'alfa':
-            return ['kode' => 'A', 'label' => 'Alpha',    'class' => 'status-a'];
         default:
             return ['kode' => '', 'label' => '', 'class' => ''];
     }
@@ -167,7 +166,7 @@ function getStatusInfo($status) {
 
 function isHadir($status) {
     $s = strtolower(trim((string)$status));
-    return in_array($s, ['hadir', 'tepat_waktu', 'terlambat']);
+    return in_array($s, ['hadir', 'tepat_waktu']);
 }
 
 function getStatusBadge($status) {

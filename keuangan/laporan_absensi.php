@@ -338,7 +338,6 @@ if (!empty($afdeling)) {
 <div class="legend">
     <strong style="color:#064e3b;">Keterangan:</strong>
     <span><span class="badge b-h">H</span> Hadir</span>
-    <span><span class="badge b-t">T</span> Terlambat</span>
     <span><span class="badge b-a">A</span> Alpha</span>
     <span><span class="badge b-i">I</span> Izin</span>
     <span><span class="badge b-s">S</span> Sakit</span>
@@ -407,10 +406,7 @@ if (!empty($afdeling)) {
                                 if ($s == 'hadir' || $s == 'tepat_waktu') {
                                     $h++;
                                     echo '<td><span class="badge b-h">H</span></td>';
-                                } elseif ($s == 'terlambat') {
-                                    $h++;
-                                    echo '<td><span class="badge b-t">T</span></td>';
-                                } elseif (in_array($s, ['alpha', 'alpa', 'alfa'])) {
+                                } elseif (in_array($s, ['alpha', 'alpa', 'alfa', 'terlambat'])) {
                                     $a++;
                                     echo '<td><span class="badge b-a">A</span></td>';
                                 } elseif ($s == 'izin') {
@@ -514,9 +510,9 @@ if (!empty($afdeling)) {
                         $st = strtolower((string)($absen[$i] ?? null));
                         $k = '';
                         $dc = '';
-                        if (in_array($st, ['hadir', 'tepat_waktu', 'terlambat'])) {
+                        if (in_array($st, ['hadir', 'tepat_waktu'])) {
                             $k = 'H'; $dc = 'doc-status-H'; $h++;
-                        } elseif (in_array($st, ['alpha', 'alpa', 'alfa'])) {
+                        } elseif (in_array($st, ['alpha', 'alpa', 'alfa', 'terlambat'])) {
                             $k = 'A'; $dc = 'doc-status-A'; $a++;
                         } elseif ($st == 'izin') {
                             $k = 'I'; $dc = 'doc-status-I'; $i_jin++;

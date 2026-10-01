@@ -10,7 +10,7 @@ if (session_status() === PHP_SESSION_NONE) {
 $q_tot = mysqli_query($conn, "SELECT COUNT(*) as total FROM users WHERE role NOT IN ('admin', 'keuangan')");
 $total_personil = mysqli_fetch_assoc($q_tot)['total'] ?? 0;
 
-$q_hadir = mysqli_query($conn, "SELECT COUNT(*) as total FROM absensis WHERE tanggal = CURDATE() AND LOWER(status_kehadiran) IN ('hadir', 'tepat_waktu', 'terlambat')");
+$q_hadir = mysqli_query($conn, "SELECT COUNT(*) as total FROM absensis WHERE tanggal = CURDATE() AND LOWER(status_kehadiran) IN ('hadir', 'tepat_waktu')");
 $hadir_hari_ini = mysqli_fetch_assoc($q_hadir)['total'] ?? 0;
 
 $q_izin_sakit = mysqli_query($conn, "SELECT COUNT(*) as total FROM absensis WHERE tanggal = CURDATE() AND LOWER(status_kehadiran) IN ('izin', 'sakit')");
@@ -25,7 +25,7 @@ $data_grafik = [];
 for ($i = 6; $i >= 0; $i--) {
     $tgl = date('Y-m-d', strtotime("-$i days")); 
     $labels[] = date('d M', strtotime($tgl)); 
-    $query_grafik = mysqli_query($conn, "SELECT COUNT(*) as total FROM absensis WHERE tanggal = '$tgl' AND LOWER(status_kehadiran) IN ('hadir', 'tepat_waktu', 'terlambat')");
+    $query_grafik = mysqli_query($conn, "SELECT COUNT(*) as total FROM absensis WHERE tanggal = '$tgl' AND LOWER(status_kehadiran) IN ('hadir', 'tepat_waktu')");
     $row_grafik = mysqli_fetch_assoc($query_grafik);
     $data_grafik[] = $row_grafik['total'];
 }
@@ -363,7 +363,7 @@ include 'templates/header.php';
                             <td><?= date('d/m/Y', strtotime($a['tanggal'])) ?></td>
                             <td>
                                 <?php
-                                $s = strtolower($a['status_kehadiran']);
+                                $s = strtolower($a['status_kehadiran']); if ($s == 'terlambat') $s = 'alpha';
                                 if ($s == 'hadir') { $bg = '#ecfdf5'; $co = '#10b981'; }
                                 elseif (in_array($s, ['alpha', 'alpa'])) { $bg = '#fef2f2'; $co = '#ef4444'; }
                                 elseif ($s == 'izin') { $bg = '#e0f2fe'; $co = '#0284c7'; }
@@ -434,7 +434,7 @@ include 'templates/header.php';
                                 <?= ($act['waktu_masuk'] && $act['waktu_masuk'] != '00:00:00') ? date('H:i', strtotime($act['waktu_masuk'])) : '-' ?>
                             </div>
                             <?php
-                                $s = strtolower($act['status_kehadiran']);
+                                $s = strtolower($act['status_kehadiran']); if ($s == 'terlambat') $s = 'alpha';
                                 if ($s == 'hadir') { $co = '#10b981'; }
                                 elseif (in_array($s, ['alpha', 'alpa'])) { $co = '#ef4444'; }
                                 elseif ($s == 'izin') { $co = '#0284c7'; }

@@ -286,11 +286,11 @@ if (!empty($afdeling)) {
                                 $st = $data_absen[$user['id']][$i] ?? null;
                                 $kode = '';
                                 $cls = '';
-                                if (in_array(strtolower((string)$st), ['hadir', 'tepat_waktu', 'terlambat'])) {
+                                if (in_array(strtolower((string)$st), ['hadir', 'tepat_waktu'])) {
                                     $kode = 'H';
                                     $cls = 'ab-H';
                                     $t_hadir++;
-                                } elseif (in_array(strtolower((string)$st), ['alpha', 'alpa', 'alfa'])) {
+                                } elseif (in_array(strtolower((string)$st), ['alpha', 'alpa', 'alfa', 'terlambat'])) {
                                     $kode = 'A';
                                     $cls = 'ab-A';
                                     $t_alpha++;
@@ -404,11 +404,11 @@ if (!empty($afdeling)) {
                         $st = $data_absen[$user['id']][$i] ?? null;
                         $k = '';
                         $dc = '';
-                        if (in_array(strtolower((string)$st), ['hadir', 'tepat_waktu', 'terlambat'])) {
+                        if (in_array(strtolower((string)$st), ['hadir', 'tepat_waktu'])) {
                             $k = 'H';
                             $dc = 'doc-status-H';
                             $p_h++;
-                        } elseif (in_array(strtolower((string)$st), ['alpha', 'alpa', 'alfa'])) {
+                        } elseif (in_array(strtolower((string)$st), ['alpha', 'alpa', 'alfa', 'terlambat'])) {
                             $k = 'A';
                             $dc = 'doc-status-A';
                             $p_a++;

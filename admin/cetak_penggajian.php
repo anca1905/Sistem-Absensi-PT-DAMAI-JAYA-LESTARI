@@ -28,7 +28,7 @@ $jabatan_label = empty($jabatan) ? "KARYAWAN" : strtoupper($jabatan);
 $afd_safe = mysqli_real_escape_string($conn, $afdeling);
 $query_str = "
     SELECT u.id, u.nik, u.name, u.role, p.hk_dibayar, p.tarif_hk, p.uang_lembur, p.uang_premi, p.potongan_bpjs, p.potongan_koperasi, p.gaji_kotor, p.gaji_bersih, p.status,
-           (SELECT COUNT(id) FROM absensis a WHERE a.user_id = u.id AND MONTH(a.tanggal) = '$bulan' AND YEAR(a.tanggal) = '$tahun' AND a.status_kehadiran IN ('hadir', 'terlambat')) AS auto_hk
+           (SELECT COUNT(id) FROM absensis a WHERE a.user_id = u.id AND MONTH(a.tanggal) = '$bulan' AND YEAR(a.tanggal) = '$tahun' AND a.status_kehadiran IN ('hadir', 'tepat_waktu')) AS auto_hk
     FROM users u 
     LEFT JOIN penggajian p ON u.id = p.user_id AND p.periode_bulan = '$bulan' AND p.periode_tahun = '$tahun'
     WHERE u.afdeling = '$afd_safe' AND u.role IN ('karyawan', 'mandor', 'pengawas', 'kerani')
@@ -48,6 +48,12 @@ while ($row = mysqli_fetch_assoc($query)) {
     $users[] = $row;
     $total_gaji_bersih += ($row['gaji_bersih'] ?? 0);
 }
+
+// Data Tanda Tangan Dinamis Sesuai Afdeling
+$penandatangan = getReportSignatories($conn, $afdeling);
+$nama_pengawas = $penandatangan['pengawas'];
+$nama_kerani   = $penandatangan['kerani'];
+$teks_afdeling = $penandatangan['label_afdeling'] ?: $afdeling;
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -255,13 +261,13 @@ while ($row = mysqli_fetch_assoc($query)) {
     <div class="signature-area" style="justify-content: space-around;">
         <div class="sig-box">
             <p>Diketahui oleh,</p>
-            <span class="sig-name" style="border-bottom: 1px solid #000; padding-bottom: 2px;">Manda</span>
-            <span class="sig-role">Pengawas Afd 9</span>
+            <span class="sig-name" style="border-bottom: 1px solid #000; padding-bottom: 2px;"><?= htmlspecialchars($nama_pengawas) ?></span>
+            <span class="sig-role">Pengawas <?= htmlspecialchars($teks_afdeling) ?></span>
         </div>
         <div class="sig-box">
             <p>Disusun oleh,</p>
-            <span class="sig-name" style="border-bottom: 1px solid #000; padding-bottom: 2px;">Arsyad</span>
-            <span class="sig-role">Kerani Afd 9</span>
+            <span class="sig-name" style="border-bottom: 1px solid #000; padding-bottom: 2px;"><?= htmlspecialchars($nama_kerani) ?></span>
+            <span class="sig-role">Kerani <?= htmlspecialchars($teks_afdeling) ?></span>
         </div>
     </div>
 

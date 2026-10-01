@@ -234,7 +234,6 @@ $penandatangan = getReportSignatories($conn, $_SESSION['afdeling'] ?? '');
                     <th rowspan="2" class="text-left" width="200">NAMA LENGKAP</th>
                     <th colspan="<?= $jumlah_hari ?>">TGL</th>
                     <th rowspan="2" width="30" title="Hadir">H</th>
-                    <th rowspan="2" width="30" style="color:#854d0e;" title="Terlambat">T</th>
                     <th rowspan="2" width="30">I</th>
                     <th rowspan="2" width="30">A</th>
                     <th rowspan="2" width="30">S</th>
@@ -273,7 +272,6 @@ $penandatangan = getReportSignatories($conn, $_SESSION['afdeling'] ?? '');
 
                         <?php
                         $t_hadir = 0;
-                        $t_terlambat = 0;
                         $t_izin = 0;
                         $t_sakit = 0;
                         $t_cuti = 0;
@@ -290,7 +288,6 @@ $penandatangan = getReportSignatories($conn, $_SESSION['afdeling'] ?? '');
                                 $info = getStatusInfo($status);
                                 switch($info['kode']) {
                                     case 'H': $t_hadir++; break;
-                                    case 'T': $t_terlambat++; break;
                                     case 'I': $t_izin++; break;
                                     case 'S': $t_sakit++; break;
                                     case 'C': $t_cuti++; break;
@@ -317,7 +314,6 @@ $penandatangan = getReportSignatories($conn, $_SESSION['afdeling'] ?? '');
                         ?>
 
                         <td style="font-weight: 700; color: #166534;"><?= $t_hadir ?></td>
-                        <td style="font-weight: 700; color: #854d0e;"><?= $t_terlambat ?></td>
                         <td style="font-weight: 700; color: #075985;"><?= $t_izin ?></td>
                         <td style="font-weight: 700; color: #991b1b;"><?= $t_alpha ?></td>
                         <td style="font-weight: 700; color: #5b21b6;"><?= $t_sakit ?></td>
@@ -399,10 +395,10 @@ $penandatangan = getReportSignatories($conn, $_SESSION['afdeling'] ?? '');
                         $st = $user['absen_data'][$i] ?? null;
                         $k = '';
                         $dc = '';
-                        if (in_array($st, ['hadir', 'tepat_waktu', 'terlambat'])) {
+                        if (in_array($st, ['hadir', 'tepat_waktu'])) {
                             $k = 'H';
                             $dc = 'doc-status-H';
-                        } elseif (in_array($st, ['alpha', 'alpa', 'alfa'])) {
+                        } elseif (in_array($st, ['alpha', 'alpa', 'alfa', 'terlambat'])) {
                             $k = 'A';
                             $dc = 'doc-status-A';
                         } elseif ($st == 'izin') {

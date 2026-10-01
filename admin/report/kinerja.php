@@ -66,26 +66,17 @@ while ($user = mysqli_fetch_assoc($query_users)) {
     $print_data[] = $user;
 }
 
-// --- TAMBAHKAN KODE INI SEBELUM PENUTUP
-
-// Ambil data kerani dari session (sesuaikan nama variabel session-nya jika berbeda)
-$nama_kerani   = $_SESSION['name'] ?? 'Nama Kerani'; 
-$afdeling_user = $_SESSION['afdeling'] ?? '';
-
-// Cari nama pengawas di afdeling yang sama
-$nama_pengawas = '-';
-if (!empty($afdeling_user)) {
-    // Sesuaikan nama tabel 'users' dan kolom 'role', 'afdeling', 'name' dengan database
-    $query_pengawas = mysqli_query($conn, "SELECT name FROM users WHERE (role = 'pengawas' OR jabatan = 'pengawas') AND afdeling = '" . mysqli_real_escape_string($conn, $afdeling_user) . "' LIMIT 1");
-    
-    if ($query_pengawas && mysqli_num_rows($query_pengawas) > 0) {
-        $pengawas = mysqli_fetch_assoc($query_pengawas);
-        $nama_pengawas = $pengawas['name'];
-    }
+// Penandatangan untuk dokumen cetak keseluruhan (tombol utama)
+if (!empty($afdeling)) {
+    $penandatangan = getReportSignatories($conn, $afdeling);
+    $nama_pengawas = $penandatangan['pengawas'];
+    $nama_kerani   = $penandatangan['kerani'];
+    $teks_afdeling = $penandatangan['label_afdeling'] ?: $afdeling;
+} else {
+    $teks_afdeling = "Semua Afdeling";
+    $nama_kerani   = "( ................................... )";
+    $nama_pengawas = "( ................................... )";
 }
-
-// Format tulisan untuk di bawah TTD
-$teks_afdeling = !empty($afdeling_user) ? "Afd " . htmlspecialchars($afdeling_user) : "Semua Afdeling";
 ?>
 
 <style>
@@ -212,9 +203,24 @@ $teks_afdeling = !empty($afdeling_user) ? "Afd " . htmlspecialchars($afdeling_us
             </thead>
             <tbody>
                 <?php if (count($print_data) > 0): $no = 1;
+                    $sig_cache = [];
                     foreach ($print_data as $user):
                         $status = $user['lk_status'] ? ucfirst($user['lk_status']) : 'Belum';
                         $badge  = (strtolower($status) == 'diterima' || strtolower($status) == 'selesai') ? 'badge-success' : 'badge-warning';
+
+                        $user_afd = trim((string)($user['afdeling'] ?? ''));
+                        if ($user_afd !== '') {
+                            if (!isset($sig_cache[$user_afd])) {
+                                $sig_cache[$user_afd] = getReportSignatories($conn, $user_afd);
+                            }
+                            $u_sig = $sig_cache[$user_afd];
+                        } else {
+                            $u_sig = [
+                                'pengawas' => '( ................................... )',
+                                'kerani'   => '( ................................... )',
+                                'label_afdeling' => 'Afdeling'
+                            ];
+                        }
 
                         $dataJSON = htmlspecialchars(json_encode([
                             'kategori'  => $user['kategori_task'] ?? 'perawatan',
@@ -235,6 +241,10 @@ $teks_afdeling = !empty($afdeling_user) ? "Afd " . htmlspecialchars($afdeling_us
                             'aksi'      => ucfirst($user['aksi'] ?? '-'),
                             'status'    => $status,
                             'badge'     => $badge,
+                            'pengawas_name' => $u_sig['pengawas'],
+                            'pengawas_role' => 'Pengawas ' . ($u_sig['label_afdeling'] ?: $user_afd),
+                            'kerani_name'   => $u_sig['kerani'],
+                            'kerani_role'   => 'Kerani ' . ($u_sig['label_afdeling'] ?: $user_afd),
                         ]), ENT_QUOTES, 'UTF-8');
                 ?>
                         <tr>
@@ -327,13 +337,13 @@ $teks_afdeling = !empty($afdeling_user) ? "Afd " . htmlspecialchars($afdeling_us
             <div style="display:flex; justify-content:space-between; margin-top:30px; text-align:center; font-size:13px; flex-wrap:wrap; gap:20px;">
                 <div style="min-width:160px;">
                     <div>Diketahui oleh,</div>
-                    <div style="margin-top:60px; border-bottom:1px solid #334155; padding-bottom:4px; font-weight:700;">Manda</div>
-                    <div style="font-weight:bold; margin-top:4px;">Pengawas Afd 9</div>
+                    <div style="margin-top:60px; border-bottom:1px solid #334155; padding-bottom:4px; font-weight:700;" id="modalTtdPengawasNama">( ................................... )</div>
+                    <div style="font-weight:bold; margin-top:4px;" id="modalTtdPengawasJabatan">Pengawas</div>
                 </div>
                 <div style="min-width:160px;">
                     <div>Disusun oleh,</div>
-                    <div style="margin-top:60px; border-bottom:1px solid #334155; padding-bottom:4px; font-weight:700;">Arsyad</div>
-                    <div style="font-weight:bold; margin-top:4px;">Kerani Afd 9</div>
+                    <div style="margin-top:60px; border-bottom:1px solid #334155; padding-bottom:4px; font-weight:700;" id="modalTtdKeraniNama">( ................................... )</div>
+                    <div style="font-weight:bold; margin-top:4px;" id="modalTtdKeraniJabatan">Kerani</div>
                 </div>
             </div>
 
@@ -444,6 +454,12 @@ $teks_afdeling = !empty($afdeling_user) ? "Afd " . htmlspecialchars($afdeling_us
         document.getElementById('docAfdeling').textContent = afdeling;
         document.getElementById('docMandor').textContent = data.mandor;
         document.getElementById('docJudul').textContent = 'LAPORAN KINERJA HARIAN — ' + name.toUpperCase();
+
+        // Isi tanda tangan di modal sesuai data afdeling karyawan
+        document.getElementById('modalTtdPengawasNama').textContent = data.pengawas_name || '( ................................... )';
+        document.getElementById('modalTtdPengawasJabatan').textContent = data.pengawas_role || ('Pengawas ' + afdeling);
+        document.getElementById('modalTtdKeraniNama').textContent = data.kerani_name || '( ................................... )';
+        document.getElementById('modalTtdKeraniJabatan').textContent = data.kerani_role || ('Kerani ' + afdeling);
 
         const cat = data.kategori,
             obj = (data.objek || '').toLowerCase();

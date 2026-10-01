@@ -62,10 +62,10 @@
         height: auto !important;
     }
 
-    /* --- Sembunyikan SEMUA konten web dalam content-body/container --- */
-    .content-body > *:not(#official-print-doc),
-    .content-container > *:not(#official-print-doc),
-    .report-wrapper > *:not(#official-print-doc) {
+    /* --- Sembunyikan SEMUA konten web dalam content-body/container HANYA jika ada #official-print-doc --- */
+    body:has(#official-print-doc) .content-body > *:not(#official-print-doc),
+    body:has(#official-print-doc) .content-container > *:not(#official-print-doc),
+    body:has(#official-print-doc) .report-wrapper > *:not(#official-print-doc) {
         display: none !important;
     }
 

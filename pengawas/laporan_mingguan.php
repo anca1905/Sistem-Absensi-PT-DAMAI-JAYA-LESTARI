@@ -658,7 +658,7 @@ $periode_label = str_pad($start_day, 2, '0', STR_PAD_LEFT) . " - " . str_pad($en
 
                         if ($abs) {
                             $s = strtolower($abs['status_kehadiran']);
-                            if ($s == 'hadir') {
+                            if ($s == 'hadir' || $s == 'tepat_waktu') {
                                 $badge_class = 'badge-hadir';
                                 $badge_text = 'Hadir';
                                 $total_hadir++;
@@ -671,7 +671,7 @@ $periode_label = str_pad($start_day, 2, '0', STR_PAD_LEFT) . " - " . str_pad($en
                             } elseif ($s == 'cuti') {
                                 $badge_class = 'badge-cuti';
                                 $badge_text = 'Cuti';
-                            } elseif ($s == 'alpha') {
+                            } elseif (in_array($s, ['alpha', 'alpa', 'alfa', 'terlambat'])) {
                                 $badge_class = 'badge-alpha';
                                 $badge_text = 'Alpha';
                             } else {

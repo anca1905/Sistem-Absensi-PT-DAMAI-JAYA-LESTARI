@@ -13,7 +13,7 @@ $q_total_karyawan = mysqli_query($conn, "SELECT COUNT(*) as total FROM users");
 $total_karyawan   = mysqli_fetch_assoc($q_total_karyawan)['total'];
 
 // Hadir hari ini
-$q_hadir_hari     = mysqli_query($conn, "SELECT COUNT(*) as total FROM absensis WHERE tanggal='$today' AND status_kehadiran IN ('hadir','tepat_waktu','terlambat')");
+$q_hadir_hari     = mysqli_query($conn, "SELECT COUNT(*) as total FROM absensis WHERE tanggal='$today' AND status_kehadiran IN ('hadir','tepat_waktu')");
 $hadir_hari       = mysqli_fetch_assoc($q_hadir_hari)['total'];
 
 // Total izin bulan ini (pending)
@@ -294,7 +294,7 @@ $logbook_total    = mysqli_fetch_assoc($q_logbook_total)['total'];
                     $badge_class = 'badge-hadir';
                     $badge_text = ucfirst($s);
                     if (in_array($s, ['alpha','alpa','alfa'])) { $dot_class = 'dot-red'; $badge_class = 'badge-alpha'; }
-                    elseif ($s == 'terlambat') { $dot_class = 'dot-amber'; $badge_class = 'badge-terlambat'; }
+                    elseif ($s == 'terlambat') { $dot_class = 'dot-rose'; $badge_class = 'badge-alpha'; $label = 'Alpha'; }
                     elseif ($s == 'izin') { $dot_class = 'dot-amber'; $badge_class = 'badge-izin'; }
             ?>
             <div class="activity-item">

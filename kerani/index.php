@@ -15,17 +15,17 @@ $total_personil = mysqli_fetch_assoc($q_personil)['total'] ?? 0;
 
 // 2. Hadir Hari Ini
 if (!empty($afdeling)) {
-    $q_hadir = mysqli_query($conn, "SELECT COUNT(*) as total FROM absensis a JOIN users u ON a.user_id = u.id WHERE a.tanggal='$today' AND (LOWER(a.status_kehadiran) IN ('hadir', 'tepat_waktu', 'terlambat')) AND u.afdeling='$afdeling'");
+    $q_hadir = mysqli_query($conn, "SELECT COUNT(*) as total FROM absensis a JOIN users u ON a.user_id = u.id WHERE a.tanggal='$today' AND (LOWER(a.status_kehadiran) IN ('hadir', 'tepat_waktu')) AND u.afdeling='$afdeling'");
 } else {
-    $q_hadir = mysqli_query($conn, "SELECT COUNT(*) as total FROM absensis WHERE tanggal='$today' AND (LOWER(status_kehadiran) IN ('hadir', 'tepat_waktu', 'terlambat'))");
+    $q_hadir = mysqli_query($conn, "SELECT COUNT(*) as total FROM absensis WHERE tanggal='$today' AND (LOWER(status_kehadiran) IN ('hadir', 'tepat_waktu'))");
 }
 $total_hadir = mysqli_fetch_assoc($q_hadir)['total'] ?? 0;
 
 // 3. Total Tdk Hadir Hari Ini
 if (!empty($afdeling)) {
-    $q_tdk = mysqli_query($conn, "SELECT COUNT(*) as total FROM absensis a JOIN users u ON a.user_id = u.id WHERE a.tanggal='$today' AND (LOWER(a.status_kehadiran) IN ('alpha', 'alpa', 'alfa', 'izin', 'sakit', 'cuti')) AND u.afdeling='$afdeling'");
+    $q_tdk = mysqli_query($conn, "SELECT COUNT(*) as total FROM absensis a JOIN users u ON a.user_id = u.id WHERE a.tanggal='$today' AND (LOWER(a.status_kehadiran) IN ('alpha', 'alpa', 'alfa', 'terlambat', 'izin', 'sakit', 'cuti')) AND u.afdeling='$afdeling'");
 } else {
-    $q_tdk = mysqli_query($conn, "SELECT COUNT(*) as total FROM absensis WHERE tanggal='$today' AND (LOWER(status_kehadiran) IN ('alpha', 'alpa', 'alfa', 'izin', 'sakit', 'cuti'))");
+    $q_tdk = mysqli_query($conn, "SELECT COUNT(*) as total FROM absensis WHERE tanggal='$today' AND (LOWER(status_kehadiran) IN ('alpha', 'alpa', 'alfa', 'terlambat', 'izin', 'sakit', 'cuti'))");
 }
 $total_tdk_hadir = mysqli_fetch_assoc($q_tdk)['total'] ?? 0;
 ?>

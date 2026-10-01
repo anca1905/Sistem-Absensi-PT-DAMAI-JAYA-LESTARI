@@ -103,7 +103,7 @@ $query = mysqli_query($conn, "
                         <td class="text-center"><?= $masuk ?></td>
                         <td class="text-center"><?= $pulang ?></td>
                         <td class="text-center" style="<?= $status_color ?> font-weight:bold;">
-                            <?= strtoupper(str_replace('_', ' ', $row['status_kehadiran'])) ?>
+                            <?= (strtolower($row['status_kehadiran']) == 'terlambat') ? 'ALPHA' : strtoupper(str_replace('_', ' ', $row['status_kehadiran'])) ?>
                         </td>
                     </tr>
                 <?php

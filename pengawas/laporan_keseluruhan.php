@@ -778,7 +778,7 @@ $periode_label = "01 - {$jumlah_hari} " . $nama_bulan[$bulan] . " {$tahun}";
 
                         if ($abs) {
                             $s = strtolower($abs['status_kehadiran']);
-                            if ($s == 'hadir') {
+                            if ($s == 'hadir' || $s == 'tepat_waktu') {
                                 $badge_class = 'badge-hadir';
                                 $badge_text = 'Hadir';
                                 $total_hadir++;
@@ -791,7 +791,7 @@ $periode_label = "01 - {$jumlah_hari} " . $nama_bulan[$bulan] . " {$tahun}";
                             } elseif ($s == 'cuti') {
                                 $badge_class = 'badge-cuti';
                                 $badge_text = 'Cuti';
-                            } elseif ($s == 'alpha') {
+                            } elseif (in_array($s, ['alpha', 'alpa', 'alfa', 'terlambat'])) {
                                 $badge_class = 'badge-alpha';
                                 $badge_text = 'Alpha';
                             } else {

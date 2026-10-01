@@ -75,6 +75,28 @@ if (isset($_GET['afdeling_filter']) && $_GET['afdeling_filter'] != '') {
 }
 $where_clause = "WHERE " . implode(' AND ', $where_conditions);
 $data_karyawan = mysqli_query($conn, "SELECT * FROM users $where_clause ORDER BY id DESC");
+$list_personil = [];
+if ($data_karyawan) {
+    while ($row = mysqli_fetch_assoc($data_karyawan)) {
+        $list_personil[] = $row;
+    }
+}
+
+// Data Tanda Tangan untuk Cetak Dokumen Resmi
+$nama_kerani = '...................................';
+$nama_pengawas = '...................................';
+$teks_afdeling = !empty($_GET['afdeling_filter']) ? htmlspecialchars($_GET['afdeling_filter']) : '';
+
+if (!empty($_GET['afdeling_filter'])) {
+    $q_k = mysqli_query($conn, "SELECT name FROM users WHERE (jabatan = 'kerani' OR role = 'kerani') AND afdeling = '" . mysqli_real_escape_string($conn, $_GET['afdeling_filter']) . "' LIMIT 1");
+    if ($rk = mysqli_fetch_assoc($q_k)) {
+        $nama_kerani = $rk['name'];
+    }
+    $q_p = mysqli_query($conn, "SELECT name FROM users WHERE (jabatan = 'pengawas' OR role = 'pengawas') AND afdeling = '" . mysqli_real_escape_string($conn, $_GET['afdeling_filter']) . "' LIMIT 1");
+    if ($rp = mysqli_fetch_assoc($q_p)) {
+        $nama_pengawas = $rp['name'];
+    }
+}
 
 include 'templates/header.php';
 ?>
@@ -288,59 +310,6 @@ include 'templates/header.php';
         text-align: right;
     }
 
-    /* Print Styles */
-    @media print {
-        body {
-            background-color: white;
-            padding: 0;
-            margin: 0;
-        }
-
-        /* Hide sidebar/header if they exist in templates */
-        .sidebar,
-        .navbar,
-        .topbar {
-            display: none !important;
-        }
-
-        /* Hide action buttons and filters */
-        .page-header button,
-        .btn,
-        form,
-        .aksi-column {
-            display: none !important;
-        }
-
-        .page-header {
-            margin-bottom: 20px;
-        }
-
-        .table-container {
-            box-shadow: none;
-            border: none;
-        }
-
-        table {
-            width: 100%;
-            border: 1px solid #000;
-        }
-
-        th,
-        td {
-            border: 1px solid #000;
-            padding: 8px;
-            color: #000;
-        }
-
-        th {
-            background-color: #f0f0f0;
-        }
-
-        /* Ensure table header prints on new pages */
-        thead {
-            display: table-header-group;
-        }
-    }
 </style>
 
 <div>
@@ -403,17 +372,17 @@ include 'templates/header.php';
             </thead>
             <tbody>
                 <?php $no = 1;
-                while ($row = mysqli_fetch_assoc($data_karyawan)): ?>
+                foreach ($list_personil as $row): ?>
                     <tr>
                         <td><?= $no++ ?></td>
                         <td>
-                            <div style="font-weight: 600;"><?= $row['name'] ?></div>
-                            <div style="font-size: 12px; color: #94a3b8;"><?= $row['email'] ?></div>
+                            <div style="font-weight: 600;"><?= htmlspecialchars($row['name']) ?></div>
+                            <div style="font-size: 12px; color: #94a3b8;"><?= htmlspecialchars($row['email']) ?></div>
                         </td>
-                        <td><span class="badge-nik"><?= $row['nik'] ?></span></td>
+                        <td><span class="badge-nik"><?= htmlspecialchars($row['nik']) ?></span></td>
                         <td>
-                            <div style="font-weight: 600; color: #475569;"><?= $row['afdeling'] ?: '-' ?></div>
-                            <div style="font-size: 12px; color: #64748b; text-transform: capitalize;"><?= $row['role'] ?></div>
+                            <div style="font-weight: 600; color: #475569;"><?= htmlspecialchars($row['afdeling'] ?: '-') ?></div>
+                            <div style="font-size: 12px; color: #64748b; text-transform: capitalize;"><?= htmlspecialchars($row['role']) ?></div>
                         </td>
                         <td style="text-align: right;" class="aksi-column">
                             <a href="cetak_kartu.php?id=<?= $row['id'] ?>" target="_blank" class="btn btn-primary" style="padding: 6px 10px; font-size: 11px;">
@@ -431,15 +400,116 @@ include 'templates/header.php';
                             <?php endif; ?>
                         </td>
                     </tr>
-                <?php endwhile; ?>
+                <?php endforeach; ?>
             </tbody>
         </table>
 
-        <?php if ($no == 1): ?>
+        <?php if (empty($list_personil)): ?>
             <div style="padding: 40px; text-align: center; color: #94a3b8;">
                 Belum ada data personil.
             </div>
         <?php endif; ?>
+    </div>
+</div>
+
+<!-- ========== DOKUMEN CETAK RESMI ========== -->
+<div id="official-print-doc">
+    <style>
+        @media print {
+            @page {
+                size: portrait;
+                margin: 10mm;
+            }
+        }
+    </style>
+
+    <!-- Kop Surat -->
+    <div class="doc-header">
+        <img src="<?= BASE_URL ?>assets/img/logo.png" alt="" class="doc-header-logo" onerror="this.style.display='none'">
+        <div class="doc-header-text">
+            <h1>PT Damai Jaya Lestari</h1>
+            <h2>Data Master Personil &amp; Akses Sistem</h2>
+            <p>Jl. Perkebunan No. 1 &nbsp;|&nbsp; Telp: (021) 000-0000 &nbsp;|&nbsp; Email: admin@djl.co.id</p>
+        </div>
+    </div>
+
+    <!-- Judul & Metadata -->
+    <div class="doc-title">
+        <h3>DAFTAR DATA PERSONIL</h3>
+    </div>
+    <div class="doc-meta">
+        <div><strong>Afdeling&nbsp;:</strong> <?= !empty($_GET['afdeling_filter']) ? htmlspecialchars($_GET['afdeling_filter']) : 'Semua Afdeling' ?></div>
+        <div><strong>Jabatan&nbsp;&nbsp;:</strong> <?= !empty($_GET['role_filter']) ? ucfirst(htmlspecialchars($_GET['role_filter'])) : 'Semua Jabatan' ?></div>
+        <div><strong>Total&nbsp;&nbsp;&nbsp;&nbsp;:</strong> <?= count($list_personil) ?> Personil</div>
+        <div><strong>Dicetak&nbsp;&nbsp;:</strong> <?= date('d F Y, H:i') ?> WIB</div>
+    </div>
+
+    <!-- Tabel Dokumen -->
+    <table class="doc-table">
+        <thead>
+            <tr>
+                <th style="width: 35px;">No</th>
+                <th style="width: 95px;">NIK</th>
+                <th style="text-align: left;">Nama Lengkap</th>
+                <th style="text-align: left;">Email / No HP</th>
+                <th style="width: 85px;">Afdeling</th>
+                <th style="width: 85px;">Jabatan</th>
+                <th style="width: 60px;">L/P</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php if (!empty($list_personil)): ?>
+                <?php $pno = 1; foreach ($list_personil as $p): ?>
+                    <tr>
+                        <td class="text-center"><?= $pno++ ?></td>
+                        <td class="text-center" style="font-weight: bold;"><?= htmlspecialchars($p['nik']) ?></td>
+                        <td class="text-left" style="font-weight: 600;"><?= htmlspecialchars($p['name']) ?></td>
+                        <td class="text-left">
+                            <?= htmlspecialchars($p['email']) ?>
+                            <?= !empty($p['no_hp']) ? '<br><small style="color:#555;">' . htmlspecialchars($p['no_hp']) . '</small>' : '' ?>
+                        </td>
+                        <td class="text-center"><?= htmlspecialchars($p['afdeling'] ?: '-') ?></td>
+                        <td class="text-center" style="text-transform: capitalize;"><?= htmlspecialchars($p['role'] ?: ($p['jabatan'] ?? '-')) ?></td>
+                        <td class="text-center"><?= htmlspecialchars($p['jenis_kelamin'] ?: '-') ?></td>
+                    </tr>
+                <?php endforeach; ?>
+            <?php else: ?>
+                <tr>
+                    <td colspan="7" class="text-center" style="padding: 20px;">Tidak ada data personil.</td>
+                </tr>
+            <?php endif; ?>
+        </tbody>
+    </table>
+
+    <!-- Tanda Tangan -->
+    <div class="doc-signature">
+        <?php if (!empty($_GET['afdeling_filter'])): ?>
+            <div class="doc-signature-col">
+                <p>Diketahui oleh,</p>
+                <span class="sig-name"><?= htmlspecialchars($nama_pengawas) ?></span>
+                <div style="font-weight:bold; margin-top:4px;">Pengawas <?= $teks_afdeling ?></div>
+            </div>
+            <div class="doc-signature-col">
+                <p>Disusun oleh,</p>
+                <span class="sig-name"><?= htmlspecialchars($nama_kerani) ?></span>
+                <div style="font-weight:bold; margin-top:4px;">Kerani <?= $teks_afdeling ?></div>
+            </div>
+        <?php else: ?>
+            <div class="doc-signature-col">
+                <p>Mengetahui,</p>
+                <span class="sig-name">( ................................... )</span>
+                <div style="font-weight:bold; margin-top:4px;">Pimpinan Perusahaan</div>
+            </div>
+            <div class="doc-signature-col">
+                <p>Dicetak oleh,</p>
+                <span class="sig-name"><?= htmlspecialchars($_SESSION['nama'] ?? 'Administrator') ?></span>
+                <div style="font-weight:bold; margin-top:4px;">Administrator Sistem</div>
+            </div>
+        <?php endif; ?>
+    </div>
+
+    <div class="doc-footer">
+        Dokumen ini dicetak secara otomatis oleh Sistem Informasi PT Damai Jaya Lestari pada <?= date('d F Y \p\u\k\u\l H:i') ?> WIB.
     </div>
 </div>
 

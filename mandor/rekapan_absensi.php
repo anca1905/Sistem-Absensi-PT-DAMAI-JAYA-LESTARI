@@ -284,10 +284,7 @@ while ($row = mysqli_fetch_assoc($query_absen)) {
                             if ($status == 'tepat_waktu' || $status == 'hadir') {
                                 $total_hadir++;
                                 echo '<td><span class="status-badge status-h">H</span></td>';
-                            } elseif ($status == 'terlambat') {
-                                $total_hadir++;
-                                echo '<td><span class="status-badge status-t">T</span></td>';
-                            } elseif (in_array($status, ['alfa', 'alpa', 'alpha'])) {
+                            } elseif (in_array($status, ['alfa', 'alpa', 'alpha', 'terlambat'])) {
                                 echo '<td><span class="status-badge status-a">A</span></td>';
                             } elseif ($status == 'izin') {
                                 echo '<td><span class="status-badge status-i">I</span></td>';

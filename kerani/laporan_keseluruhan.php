@@ -591,8 +591,8 @@ $list_karyawan_page = array_slice($list_karyawan, $offset, $per_page);
                     $_q = mysqli_query($conn, "SELECT status_kehadiran FROM absensis WHERE user_id=$_uid AND MONTH(tanggal)=$bulan_int AND YEAR(tanggal)=$tahun");
                     while ($_a = mysqli_fetch_assoc($_q)) {
                         $_s = strtolower($_a['status_kehadiran']);
-                        if (!in_array($_s, ['alpha', 'izin', 'sakit', 'cuti'])) $total_hadir_global++;
-                        if ($_s === 'alpha') $total_alpha_global++;
+                        if (in_array($_s, ['hadir', 'tepat_waktu'])) $total_hadir_global++;
+                        if (in_array($_s, ['alpha', 'alpa', 'alfa', 'terlambat'])) $total_alpha_global++;
                     }
                     $_qlb = mysqli_query($conn, "SELECT SUM(hasil_langsir_kg) as sl, SUM(hasil_ton) as st, SUM(hasil_kg) as sk, SUM(prestasi_kg) as sp FROM logbook_kinerja WHERE user_id=$_uid AND objek_kerja='$objek_safe' AND MONTH(tanggal)=$bulan_int AND YEAR(tanggal)=$tahun");
                     $_lb = $_qlb ? mysqli_fetch_assoc($_qlb) : null;
@@ -617,8 +617,8 @@ $list_karyawan_page = array_slice($list_karyawan, $offset, $per_page);
                     $alpha_count = 0;
                     while ($abs = mysqli_fetch_assoc($q_abs)) {
                         $s = strtolower($abs['status_kehadiran']);
-                        if (!in_array($s, ['alpha', 'izin', 'sakit', 'cuti'])) $hadir_count++;
-                        if ($s === 'alpha') $alpha_count++;
+                        if (in_array($s, ['hadir', 'tepat_waktu'])) $hadir_count++;
+                        if (in_array($s, ['alpha', 'alpa', 'alfa', 'terlambat'])) $alpha_count++;
                     }
 
                     // Logbook
