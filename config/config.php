@@ -25,3 +25,7 @@ define('BASE_URL', 'https://portal-djl.skillance.cloud/');
 
 // Secret key untuk generate token WA (jangan ganti sembarangan!)
 define('APP_SECRET', 'DJL_AMANDA_SECRET_2025');
+
+// Fonnte WhatsApp API Token (Opsional jika diisi via Menu Admin -> Koneksi WhatsApp)
+define('FONNTE_TOKEN', '');
+

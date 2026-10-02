@@ -9,19 +9,8 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'admin') {
     exit;
 }
 
-$dir = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'wa-bot';
-$logFile = $dir . DIRECTORY_SEPARATOR . 'server.log';
-// Menggunakan WScript.Shell agar berjalan di background tanpa mengganggu PHP, dan log error disimpan ke server.log
-try {
-    $WshShell = new COM("WScript.Shell");
-    $WshShell->CurrentDirectory = $dir;
-    // Pindah ke direktori dengan cd /d untuk memastikan
-    $cmd = "cmd /c cd /d \"$dir\" && node server.js > \"$logFile\" 2>&1";
-    $WshShell->Run($cmd, 0, false);
-    echo json_encode(['status' => 'success', 'message' => 'Node.js Server sedang dihidupkan di latar belakang...']);
-} catch (Throwable $e) {
-    // Fallback if COM is disabled
-    $cmd = "start /B cmd /c \"cd /d \"$dir\" && node server.js > \"$logFile\" 2>&1\"";
-    pclose(popen($cmd, "r"));
-    echo json_encode(['status' => 'success', 'message' => 'Node.js Server sedang dihidupkan di latar belakang (fallback)...']);
-}
+header('Content-Type: application/json');
+echo json_encode([
+    'status' => 'info',
+    'message' => 'Layanan WhatsApp kini menggunakan Fonnte Cloud API. Server Node.js lokal sudah tidak diperlukan lagi.'
+]);
