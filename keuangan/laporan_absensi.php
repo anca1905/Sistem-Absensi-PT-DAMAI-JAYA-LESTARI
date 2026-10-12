@@ -4,6 +4,10 @@ include 'templates/header.php';
 
 $bulan = isset($_GET['bulan']) ? str_pad($_GET['bulan'], 2, '0', STR_PAD_LEFT) : date('m');
 $tahun = isset($_GET['tahun']) ? (int)$_GET['tahun'] : (int)date('Y');
+
+// Sinkronisasi status Alpha otomatis untuk periode bulan yang dilihat
+checkAndSetAlpha($conn, $bulan, $tahun);
+
 $cari  = isset($_GET['cari'])  ? trim($_GET['cari']) : '';
 $afdeling = isset($_GET['afdeling']) ? trim($_GET['afdeling']) : '';
 $daftar_jabatan = [

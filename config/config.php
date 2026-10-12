@@ -18,6 +18,12 @@ require_once __DIR__ . '/functions.php';
 require_once __DIR__ . '/wa_helper.php';
 require_once __DIR__ . '/alert_helper.php';
 
+// Auto check & set Alpha otomatis (maksimal 1x per 5 menit per sesi agar tetap ringan & otomatis)
+if (!isset($_SESSION['last_alpha_check']) || (time() - $_SESSION['last_alpha_check'] > 300)) {
+    checkAndSetAlpha($conn);
+    $_SESSION['last_alpha_check'] = time();
+}
+
 // URL dasar aplikasi (ganti sesuai environment)
 // Production: https://portal-djl.skillance.cloud/
 // Development: http://localhost/amanda/amanda/

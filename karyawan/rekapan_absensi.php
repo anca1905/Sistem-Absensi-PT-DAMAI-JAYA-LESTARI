@@ -11,6 +11,10 @@ include 'templates/header.php';
 
 $bulan = isset($_GET['bulan']) ? $_GET['bulan'] : date('m');
 $tahun = isset($_GET['tahun']) ? $_GET['tahun'] : date('Y');
+
+// Sinkronisasi status Alpha otomatis untuk periode bulan yang dilihat
+checkAndSetAlpha($conn, $bulan, $tahun);
+
 $jumlah_hari = (int)date('t', mktime(0, 0, 0, (int)$bulan, 1, $tahun));
 
 $nama_bulan = array(

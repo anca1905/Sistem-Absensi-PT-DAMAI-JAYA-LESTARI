@@ -41,28 +41,70 @@ function redirect($url)
     exit;
 }
 
-// Fungsi auto alpha
-function checkAndSetAlpha($conn) {
+// Fungsi auto alpha dengan backfill tanggal lampau & libur hari Minggu
+function checkAndSetAlpha($conn, $bulan = null, $tahun = null) {
+    if (!$conn) return;
+
+    $now_time = date('H:i:s');
     $today = date('Y-m-d');
-    $time_now = date('H:i:s');
-    
-    // Jika sudah lewat jam 15:00
-    if ($time_now > '15:00:00') {
-        // Ambil semua user yang belum ada di tabel absensis hari ini
-        $query = "
-            SELECT id FROM users 
-            WHERE id NOT IN (
-                SELECT user_id FROM absensis WHERE tanggal = '$today'
-            )
-        ";
-        $result = mysqli_query($conn, $query);
-        if ($result && mysqli_num_rows($result) > 0) {
-            while ($row = mysqli_fetch_assoc($result)) {
-                $user_id = $row['id'];
-                // Insert status alpha
-                mysqli_query($conn, "INSERT INTO absensis (user_id, tanggal, waktu_masuk, status_kehadiran) VALUES ('$user_id', '$today', NULL, 'alpha')");
-            }
+
+    // Tentukan rentang tanggal yang diperiksa
+    if ($bulan !== null && $tahun !== null) {
+        $bulan_str = str_pad((int)$bulan, 2, '0', STR_PAD_LEFT);
+        $tahun_str = (int)$tahun;
+        $start_date = "$tahun_str-$bulan_str-01";
+        $days_in_month = (int)date('t', strtotime($start_date));
+        $end_date = "$tahun_str-$bulan_str-" . str_pad($days_in_month, 2, '0', STR_PAD_LEFT);
+
+        // Jangan proses masa depan
+        if ($end_date > $today) {
+            $end_date = $today;
         }
+        if ($start_date > $today) {
+            return;
+        }
+    } else {
+        // Default: Periksa dari awal bulan berjalan sampai hari ini
+        $start_date = date('Y-m-01');
+        $end_date = $today;
+    }
+
+    $current = strtotime($start_date);
+    $end = strtotime($end_date);
+
+    while ($current <= $end) {
+        $tgl = date('Y-m-d', $current);
+        $dow = (int)date('N', $current); // 1 = Senin, ..., 7 = Minggu
+
+        // Hari Minggu dihitung LIBUR, lewati
+        if ($dow === 7) {
+            $current = strtotime('+1 day', $current);
+            continue;
+        }
+
+        // Jika hari ini dan belum lewat jam 15:00, lewati (karyawan masih bisa absen)
+        if ($tgl === $today && $now_time <= '15:00:00') {
+            $current = strtotime('+1 day', $current);
+            continue;
+        }
+
+        // Masukkan Alpha untuk user operasional yang belum absen dan tidak ada perizinan disetujui
+        $query = "
+            INSERT INTO absensis (user_id, tanggal, waktu_masuk, status_kehadiran)
+            SELECT u.id, '$tgl', NULL, 'alpha'
+            FROM users u
+            WHERE u.role IN ('karyawan', 'mandor', 'pengawas', 'kerani')
+              AND (u.created_at IS NULL OR DATE(u.created_at) <= '$tgl')
+              AND u.id NOT IN (
+                  SELECT a.user_id FROM absensis a WHERE a.tanggal = '$tgl'
+              )
+              AND u.id NOT IN (
+                  SELECT p.user_id FROM perizinan p WHERE p.tanggal_izin = '$tgl' AND p.status = 'disetujui'
+              )
+        ";
+        mysqli_query($conn, $query);
+
+        $current = strtotime('+1 day', $current);
     }
 }
 

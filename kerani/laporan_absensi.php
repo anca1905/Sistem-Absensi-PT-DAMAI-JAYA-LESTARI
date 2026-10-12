@@ -14,6 +14,9 @@ $role_filter = isset($_GET['role']) ? $_GET['role'] : 'karyawan';
 $bulan = isset($_GET['bulan']) ? $_GET['bulan'] : date('m');
 $tahun = isset($_GET['tahun']) ? $_GET['tahun'] : date('Y');
 
+// Sinkronisasi status Alpha otomatis untuk periode bulan yang dilihat
+checkAndSetAlpha($conn, $bulan, $tahun);
+
 $jumlah_hari = date('t', mktime(0, 0, 0, $bulan, 1, $tahun));
 $nama_bulan = array(
     '01' => 'Januari',

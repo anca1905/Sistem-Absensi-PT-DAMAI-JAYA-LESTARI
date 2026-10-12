@@ -11,6 +11,9 @@ $tahun    = isset($_GET['tahun'])    ? $_GET['tahun']    : date('Y');
 $jabatan  = isset($_GET['jabatan'])  ? $_GET['jabatan']  : '';
 $afdeling = isset($_GET['afdeling']) ? $_GET['afdeling'] : '';
 
+// Sinkronisasi status Alpha otomatis untuk periode bulan yang dilihat
+checkAndSetAlpha($conn, $bulan, $tahun);
+
 $jumlah_hari = date('t', mktime(0, 0, 0, $bulan, 1, $tahun));
 
 $nama_bulan = [
