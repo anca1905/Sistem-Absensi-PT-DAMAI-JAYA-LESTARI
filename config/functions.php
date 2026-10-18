@@ -48,6 +48,9 @@ function checkAndSetAlpha($conn, $bulan = null, $tahun = null) {
     $now_time = date('H:i:s');
     $today = date('Y-m-d');
 
+    // Koreksi otomatis jika ada data yang sudah absen (waktu_masuk ada) tapi sempat tersimpan sebagai 'alpha'
+    mysqli_query($conn, "UPDATE absensis SET status_kehadiran = 'hadir' WHERE waktu_masuk IS NOT NULL AND status_kehadiran = 'alpha'");
+
     // Tentukan rentang tanggal yang diperiksa
     if ($bulan !== null && $tahun !== null) {
         $bulan_str = str_pad((int)$bulan, 2, '0', STR_PAD_LEFT);
