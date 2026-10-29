@@ -44,10 +44,57 @@ require '../config/config.php';
 
         .scan-header {
             background: linear-gradient(135deg, #1e3a8a 0%, #172554 100%);
-            padding: 20px;
+            padding: 18px 20px;
             text-align: center;
             border-bottom: 4px solid #f59e0b;
             color: white;
+            position: relative;
+        }
+
+        .btn-header-back {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.18);
+            color: white;
+            text-decoration: none;
+            padding: 7px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.2s;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+        }
+
+        .btn-header-back:hover {
+            background: rgba(255, 255, 255, 0.32);
+            color: white;
+        }
+
+        .btn-modal-back {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background: #f8fafc;
+            color: #475569;
+            text-decoration: none;
+            padding: 11px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 700;
+            border: 1.5px solid #cbd5e1;
+            transition: all 0.2s;
+            margin-top: 8px;
+        }
+
+        .btn-modal-back:hover {
+            background: #e2e8f0;
+            color: #1e293b;
         }
 
         .scan-header h2 {
@@ -225,6 +272,13 @@ require '../config/config.php';
 
     <div class="scan-container">
         <div class="scan-header">
+            <a href="index.php" class="btn-header-back" title="Kembali ke Dashboard">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="19" y1="12" x2="5" y2="12"></line>
+                    <polyline points="12 19 5 12 12 5"></polyline>
+                </svg>
+                <span>Kembali</span>
+            </a>
             <h2>Pos Security</h2>
             <p>SISTEM ABSENSI QR CODE</p>
         </div>
@@ -255,7 +309,16 @@ require '../config/config.php';
             <h3 id="mTitle" class="modal-title">BERHASIL</h3>
             <p id="mName" class="modal-desc">Nama Karyawan</p>
             <div id="mInfo" class="modal-time">08:00:00</div>
-            <button class="btn-modal" onclick="closeModal()">LANJUT SCAN</button>
+            <div style="display:flex; flex-direction:column; gap:9px;">
+                <button type="button" class="btn-modal" onclick="closeModal()">LANJUT SCAN</button>
+                <a href="index.php" class="btn-modal-back">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="19" y1="12" x2="5" y2="12"></line>
+                        <polyline points="12 19 5 12 12 5"></polyline>
+                    </svg>
+                    Selesai &amp; Kembali ke Dashboard
+                </a>
+            </div>
         </div>
     </div>
 

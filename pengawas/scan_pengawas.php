@@ -2,36 +2,30 @@
 require '../config/config.php';
 
 // -----------------------------------------------------
-// LOGIKA COUNTDOWN 2 JAM & AUTO ALPHA
+// LOGIKA COUNTDOWN 2 JAM & AUTO ALPHA (BERBASIS DATABASE)
+// Bebas masalah file permission di hosting/server Linux
 // -----------------------------------------------------
-$session_file = '../config/scan_session.json';
 $today = date('Y-m-d');
 $now_time = time();
 $two_hours_in_seconds = 2 * 60 * 60; // 7200 detik
 
-// Baca file session
-$session_data = [];
-if (file_exists($session_file)) {
-    $content = file_get_contents($session_file);
-    if (!empty($content)) {
-        $session_data = json_decode($content, true);
-    }
-}
+// Pastikan tabel scan_sessions ada
+mysqli_query($conn, "CREATE TABLE IF NOT EXISTS scan_sessions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    session_date DATE NOT NULL UNIQUE,
+    start_timestamp INT NOT NULL,
+    start_time_formatted VARCHAR(10) NOT NULL
+)");
 
-// Cek apakah ada session untuk hari ini
-if (isset($session_data['date']) && $session_data['date'] === $today) {
-    // Session hari ini sudah ada, hitung sisa waktu
-    $start_time = $session_data['start_timestamp'];
+$q_sess = mysqli_query($conn, "SELECT * FROM scan_sessions WHERE session_date = '$today' LIMIT 1");
+if ($q_sess && mysqli_num_rows($q_sess) > 0) {
+    $sess_row = mysqli_fetch_assoc($q_sess);
+    $start_time = (int)$sess_row['start_timestamp'];
     $elapsed = $now_time - $start_time;
     $remaining_seconds = $two_hours_in_seconds - $elapsed;
 } else {
-    // Session baru untuk hari ini
-    $session_data = [
-        'date' => $today,
-        'start_timestamp' => $now_time,
-        'start_time_formatted' => date('H:i:s')
-    ];
-    file_put_contents($session_file, json_encode($session_data));
+    $start_formatted = date('H:i:s');
+    mysqli_query($conn, "INSERT IGNORE INTO scan_sessions (session_date, start_timestamp, start_time_formatted) VALUES ('$today', $now_time, '$start_formatted')");
     $remaining_seconds = $two_hours_in_seconds;
 }
 
@@ -42,18 +36,8 @@ if ($remaining_seconds <= 0) {
     $is_session_closed = true;
     $remaining_seconds = 0;
 
-    // Proses Alpha untuk karyawan yang belum ada di tabel absensis hari ini
-    $query_karyawan = mysqli_query($conn, "SELECT id FROM users WHERE role = 'karyawan'");
-    while ($karyawan = mysqli_fetch_assoc($query_karyawan)) {
-        $user_id = $karyawan['id'];
-
-        // Cek apakah sudah absen hari ini
-        $cek_absen = mysqli_query($conn, "SELECT id FROM absensis WHERE user_id = '$user_id' AND tanggal = '$today'");
-        if (mysqli_num_rows($cek_absen) == 0) {
-            // Belum absen -> Insert Alpha
-            mysqli_query($conn, "INSERT INTO absensis (user_id, tanggal, waktu_masuk, status_kehadiran) VALUES ('$user_id', '$today', NULL, 'alpha')");
-        }
-    }
+    // Proses Alpha terpadu untuk hari ini
+    checkAndSetAlpha($conn);
 }
 ?>
 
@@ -99,10 +83,11 @@ if ($remaining_seconds <= 0) {
 
         .scan-header {
             background: linear-gradient(135deg, #1e3a8a 0%, #172554 100%);
-            padding: 20px;
+            padding: 18px 20px;
             text-align: center;
             border-bottom: 4px solid #f59e0b;
             color: white;
+            position: relative;
         }
 
         .scan-header h2 {
@@ -115,8 +100,32 @@ if ($remaining_seconds <= 0) {
         .scan-header p {
             color: #bfdbfe;
             font-size: 12px;
-            margin-top: 5px;
+            margin-top: 4px;
             margin-bottom: 0;
+        }
+
+        .btn-header-back {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.18);
+            color: white;
+            text-decoration: none;
+            padding: 7px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.2s;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+        }
+
+        .btn-header-back:hover {
+            background: rgba(255, 255, 255, 0.32);
+            color: white;
         }
 
         .scan-body {
@@ -134,7 +143,7 @@ if ($remaining_seconds <= 0) {
         }
 
         .countdown {
-            font-size: 16px;
+            font-size: 15px;
             font-weight: 700;
             color: #ef4444;
             margin-bottom: 15px;
@@ -163,18 +172,16 @@ if ($remaining_seconds <= 0) {
             font-size: 14px;
         }
 
-        /* --- AREA KAMERA BARU --- */
+        /* --- AREA KAMERA --- */
         #reader {
             width: 100%;
             min-height: 300px;
-            /* Tinggi minimum biar ga gepeng */
             background: #000;
             border-radius: 12px;
             overflow: hidden;
             position: relative;
         }
 
-        /* Memastikan video mengisi penuh kotak */
         #reader video {
             width: 100% !important;
             height: 100% !important;
@@ -182,7 +189,6 @@ if ($remaining_seconds <= 0) {
             border-radius: 12px;
         }
 
-        /* Loading Indicator */
         .loading-text {
             position: absolute;
             top: 50%;
@@ -193,7 +199,6 @@ if ($remaining_seconds <= 0) {
             z-index: 1;
         }
 
-        /* Kotak Error (Muncul jika kamera gagal) */
         #error-msg {
             display: none;
             margin-top: 15px;
@@ -209,19 +214,28 @@ if ($remaining_seconds <= 0) {
         /* Footer */
         .scan-footer {
             background-color: #f8fafc;
-            padding: 15px;
+            padding: 14px 20px;
             text-align: center;
             border-top: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
         }
 
         .btn-back {
             text-decoration: none;
             color: #64748b;
             font-size: 13px;
-            font-weight: 600;
+            font-weight: 700;
             display: inline-flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
+            transition: color 0.2s;
+        }
+
+        .btn-back:hover {
+            color: #1e3a8a;
         }
 
         /* --- MODAL POPUP --- */
@@ -243,11 +257,12 @@ if ($remaining_seconds <= 0) {
         .modal-box {
             background: white;
             width: 100%;
-            max-width: 350px;
+            max-width: 360px;
             border-radius: 16px;
-            padding: 25px;
+            padding: 24px;
             text-align: center;
             animation: popUp 0.3s ease-out;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
         }
 
         @keyframes popUp {
@@ -255,7 +270,6 @@ if ($remaining_seconds <= 0) {
                 transform: scale(0.9);
                 opacity: 0;
             }
-
             to {
                 transform: scale(1);
                 opacity: 1;
@@ -277,19 +291,25 @@ if ($remaining_seconds <= 0) {
 
         .modal-desc {
             font-size: 16px;
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 5px;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 6px;
         }
 
         .modal-time {
             font-size: 13px;
             color: #64748b;
-            margin-bottom: 20px;
+            margin-bottom: 18px;
             background: #f1f5f9;
-            padding: 5px 10px;
-            border-radius: 4px;
+            padding: 6px 12px;
+            border-radius: 6px;
             display: inline-block;
+        }
+
+        .modal-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 9px;
         }
 
         .btn-modal {
@@ -299,9 +319,36 @@ if ($remaining_seconds <= 0) {
             padding: 12px;
             border-radius: 8px;
             cursor: pointer;
-            font-weight: bold;
+            font-weight: 700;
             width: 100%;
             font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .btn-modal:hover {
+            opacity: 0.95;
+            transform: translateY(-1px);
+        }
+
+        .btn-modal-back {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background: #f8fafc;
+            color: #475569;
+            text-decoration: none;
+            padding: 11px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 700;
+            border: 1.5px solid #cbd5e1;
+            transition: all 0.2s;
+        }
+
+        .btn-modal-back:hover {
+            background: #e2e8f0;
+            color: #1e293b;
         }
     </style>
 </head>
@@ -310,6 +357,13 @@ if ($remaining_seconds <= 0) {
 
     <div class="scan-container">
         <div class="scan-header">
+            <a href="index.php" class="btn-header-back" title="Kembali ke Dashboard">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="19" y1="12" x2="5" y2="12"></line>
+                    <polyline points="12 19 5 12 12 5"></polyline>
+                </svg>
+                <span>Kembali</span>
+            </a>
             <h2>Pos Security</h2>
             <p>SISTEM ABSENSI QR CODE</p>
         </div>
@@ -334,21 +388,33 @@ if ($remaining_seconds <= 0) {
 
         <div class="scan-footer">
             <a href="index.php" class="btn-back">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M19 12H5M12 19l-7-7 7-7" />
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="19" y1="12" x2="5" y2="12"></line>
+                    <polyline points="12 19 5 12 12 5"></polyline>
                 </svg>
                 Kembali ke Dashboard
             </a>
         </div>
     </div>
 
+    <!-- Modal Popup Hasil Scan -->
     <div id="resultModal" class="modal-overlay">
         <div class="modal-box">
             <span id="mIcon" class="modal-icon">✅</span>
             <h3 id="mTitle" class="modal-title">BERHASIL</h3>
-            <p id="mName" class="modal-desc">Nama Karyawan</p>
+            <p id="mName" class="modal-desc">Nama Personel</p>
             <div id="mInfo" class="modal-time">08:00:00</div>
-            <button class="btn-modal" onclick="closeModal()">LANJUT SCAN</button>
+
+            <div class="modal-actions">
+                <button type="button" class="btn-modal" onclick="closeModal()">LANJUT SCAN</button>
+                <a href="index.php" class="btn-modal-back">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="19" y1="12" x2="5" y2="12"></line>
+                        <polyline points="12 19 5 12 12 5"></polyline>
+                    </svg>
+                    Selesai &amp; Kembali ke Dashboard
+                </a>
+            </div>
         </div>
     </div>
 
@@ -357,7 +423,10 @@ if ($remaining_seconds <= 0) {
     <script>
         // 1. JAM DIGITAL
         setInterval(() => {
-            document.getElementById('clock').innerText = new Date().toLocaleTimeString('id-ID');
+            const clockEl = document.getElementById('clock');
+            if (clockEl) {
+                clockEl.innerText = new Date().toLocaleTimeString('id-ID');
+            }
         }, 1000);
 
         <?php if (!$is_session_closed): ?>
@@ -366,13 +435,13 @@ if ($remaining_seconds <= 0) {
 
             function updateCountdown() {
                 if (remainingSeconds <= 0) {
-                    // WAKTU HABIS! Refresh halaman untuk memicu backend nulis Alpha
                     document.getElementById('countdownTimer').innerText = "WAKTU HABIS!";
                     if (typeof html5QrCode !== 'undefined' && html5QrCode) {
-                        html5QrCode.stop().then(() => html5QrCode.clear());
+                        try {
+                            html5QrCode.stop().then(() => html5QrCode.clear());
+                        } catch (e) {}
                     }
 
-                    // Beri alert kecil lalu reload
                     setTimeout(() => {
                         alert("Waktu scan telah habis! Halaman akan dimuat ulang.");
                         window.location.reload();
@@ -393,36 +462,37 @@ if ($remaining_seconds <= 0) {
                 remainingSeconds--;
             }
 
-            // Jalankan tiap detik
             setInterval(updateCountdown, 1000);
-            updateCountdown(); // Call first time immediately
+            updateCountdown();
         <?php endif; ?>
 
         // 2. SUARA BEEP
         const audioCtx = new(window.AudioContext || window.webkitAudioContext)();
 
         function playSound(type) {
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
+            try {
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
 
-            if (type === 'success') {
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(880, audioCtx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(440, audioCtx.currentTime + 0.1);
-            } else {
-                osc.type = 'sawtooth';
-                osc.frequency.setValueAtTime(150, audioCtx.currentTime);
-            }
-            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.3);
+                if (type === 'success') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(440, audioCtx.currentTime + 0.1);
+                } else {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+                }
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.3);
+            } catch (e) {}
         }
 
-        // 3. INISIALISASI KAMERA (Kembali ke mode UI Bawaan Library agar kompatibel di semua HP)
+        // 3. INISIALISASI KAMERA DENGAN FALLBACK AMAN
         <?php if (!$is_session_closed): ?>
             const config = {
                 fps: 10,
@@ -430,11 +500,9 @@ if ($remaining_seconds <= 0) {
                     width: 250,
                     height: 250
                 },
-                supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA],
                 aspectRatio: 1.0
             };
 
-            // Gunakan API Langsung agar kamera otomatis menyala
             let html5QrCode = new Html5Qrcode("reader");
             let isProcessing = false;
 
@@ -442,8 +510,7 @@ if ($remaining_seconds <= 0) {
                 if (isProcessing) return;
                 isProcessing = true;
 
-                // Jeda kamera saat memproses
-                html5QrCode.pause();
+                try { html5QrCode.pause(); } catch (e) {}
 
                 fetch('proses_absen.php', {
                         method: 'POST',
@@ -466,14 +533,23 @@ if ($remaining_seconds <= 0) {
                     });
             }
 
-            // Mulai kamera otomatis dengan kamera belakang (environment)
+            // Jalankan kamera: coba kamera belakang dulu, jika gagal coba kamera depan/apa saja
             html5QrCode.start(
                 { facingMode: "environment" },
                 config,
                 onScanSuccess
-            ).catch((err) => {
-                document.getElementById('reader').innerHTML = "<div style='color:red; text-align:center; padding:20px;'><h3 style='margin-bottom:10px;'>Akses Kamera Ditolak</h3><p>Gagal mengakses kamera. Harap pastikan Anda telah memberikan izin kamera pada browser Anda.</p></div>";
-                console.error("Gagal memulai kamera: ", err);
+            ).catch(err => {
+                console.warn("Kamera belakang tidak tersedia, mencoba kamera depan/default...", err);
+                html5QrCode.start(
+                    { facingMode: "user" },
+                    config,
+                    onScanSuccess
+                ).catch(err2 => {
+                    const readerEl = document.getElementById('reader');
+                    if (readerEl) {
+                        readerEl.innerHTML = "<div style='color:#ef4444; text-align:center; padding:24px;'><h3 style='margin-bottom:8px;'>Kamera Tidak Aktif</h3><p style='font-size:13px;'>Pastikan izin akses kamera telah diberikan pada browser Anda.</p></div>";
+                    }
+                });
             });
 
             // 4. MODAL LOGIC
@@ -483,9 +559,11 @@ if ($remaining_seconds <= 0) {
             const mInfo = document.getElementById('mInfo');
             const mIcon = document.getElementById('mIcon');
             const btnModal = document.querySelector('.btn-modal');
+            let autoCloseTimer = null;
 
             function showModal(data) {
                 modal.style.display = 'flex';
+                if (autoCloseTimer) clearTimeout(autoCloseTimer);
 
                 if (data.status === 'success') {
                     playSound('success');
@@ -493,32 +571,41 @@ if ($remaining_seconds <= 0) {
                     mTitle.innerText = "ABSEN " + data.type;
                     mTitle.style.color = "#15803d";
                     mName.innerText = data.nama;
-                    mInfo.innerText = data.waktu + " • " + data.ket;
+                    mInfo.innerText = data.waktu + " • " + (data.ket || 'Tercatat');
                     btnModal.style.backgroundColor = "#15803d";
-                    btnModal.innerText = "OK, LANJUT";
+                    btnModal.innerText = "LANJUT SCAN";
+                } else if (data.status === 'info') {
+                    playSound('success');
+                    mIcon.innerHTML = "ℹ️";
+                    mTitle.innerText = "INFO ABSENSI";
+                    mTitle.style.color = "#0284c7";
+                    mName.innerText = data.nama || 'Informasi';
+                    mInfo.innerText = data.message || 'Sudah tercatat';
+                    btnModal.style.backgroundColor = "#0284c7";
+                    btnModal.innerText = "LANJUT SCAN";
                 } else {
                     playSound('error');
                     mIcon.innerHTML = "⛔";
                     mTitle.innerText = "GAGAL";
                     mTitle.style.color = "#b91c1c";
-                    mName.innerText = data.message;
+                    mName.innerText = data.message || 'Gagal memproses';
                     mInfo.innerText = "Silakan Coba Lagi";
                     btnModal.style.backgroundColor = "#b91c1c";
                     btnModal.innerText = "COBA LAGI";
                 }
 
-                setTimeout(() => {
-                    if (modal.style.display == 'flex') closeModal();
-                }, 2500);
+                autoCloseTimer = setTimeout(() => {
+                    if (modal.style.display === 'flex') closeModal();
+                }, 3500);
             }
 
             function closeModal() {
+                if (autoCloseTimer) clearTimeout(autoCloseTimer);
                 modal.style.display = 'none';
-                // Lanjutkan kamera setelah ditutup
                 setTimeout(() => {
                     isProcessing = false;
-                    html5QrCode.resume();
-                }, 1500); // delay 1.5 detik agar gak kepencet dobel
+                    try { html5QrCode.resume(); } catch (e) {}
+                }, 1000);
             }
         <?php endif; ?>
     </script>
