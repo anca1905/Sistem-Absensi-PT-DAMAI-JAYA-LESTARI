@@ -74,11 +74,35 @@ while ($a = mysqli_fetch_assoc($q_absen)) {
 
 
 // --- LOGIKA TANDA TANGAN BERDASARKAN FILTER AFDELING ---
+$nama_mandor_tampil = '';
+$nama_kerani_tampil = '';
 if (!empty($afdeling)) {
     $penandatangan = getReportSignatories($conn, $afdeling);
     $nama_pengawas = $penandatangan["pengawas"];
     $nama_kerani = $penandatangan["kerani"];
     $teks_afdeling = $penandatangan["label_afdeling"] ?: "Afdeling";
+    if (!empty($nama_kerani) && $nama_kerani !== '( ................................... )') {
+        $nama_kerani_tampil = $nama_kerani;
+    }
+
+    // Cari Mandor pada afdeling terkait
+    $num_afd = preg_replace('/[^0-9]/', '', $afdeling);
+    $afd_safe = mysqli_real_escape_string($conn, $afdeling);
+    if ($num_afd !== '') {
+        $where_mandor = "(afdeling = '$afd_safe' OR afdeling = 'Afd $num_afd' OR afdeling = 'Afdeling $num_afd' OR afdeling = '$num_afd' OR afdeling LIKE '%$num_afd%')";
+    } else {
+        $where_mandor = "(afdeling = '$afd_safe' OR afdeling LIKE '%$afd_safe%')";
+    }
+    $q_mandor = mysqli_query($conn, "SELECT name FROM users WHERE (role='mandor' OR jabatan='mandor' OR jabatan LIKE '%mandor%') AND $where_mandor ORDER BY name ASC");
+    $arr_mandor = [];
+    if ($q_mandor) {
+        while ($m = mysqli_fetch_assoc($q_mandor)) {
+            $arr_mandor[] = $m['name'];
+        }
+    }
+    if (!empty($arr_mandor)) {
+        $nama_mandor_tampil = implode(', ', $arr_mandor);
+    }
 } else {
     // Jika filter Semua Afdeling, tampilkan garis titik-titik untuk diisi manual jika dicetak
     $teks_afdeling = "Semua Afdeling";
@@ -171,6 +195,90 @@ if (!empty($afdeling)) {
         background: #f9fafb;
         border-color: #10b981;
         color: #059669;
+    }
+
+    /* Card */
+    .lk-card {
+        background: white;
+        border-radius: 14px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, .02);
+        overflow: hidden;
+        margin-bottom: 24px;
+    }
+
+    .lk-header-main {
+        padding: 20px 24px;
+        border-bottom: 1.5px solid #e2e8f0;
+        background: #f8fafc;
+        text-align: center;
+    }
+
+    .lk-title {
+        font-size: 17px;
+        font-weight: 800;
+        color: #1f2937;
+        margin: 0;
+    }
+
+    .lk-subtitle {
+        font-size: 13px;
+        color: #64748b;
+        margin-top: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 6px;
+        line-height: 1.6;
+    }
+
+    .lk-subtitle .sep {
+        color: #cbd5e1;
+        font-weight: 400;
+    }
+
+    .lk-subtitle strong {
+        color: #1f2937;
+    }
+
+    /* Tipe badge */
+    .tipe-badge {
+        display: inline-block;
+        padding: 3px 10px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: .5px;
+    }
+
+    .badge-karyawan {
+        background: #fee2e2;
+        color: #dc2626;
+    }
+
+    .badge-mandor {
+        background: #fef3c7;
+        color: #d97706;
+    }
+
+    .badge-kerani {
+        background: #eff6ff;
+        color: #2563eb;
+    }
+
+    .badge-pengawas {
+        background: #f5f3ff;
+        color: #7c3aed;
+    }
+
+    .lk-card .legend {
+        margin: 0;
+        border: none;
+        border-bottom: 1px solid #e5e7eb;
+        border-radius: 0;
+        background: #ffffff;
+        padding: 10px 16px;
     }
 
     .table-wrap {
@@ -338,33 +446,52 @@ if (!empty($afdeling)) {
     </button>
 </div>
 
-<!-- Legend -->
-<div class="legend">
-    <strong style="color:#064e3b;">Keterangan:</strong>
-    <span><span class="badge b-h">H</span> Hadir</span>
-    <span><span class="badge b-a">A</span> Alpha</span>
-    <span><span class="badge b-i">I</span> Izin</span>
-    <span><span class="badge b-s">S</span> Sakit</span>
-    <span><span class="badge b-c">C</span> Cuti</span>
-    <span><span style="color:#94a3b8;">-</span> Tidak Ada Data</span>
-</div>
+<!-- Card Laporan -->
+<div class="lk-card print-area">
+    <div class="lk-header-main">
+        <p class="lk-title">Laporan Absensi <?= htmlspecialchars($daftar_jabatan[$jabatan]) ?><?= !empty($afdeling) ? ' (' . htmlspecialchars($afdeling) . ')' : '' ?></p>
+        <p class="lk-subtitle">
+            <span>Periode: <strong>01 &ndash; <?= $jumlah_hari ?> <?= $nama_bulan[$bulan] ?> <?= $tahun ?></strong></span>
+            <span class="sep">|</span>
+            <span>Afdeling: <strong><?= !empty($afdeling) ? htmlspecialchars($afdeling) : 'Semua Afdeling' ?></strong></span>
+            <span class="sep">|</span>
+            <span>Jabatan: <strong><?= htmlspecialchars($daftar_jabatan[$jabatan]) ?></strong></span>
+            <?php if (!empty($nama_kerani_tampil)): ?>
+                <span class="sep">|</span>
+                <span>Kerani: <strong><?= htmlspecialchars($nama_kerani_tampil) ?></strong></span>
+            <?php endif; ?>
+            <?php if (!empty($nama_mandor_tampil) && $jabatan === 'karyawan'): ?>
+                <span class="sep">|</span>
+                <span>Mandor: <strong><?= htmlspecialchars($nama_mandor_tampil) ?></strong></span>
+            <?php endif; ?>
+            <?php if (!empty($cari)): ?>
+                <span class="sep">|</span>
+                <span>Pencarian: <strong>&ldquo;<?= htmlspecialchars($cari) ?>&rdquo;</strong></span>
+            <?php endif; ?>
+            <span class="sep">|</span>
+            <span class="tipe-badge badge-<?= $jabatan ?>"><?= htmlspecialchars($daftar_jabatan[$jabatan]) ?></span>
+        </p>
+    </div>
 
-<!-- Table -->
-<div class="print-area">
-    <div style="text-align:center; margin-bottom:16px; display:none;" class="print-kop">
-        <strong style="font-size:15px;">REKAPAN ABSENSI KARYAWAN</strong><br>
-        <span style="font-size:12px;">Periode: <?= $nama_bulan[$bulan] . ' ' . $tahun ?> | PT Damai Jaya Lestari</span>
-        <hr style="margin:8px 0;">
+    <!-- Legend -->
+    <div class="legend">
+        <strong style="color:#064e3b;">Keterangan:</strong>
+        <span><span class="badge b-h">H</span> Hadir</span>
+        <span><span class="badge b-a">A</span> Alpha</span>
+        <span><span class="badge b-i">I</span> Izin</span>
+        <span><span class="badge b-s">S</span> Sakit</span>
+        <span><span class="badge b-c">C</span> Cuti</span>
+        <span><span style="color:#94a3b8;">-</span> Tidak Ada Data</span>
     </div>
 
     <?php if (count($list_karyawan) > 0): ?>
-        <div class="table-wrap">
+        <div class="table-wrap" style="border:none; border-radius:0; box-shadow:none;">
             <table class="table-absen">
                 <thead>
                     <tr>
                         <th rowspan="2" style="width:30px;">No</th>
                         <th rowspan="2" style="min-width:70px;">NIK</th>
-                        <th rowspan="2" style="min-width:160px; text-align:left;">Nama Karyawan</th>
+                        <th rowspan="2" style="min-width:160px; text-align:left;">Nama Personel</th>
                         <th rowspan="2">Afdeling</th>
                         <?php for ($i = 1; $i <= $jumlah_hari; $i++): ?>
                             <th style="min-width:26px;"><?= $i ?></th>
@@ -438,7 +565,7 @@ if (!empty($afdeling)) {
             </table>
         </div>
     <?php else: ?>
-        <div style="text-align:center; padding:48px; background:white; border-radius:14px; border:1px solid #e5e7eb; color:#9ca3af;">
+        <div style="text-align:center; padding:48px; background:white; color:#9ca3af;">
             <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" stroke-width="1.5" style="margin:0 auto 12px;display:block;">
                 <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
                 <circle cx="9" cy="7" r="4"></circle>
@@ -465,10 +592,17 @@ if (!empty($afdeling)) {
         <h3>Laporan Absensi &mdash; <?= $nama_bulan[$bulan] ?> <?= $tahun ?></h3>
     </div>
     <div class="doc-meta">
-        <div><strong>Afdeling&nbsp;:</strong> <?= !empty($afdeling) ? htmlspecialchars($afdeling) : 'Semua Afdeling' ?></div>
-        <div><strong>Jabatan&nbsp;&nbsp;:</strong> <?= htmlspecialchars($daftar_jabatan[$jabatan]) ?></div>
+        <div><strong>Periode&nbsp;&nbsp;&nbsp;&nbsp;:</strong> 01 &ndash; <?= $jumlah_hari ?> <?= $nama_bulan[$bulan] ?> <?= $tahun ?></div>
+        <div><strong>Afdeling&nbsp;&nbsp;&nbsp;:</strong> <?= !empty($afdeling) ? htmlspecialchars($afdeling) : 'Semua Afdeling' ?></div>
+        <div><strong>Jabatan&nbsp;&nbsp;&nbsp;&nbsp;:</strong> <?= htmlspecialchars($daftar_jabatan[$jabatan]) ?></div>
+        <?php if (!empty($nama_kerani_tampil)): ?>
+            <div><strong>Kerani&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:</strong> <?= htmlspecialchars($nama_kerani_tampil) ?></div>
+        <?php endif; ?>
+        <?php if (!empty($nama_mandor_tampil) && $jabatan === 'karyawan'): ?>
+            <div><strong>Mandor&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:</strong> <?= htmlspecialchars($nama_mandor_tampil) ?></div>
+        <?php endif; ?>
         <div><strong>Jumlah Hari:</strong> <?= $jumlah_hari ?> hari</div>
-        <div><strong>Dicetak&nbsp;&nbsp;:</strong> <?= date('d F Y, H:i') ?></div>
+        <div><strong>Dicetak&nbsp;&nbsp;&nbsp;&nbsp;:</strong> <?= date('d F Y, H:i') ?></div>
     </div>
 
     <!-- Keterangan Kode -->

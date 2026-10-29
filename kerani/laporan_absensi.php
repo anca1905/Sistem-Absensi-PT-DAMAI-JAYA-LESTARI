@@ -33,6 +33,28 @@ $nama_bulan = array(
     '12' => 'Desember'
 );
 $penandatangan = getReportSignatories($conn, $_SESSION['afdeling'] ?? '');
+$afdeling_kerani = $_SESSION['afdeling'] ?? '';
+$nama_kerani_tampil = $penandatangan['kerani'] ?: ($_SESSION['nama'] ?? '');
+$nama_mandor_tampil = '';
+if (!empty($afdeling_kerani)) {
+    $num_afd = preg_replace('/[^0-9]/', '', $afdeling_kerani);
+    $afd_safe = mysqli_real_escape_string($conn, $afdeling_kerani);
+    if ($num_afd !== '') {
+        $where_mandor = "(afdeling = '$afd_safe' OR afdeling = 'Afd $num_afd' OR afdeling = 'Afdeling $num_afd' OR afdeling = '$num_afd' OR afdeling LIKE '%$num_afd%')";
+    } else {
+        $where_mandor = "(afdeling = '$afd_safe' OR afdeling LIKE '%$afd_safe%')";
+    }
+    $q_mandor = mysqli_query($conn, "SELECT name FROM users WHERE (role='mandor' OR jabatan='mandor' OR jabatan LIKE '%mandor%') AND $where_mandor ORDER BY name ASC");
+    $arr_mandor = [];
+    if ($q_mandor) {
+        while ($m = mysqli_fetch_assoc($q_mandor)) {
+            $arr_mandor[] = $m['name'];
+        }
+    }
+    if (!empty($arr_mandor)) {
+        $nama_mandor_tampil = implode(', ', $arr_mandor);
+    }
+}
 ?>
 
 <style>
@@ -111,6 +133,56 @@ $penandatangan = getReportSignatories($conn, $_SESSION['afdeling'] ?? '');
         font-weight: 700;
         color: var(--text-main);
         margin: 0;
+    }
+
+    .lk-subtitle {
+        font-size: 13px;
+        color: #64748b;
+        margin-top: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 6px;
+        line-height: 1.6;
+    }
+
+    .lk-subtitle .sep {
+        color: #cbd5e1;
+        font-weight: 400;
+    }
+
+    .lk-subtitle strong {
+        color: #1f2937;
+    }
+
+    .tipe-badge {
+        display: inline-block;
+        padding: 3px 10px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: .5px;
+    }
+
+    .badge-karyawan {
+        background: #fee2e2;
+        color: #dc2626;
+    }
+
+    .badge-mandor {
+        background: #fef3c7;
+        color: #d97706;
+    }
+
+    .badge-kerani {
+        background: #eff6ff;
+        color: #2563eb;
+    }
+
+    .badge-pengawas {
+        background: #f5f3ff;
+        color: #7c3aed;
     }
 
     .table-container {
@@ -225,7 +297,24 @@ $penandatangan = getReportSignatories($conn, $_SESSION['afdeling'] ?? '');
 
 <div class="card">
     <div class="card-header">
-        <h3 class="card-title">Laporan Absensi Periode <?= $nama_bulan[$bulan] ?> <?= $tahun ?></h3>
+        <h3 class="card-title">Laporan Absensi <?= ucfirst($role_filter) ?><?= !empty($_SESSION['afdeling']) ? ' (' . htmlspecialchars($_SESSION['afdeling']) . ')' : '' ?></h3>
+        <p class="lk-subtitle">
+            <span>Periode: <strong>01 &ndash; <?= $jumlah_hari ?> <?= $nama_bulan[$bulan] ?> <?= $tahun ?></strong></span>
+            <span class="sep">|</span>
+            <span>Afdeling: <strong><?= htmlspecialchars($_SESSION['afdeling'] ?? '-') ?></strong></span>
+            <span class="sep">|</span>
+            <span>Jabatan: <strong><?= ucfirst($role_filter) ?></strong></span>
+            <?php if (!empty($nama_kerani_tampil) && $nama_kerani_tampil !== '( ................................... )'): ?>
+                <span class="sep">|</span>
+                <span>Kerani: <strong><?= htmlspecialchars($nama_kerani_tampil) ?></strong></span>
+            <?php endif; ?>
+            <?php if (!empty($nama_mandor_tampil) && $role_filter === 'karyawan'): ?>
+                <span class="sep">|</span>
+                <span>Mandor: <strong><?= htmlspecialchars($nama_mandor_tampil) ?></strong></span>
+            <?php endif; ?>
+            <span class="sep">|</span>
+            <span class="tipe-badge badge-<?= $role_filter ?>"><?= ucfirst($role_filter) ?></span>
+        </p>
     </div>
 
     <div class="table-container">
