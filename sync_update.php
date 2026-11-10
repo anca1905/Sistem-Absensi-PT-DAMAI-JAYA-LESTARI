@@ -25,13 +25,18 @@ echo "Direktori   : " . __DIR__ . "\n\n";
 
 // 1. Git Pull
 echo "--- [1/3] Menarik Update Terbaru dari GitHub (git pull) ---\n";
-$output = [];
-$return_var = 0;
-exec("git pull origin main 2>&1", $output, $return_var);
-if (!empty($output)) {
-    echo implode("\n", $output) . "\n";
+if (function_exists('exec')) {
+    $output = [];
+    $return_var = 0;
+    @exec("git pull origin main 2>&1", $output, $return_var);
+    if (!empty($output)) {
+        echo implode("\n", $output) . "\n";
+    }
+    echo "Status Git Pull: " . ($return_var === 0 ? "SUKSES (OK)" : "KODE RETURN: $return_var") . "\n\n";
+} else {
+    echo "INFO: Eksekusi shell/exec() dinonaktifkan pada php.ini server untuk alasan keamanan (aaPanel disable_functions).\n";
+    echo "Update file kode dilakukan melalui SSH / aaPanel Git Manager.\n\n";
 }
-echo "Status Git Pull: " . ($return_var === 0 ? "SUKSES (OK)" : "KODE RETURN: $return_var") . "\n\n";
 
 // 2. Migrasi Database (Kolom keterangan di tabel absensis)
 echo "--- [2/3] Memeriksa Struktur Database (absensis) ---\n";
