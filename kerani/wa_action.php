@@ -2,69 +2,143 @@
 // kerani/wa_action.php
 require '../config/config.php';
 
-// Validasi parameter
-if (!isset($_GET['id']) || !isset($_GET['action']) || !isset($_GET['token'])) {
-    die("Akses ditolak. Parameter tidak lengkap.");
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
 }
 
-$id = (int)$_GET['id'];
-$action = $_GET['action']; // 'setuju' atau 'tolak'
-$token = $_GET['token'];
+$id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+$user_role = 'karyawan';
 
-// Verifikasi token (MD5 dari ID + Secret Key)
-$secret_key = "DJL_AMANDA_SECRET";
-$expected_token = md5($id . $secret_key);
-
-if ($token !== $expected_token) {
-    die("Akses ditolak. Token tidak valid.");
-}
-
-// Cek apakah data perizinan ada dan ambil info user
-$q_cek = mysqli_query($conn, "SELECT p.*, u.name, u.no_hp FROM perizinan p JOIN users u ON p.user_id = u.id WHERE p.id = $id");
-if (mysqli_num_rows($q_cek) === 0) {
-    die("Data pengajuan tidak ditemukan.");
-}
-
-$row = mysqli_fetch_assoc($q_cek);
-
-// Cegah validasi ulang jika sudah divalidasi
-if ($row['status'] !== 'pending') {
-    die("Pengajuan ini sudah divalidasi dengan status: <b>" . strtoupper($row['status']) . "</b>.");
-}
-
-// Update status
-$status_db = ($action == 'setuju') ? 'disetujui' : 'ditolak';
-$q_update = mysqli_query($conn, "UPDATE perizinan SET status='$status_db' WHERE id=$id");
-
-if ($q_update) {
-    if ($status_db == 'disetujui') {
-        $uid = $row['user_id'];
-        $tgl = $row['tanggal_izin'];
-        $jenis = strtolower($row['jenis']);
-        
-        $c_abs = mysqli_query($conn, "SELECT id FROM absensis WHERE user_id='$uid' AND tanggal='$tgl'");
-        if(mysqli_num_rows($c_abs) > 0) {
-            mysqli_query($conn, "UPDATE absensis SET status_kehadiran='$jenis' WHERE user_id='$uid' AND tanggal='$tgl'");
-        } else {
-            mysqli_query($conn, "INSERT INTO absensis (user_id, tanggal, waktu_masuk, status_kehadiran) VALUES ('$uid', '$tgl', '00:00:00', '$jenis')");
-        }
+if ($id > 0) {
+    $q_role = mysqli_query($conn, "SELECT u.role FROM perizinan p JOIN users u ON p.user_id = u.id WHERE p.id = $id");
+    if ($d = mysqli_fetch_assoc($q_role)) {
+        $user_role = $d['role'];
     }
+}
 
-    // Kirim WA notifikasi ke pemohon
-    if (!empty($row['no_hp'])) {
-        $pesan = "Halo *{$row['name']}*,\n\nPengajuan *{$row['jenis']}* Anda untuk tanggal *{$row['tanggal_izin']}* telah *".strtoupper($status_db)."* oleh Kerani.\n\n_Ini adalah pesan otomatis dari Sistem Informasi Karyawan PT DJL._";
-        sendWA($row['no_hp'], $pesan);
-    }
-
-    echo "<div style='font-family: sans-serif; text-align: center; margin-top: 50px;'>";
-    if ($action == 'setuju') {
-        echo "<h2 style='color: #16a34a;'>✅ Pengajuan Berhasil Disetujui</h2>";
-    } else {
-        echo "<h2 style='color: #dc2626;'>❌ Pengajuan Berhasil Ditolak</h2>";
-    }
-    echo "<p>Notifikasi telah dikirimkan ke WhatsApp pemohon ({$row['name']}). Anda sudah bisa menutup halaman ini.</p>";
-    echo "</div>";
-} else {
-    echo "Gagal memperbarui database: " . mysqli_error($conn);
+// Jika pengguna sudah login sebagai kerani, langsung arahkan ke halaman validasi sistem
+if (isset($_SESSION['role']) && $_SESSION['role'] === 'kerani') {
+    header("Location: " . BASE_URL . "kerani/validasi_izin.php?role=" . urlencode($user_role));
+    exit;
 }
 ?>
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verifikasi Melalui Sistem - PT DJL</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        }
+        body {
+            background-color: #f1f5f9;
+            color: #0f172a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .notice-card {
+            background: #ffffff;
+            max-width: 500px;
+            width: 100%;
+            border-radius: 20px;
+            padding: 36px 30px;
+            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+            border: 1px solid #e2e8f0;
+            text-align: center;
+        }
+        .icon-box {
+            width: 72px;
+            height: 72px;
+            border-radius: 20px;
+            background: #eff6ff;
+            color: #3b82f6;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            margin-bottom: 20px;
+        }
+        h2 {
+            font-size: 22px;
+            font-weight: 800;
+            color: #0f172a;
+            margin-bottom: 12px;
+        }
+        p {
+            font-size: 14px;
+            line-height: 1.6;
+            color: #64748b;
+            margin-bottom: 24px;
+        }
+        .info-pill {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 14px 18px;
+            text-align: left;
+            font-size: 13px;
+            color: #334155;
+            margin-bottom: 24px;
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+        }
+        .info-pill i {
+            color: #3b82f6;
+            margin-top: 2px;
+            font-size: 16px;
+        }
+        .btn-portal {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            padding: 14px 20px;
+            background: #0f172a;
+            color: #ffffff;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 14px;
+            border-radius: 12px;
+            transition: all 0.2s;
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+        }
+        .btn-portal:hover {
+            background: #1e293b;
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <div class="notice-card">
+        <div class="icon-box">
+            <i class="fa-solid fa-shield-halved"></i>
+        </div>
+        <h2>Verifikasi Melalui Sistem</h2>
+        <p>
+            Konfirmasi persetujuan atau penolakan perizinan karyawan dilakukan sepenuhnya melalui <b>Sistem Web AMANDA</b> untuk menjaga keamanan dan keabsahan data.
+        </p>
+        <div class="info-pill">
+            <i class="fa-solid fa-circle-info"></i>
+            <div>
+                WhatsApp hanya digunakan untuk <b>notifikasi pemberitahuan</b>. Silakan login menggunakan akun Kerani untuk memverifikasi perizinan.
+            </div>
+        </div>
+        <a href="<?= BASE_URL ?>kerani/validasi_izin.php?role=<?= urlencode($user_role) ?>" class="btn-portal">
+            <i class="fa-solid fa-arrow-right-to-bracket"></i>
+            Buka Menu Validasi Izin Sistem
+        </a>
+    </div>
+</body>
+</html>

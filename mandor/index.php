@@ -209,6 +209,14 @@ include 'templates/header.php';
             <div class="menu-text">Laporan Keseluruhan</div>
             <svg class="menu-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
         </a>
+
+        <a href="profil.php" class="menu-btn">
+            <div class="menu-icon" style="background:#e0e7ff;color:#4338ca;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            </div>
+            <div class="menu-text">Biodata Diri &amp; Ganti Password</div>
+            <svg class="menu-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </a>
         
         <!-- DISABLED: Slip Gaji
         <a href="slip_gaji.php" class="menu-btn">

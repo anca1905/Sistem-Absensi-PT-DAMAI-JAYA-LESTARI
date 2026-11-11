@@ -11,6 +11,7 @@ if (isset($_POST['simpan_data'])) {
     $no_hp = isset($_POST['no_hp']) ? mysqli_real_escape_string($conn, $_POST['no_hp']) : '';
     $afdeling = isset($_POST['afdeling']) ? mysqli_real_escape_string($conn, $_POST['afdeling']) : '';
     $role = isset($_POST['role']) ? mysqli_real_escape_string($conn, $_POST['role']) : (isset($_GET['role']) ? $_GET['role'] : 'karyawan');
+    $alamat = isset($_POST['alamat']) ? mysqli_real_escape_string($conn, trim($_POST['alamat'])) : '';
 
     $password_sql = "";
     if (!empty($_POST['password'])) {
@@ -25,11 +26,11 @@ if (isset($_POST['simpan_data'])) {
             exit;
         }
         $pw_hash = !empty($_POST['password']) ? password_hash($_POST['password'], PASSWORD_DEFAULT) : password_hash('123456', PASSWORD_DEFAULT);
-        $query = "INSERT INTO users (nik, name, email, no_hp, password, role, afdeling) 
-                  VALUES ('$nik', '$nama', '$email', '$no_hp', '$pw_hash', '$role', '$afdeling')";
+        $query = "INSERT INTO users (nik, name, email, no_hp, password, role, afdeling, alamat) 
+                  VALUES ('$nik', '$nama', '$email', '$no_hp', '$pw_hash', '$role', '$afdeling', '$alamat')";
     } else {
         $query = "UPDATE users SET 
-                  nik='$nik', name='$nama', email='$email', no_hp='$no_hp', afdeling='$afdeling', role='$role' $password_sql 
+                  nik='$nik', name='$nama', email='$email', no_hp='$no_hp', afdeling='$afdeling', role='$role', alamat='$alamat' $password_sql 
                   WHERE id='$id'";
     }
 

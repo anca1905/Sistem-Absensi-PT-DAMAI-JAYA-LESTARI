@@ -40,8 +40,10 @@ if (isset($_POST['simpan_data'])) {
         }
 
         $afdeling_pengawas = isset($_SESSION['afdeling']) ? mysqli_real_escape_string($conn, $_SESSION['afdeling']) : '';
+        $raw_pw = !empty($_POST['password']) ? $_POST['password'] : '123456';
+        $hashed_pw = password_hash($raw_pw, PASSWORD_DEFAULT);
         $query = "INSERT INTO users (nik, name, email, password, role, jabatan, afdeling) 
-                  VALUES ('$nik', '$nama', '$email', '" . $_POST['password'] . "', 'karyawan', '$jabatan', '$afdeling_pengawas')";
+                  VALUES ('$nik', '$nama', '$email', '$hashed_pw', 'karyawan', '$jabatan', '$afdeling_pengawas')";
     } else {
         // --- LOGIKA UPDATE ---
         $query = "UPDATE users SET 

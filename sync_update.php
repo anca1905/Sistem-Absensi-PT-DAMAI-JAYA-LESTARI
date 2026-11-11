@@ -38,8 +38,8 @@ if (function_exists('exec')) {
     echo "Update file kode dilakukan melalui SSH / aaPanel Git Manager.\n\n";
 }
 
-// 2. Migrasi Database (Kolom keterangan di tabel absensis)
-echo "--- [2/3] Memeriksa Struktur Database (absensis) ---\n";
+// 2. Migrasi Database (absensis & users)
+echo "--- [2/3] Memeriksa Struktur Database (absensis & users) ---\n";
 $check = mysqli_query($conn, "SHOW COLUMNS FROM absensis LIKE 'keterangan'");
 if ($check && mysqli_num_rows($check) == 0) {
     $alt = mysqli_query($conn, "ALTER TABLE absensis ADD COLUMN keterangan VARCHAR(255) NULL AFTER status_kehadiran");
@@ -50,6 +50,30 @@ if ($check && mysqli_num_rows($check) == 0) {
     }
 } else {
     echo "OK: Kolom 'keterangan' sudah aktif di tabel absensis.\n";
+}
+
+$check_alamat = mysqli_query($conn, "SHOW COLUMNS FROM users LIKE 'alamat'");
+if ($check_alamat && mysqli_num_rows($check_alamat) == 0) {
+    $alt2 = mysqli_query($conn, "ALTER TABLE users ADD COLUMN alamat TEXT NULL AFTER no_hp");
+    if ($alt2) {
+        echo "SUKSES: Kolom 'alamat' berhasil ditambahkan ke tabel users.\n";
+    } else {
+        echo "GAGAL: " . mysqli_error($conn) . "\n";
+    }
+} else {
+    echo "OK: Kolom 'alamat' sudah aktif di tabel users.\n";
+}
+
+$check_jk = mysqli_query($conn, "SHOW COLUMNS FROM users LIKE 'jenis_kelamin'");
+if ($check_jk && mysqli_num_rows($check_jk) == 0) {
+    $alt3 = mysqli_query($conn, "ALTER TABLE users ADD COLUMN jenis_kelamin VARCHAR(20) NULL AFTER afdeling");
+    if ($alt3) {
+        echo "SUKSES: Kolom 'jenis_kelamin' berhasil ditambahkan ke tabel users.\n";
+    } else {
+        echo "GAGAL: " . mysqli_error($conn) . "\n";
+    }
+} else {
+    echo "OK: Kolom 'jenis_kelamin' sudah aktif di tabel users.\n";
 }
 echo "\n";
 

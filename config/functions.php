@@ -224,3 +224,20 @@ function getStatusBadge($status) {
     }
     return '<span class="status-badge ' . $info['class'] . '">' . $info['kode'] . '</span>';
 }
+
+// Memastikan kolom alamat dan jenis_kelamin selalu ada di tabel users
+function ensureUserColumns($conn) {
+    if (!$conn) return;
+    static $checked = false;
+    if ($checked) return;
+    $checked = true;
+
+    $res = @mysqli_query($conn, "SHOW COLUMNS FROM users LIKE 'alamat'");
+    if ($res && mysqli_num_rows($res) == 0) {
+        @mysqli_query($conn, "ALTER TABLE users ADD COLUMN alamat TEXT NULL AFTER no_hp");
+    }
+    $res_jk = @mysqli_query($conn, "SHOW COLUMNS FROM users LIKE 'jenis_kelamin'");
+    if ($res_jk && mysqli_num_rows($res_jk) == 0) {
+        @mysqli_query($conn, "ALTER TABLE users ADD COLUMN jenis_kelamin VARCHAR(20) NULL AFTER afdeling");
+    }
+}

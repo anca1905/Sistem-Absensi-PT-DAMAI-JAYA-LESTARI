@@ -28,6 +28,10 @@ if (!empty($afdeling)) {
     $q_tdk = mysqli_query($conn, "SELECT COUNT(*) as total FROM absensis WHERE tanggal='$today' AND (LOWER(status_kehadiran) IN ('alpha', 'alpa', 'alfa', 'terlambat', 'izin', 'sakit', 'cuti'))");
 }
 $total_tdk_hadir = mysqli_fetch_assoc($q_tdk)['total'] ?? 0;
+
+// 4. Total Izin Menunggu Validasi Sistem
+$q_izin_p = mysqli_query($conn, "SELECT COUNT(*) as total FROM perizinan WHERE status='pending'");
+$total_izin_pending = mysqli_fetch_assoc($q_izin_p)['total'] ?? 0;
 ?>
 
 <style>
@@ -181,6 +185,20 @@ $total_tdk_hadir = mysqli_fetch_assoc($q_tdk)['total'] ?? 0;
             <p><?= $total_tdk_hadir ?></p>
         </div>
     </div>
+
+    <a href="validasi_izin.php" class="stat-card" style="text-decoration: none; color: inherit;">
+        <div class="stat-icon" style="background: <?= $total_izin_pending > 0 ? '#fef2f2' : '#f0fdf4' ?>; color: <?= $total_izin_pending > 0 ? '#ef4444' : '#16a34a' ?>;">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <path d="M9 15l2 2 4-4"></path>
+            </svg>
+        </div>
+        <div class="stat-info">
+            <h3>Izin Perlu Validasi</h3>
+            <p><?= $total_izin_pending ?></p>
+        </div>
+    </a>
 </div>
 
 <?php include 'templates/footer.php'; ?>

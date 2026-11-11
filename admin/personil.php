@@ -6,24 +6,22 @@ require '../config/config.php';
 // 1. Handle Tambah / Edit Data
 if (isset($_POST['simpan_data'])) {
     $id = $_POST['id_karyawan']; // Hidden input
-    $nik = mysqli_real_escape_string($conn, $_POST['nik']);
-    $nama = mysqli_real_escape_string($conn, $_POST['nama']);
-    $email = mysqli_real_escape_string($conn, $_POST['email']);
-    $no_hp = isset($_POST['no_hp']) ? mysqli_real_escape_string($conn, $_POST['no_hp']) : '';
-    $afdeling = mysqli_real_escape_string($conn, $_POST['afdeling']);
-    $role = mysqli_real_escape_string($conn, $_POST['role']);
-    $jenis_kelamin = isset($_POST['jenis_kelamin']) ? mysqli_real_escape_string($conn, $_POST['jenis_kelamin']) : '';
+    $nik = mysqli_real_escape_string($conn, trim($_POST['nik']));
+    $nama = mysqli_real_escape_string($conn, trim($_POST['nama']));
+    $email = mysqli_real_escape_string($conn, trim($_POST['email']));
+    $no_hp = isset($_POST['no_hp']) ? mysqli_real_escape_string($conn, trim($_POST['no_hp'])) : '';
+    $afdeling = mysqli_real_escape_string($conn, trim($_POST['afdeling']));
+    $role = mysqli_real_escape_string($conn, trim($_POST['role']));
+    $jenis_kelamin = isset($_POST['jenis_kelamin']) ? mysqli_real_escape_string($conn, trim($_POST['jenis_kelamin'])) : '';
+    $alamat = isset($_POST['alamat']) ? mysqli_real_escape_string($conn, trim($_POST['alamat'])) : '';
 
     // Password opsional (hanya diupdate jika diisi)
+    // Admin tidak dapat melihat password plaintext karyawan karena otomatis di-hash
     $password_sql = "";
-    // ...
     if (!empty($_POST['password'])) {
-        // JANGAN: $password = $_POST['password'];
-        // GANTI DENGAN INI (HASHING):
         $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
         $password_sql = ", password='$password'";
     }
-    // ...
 
     if (empty($id)) {
         // --- LOGIKA CREATE (INSERT) ---
@@ -33,8 +31,12 @@ if (isset($_POST['simpan_data'])) {
             exit;
         }
 
-        $query = "INSERT INTO users (nik, name, email, no_hp, password, role, afdeling, jenis_kelamin) 
-                  VALUES ('$nik', '$nama', '$email', '$no_hp', '" . $_POST['password'] . "', '$role', '$afdeling', '$jenis_kelamin')";
+        // Default password dibuatkan oleh admin (default 123456 jika kosong)
+        $raw_pw = !empty($_POST['password']) ? $_POST['password'] : '123456';
+        $hashed_pw = password_hash($raw_pw, PASSWORD_DEFAULT);
+
+        $query = "INSERT INTO users (nik, name, email, no_hp, password, role, afdeling, jenis_kelamin, alamat) 
+                  VALUES ('$nik', '$nama', '$email', '$no_hp', '$hashed_pw', '$role', '$afdeling', '$jenis_kelamin', '$alamat')";
     } else {
         // --- LOGIKA UPDATE ---
         $query = "UPDATE users SET 
@@ -44,13 +46,14 @@ if (isset($_POST['simpan_data'])) {
                   no_hp='$no_hp',
                   afdeling='$afdeling',
                   role='$role',
-                  jenis_kelamin='$jenis_kelamin'
+                  jenis_kelamin='$jenis_kelamin',
+                  alamat='$alamat'
                   $password_sql
                   WHERE id='$id'";
     }
 
     if (mysqli_query($conn, $query)) {
-        swalRedirect('Data berhasil disimpan!', 'personil.php', 'success');
+        swalRedirect('Data personil berhasil disimpan!', 'personil.php', 'success');
     } else {
         swalAlert('Gagal menyimpan: ' . mysqli_error($conn), 'error');
     }
@@ -157,6 +160,15 @@ include 'templates/header.php';
 
     .btn-warning:hover {
         background-color: #d97706;
+    }
+
+    .btn-info {
+        background-color: #0284c7;
+        color: white;
+    }
+
+    .btn-info:hover {
+        background-color: #0369a1;
     }
 
     /* 2. Styling Tabel Professional */
@@ -385,16 +397,20 @@ include 'templates/header.php';
                             <div style="font-size: 12px; color: #64748b; text-transform: capitalize;"><?= htmlspecialchars($row['role']) ?></div>
                         </td>
                         <td style="text-align: right;" class="aksi-column">
+                            <button onclick='lihatBiodata(<?= htmlspecialchars(json_encode($row), ENT_QUOTES, "UTF-8") ?>)' class="btn btn-info" style="padding: 6px 10px; font-size: 11px;" title="Lihat Biodata Lengkap">
+                                Biodata
+                            </button>
+
                             <a href="cetak_kartu.php?id=<?= $row['id'] ?>" target="_blank" class="btn btn-primary" style="padding: 6px 10px; font-size: 11px;">
                                 ID Card
                             </a>
 
                             <?php if ($_SESSION['role'] === 'admin'): ?>
-                                <button onclick='editData(<?= htmlspecialchars(json_encode($row), ENT_QUOTES, "UTF-8") ?>)' class="btn btn-warning" style="padding: 6px 10px; font-size: 11px;">
+                                <button onclick='editData(<?= htmlspecialchars(json_encode($row), ENT_QUOTES, "UTF-8") ?>)' class="btn btn-warning" style="padding: 6px 10px; font-size: 11px;" title="Edit Data Karyawan">
                                     Edit
                                 </button>
 
-                                <button onclick='konfirmasiHapus(<?= $row['id'] ?>)' class="btn btn-danger" style="padding: 6px 10px; font-size: 11px;">
+                                <button onclick='konfirmasiHapus(<?= $row['id'] ?>)' class="btn btn-danger" style="padding: 6px 10px; font-size: 11px;" title="Hapus Karyawan">
                                     Hapus
                                 </button>
                             <?php endif; ?>
@@ -580,9 +596,14 @@ include 'templates/header.php';
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label">Password</label>
+                    <label class="form-label">Alamat Lengkap</label>
+                    <textarea name="alamat" id="alamat" class="form-input" rows="2" placeholder="Contoh: Jl. Sawit Raya Blok B No. 12"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Password Akun</label>
                     <div style="position:relative;">
-                        <input type="password" id="password" name="password" class="form-input" placeholder="Isi hanya jika ingin mengubah password">
+                        <input type="password" id="password" name="password" class="form-input" placeholder="Kosongkan jika tidak ingin mereset password">
                         <button type="button" onclick="togglePassword()"
                             style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#94a3b8;padding:4px;display:flex;align-items:center;"
                             title="Tampilkan/Sembunyikan Password">
@@ -592,7 +613,9 @@ include 'templates/header.php';
                             </svg>
                         </button>
                     </div>
-                    <small style="color: #94a3b8; font-size: 11px;">Default untuk user baru disarankan: 123456</small>
+                    <div style="margin-top:6px; font-size:11.5px; color:#64748b; line-height: 1.4;">
+                        🔒 <b>Privasi Password</b>: Password karyawan terenkripsi otomatis (Admin tidak dapat melihat password karyawan). Default awal user baru: <b>123456</b>. Karyawan dapat mengubah passwordnya sendiri melalui menu profil.
+                    </div>
                 </div>
             </div>
 
@@ -604,15 +627,103 @@ include 'templates/header.php';
     </div>
 </div>
 
+<!-- Modal Detail Biodata Karyawan -->
+<div id="modalBiodata" class="modal-overlay">
+    <div class="modal-box" style="max-width: 550px;">
+        <div class="modal-header">
+            <h3 class="modal-title">Biodata Lengkap Pegawai</h3>
+            <button type="button" class="modal-close" onclick="closeModalBiodata()">&times;</button>
+        </div>
+        <div class="modal-body" style="padding: 24px;">
+            <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid #e2e8f0;">
+                <div id="bio_avatar" style="width: 54px; height: 54px; border-radius: 14px; background: #eff6ff; color: #2563eb; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 800;">
+                    K
+                </div>
+                <div>
+                    <h3 id="bio_nama" style="margin: 0 0 4px 0; font-size: 18px; color: #0f172a; font-weight: 800;">Nama Karyawan</h3>
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <span id="bio_role_badge" style="background: #e0e7ff; color: #4338ca; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase;">KARYAWAN</span>
+                        <span id="bio_afdeling_badge" style="background: #f1f5f9; color: #475569; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 600;">Afdeling</span>
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">
+                <div style="background: #f8fafc; padding: 10px 14px; border-radius: 8px; border: 1px solid #f1f5f9;">
+                    <div style="font-size: 11px; color: #64748b; font-weight: 600; text-transform: uppercase;">NIK (Nomor Induk)</div>
+                    <div id="bio_nik" style="font-weight: 700; color: #0f172a; margin-top: 2px; font-family: monospace;">-</div>
+                </div>
+                <div style="background: #f8fafc; padding: 10px 14px; border-radius: 8px; border: 1px solid #f1f5f9;">
+                    <div style="font-size: 11px; color: #64748b; font-weight: 600; text-transform: uppercase;">Jenis Kelamin</div>
+                    <div id="bio_jk" style="font-weight: 700; color: #0f172a; margin-top: 2px;">-</div>
+                </div>
+                <div style="background: #f8fafc; padding: 10px 14px; border-radius: 8px; border: 1px solid #f1f5f9;">
+                    <div style="font-size: 11px; color: #64748b; font-weight: 600; text-transform: uppercase;">Email Akun</div>
+                    <div id="bio_email" style="font-weight: 600; color: #0f172a; margin-top: 2px; word-break: break-all;">-</div>
+                </div>
+                <div style="background: #f8fafc; padding: 10px 14px; border-radius: 8px; border: 1px solid #f1f5f9;">
+                    <div style="font-size: 11px; color: #64748b; font-weight: 600; text-transform: uppercase;">No. HP / WhatsApp</div>
+                    <div id="bio_nohp" style="font-weight: 700; color: #0f172a; margin-top: 2px;">-</div>
+                </div>
+            </div>
+
+            <div style="background: #f8fafc; padding: 12px 14px; border-radius: 8px; border: 1px solid #f1f5f9; margin-bottom: 14px;">
+                <div style="font-size: 11px; color: #64748b; font-weight: 600; text-transform: uppercase;">Alamat Lengkap</div>
+                <div id="bio_alamat" style="font-size: 13.5px; color: #1e293b; margin-top: 4px; line-height: 1.5;">-</div>
+            </div>
+
+            <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 10px 14px; font-size: 12px; color: #1e40af; display: flex; align-items: flex-start; gap: 8px;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" style="flex-shrink:0; margin-top: 2px;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                <span><b>Keamanan Kata Sandi</b>: Terenkripsi satu arah dengan BCrypt. Admin tidak dapat melihat kata sandi karyawan demi privasi &amp; keamanan.</span>
+            </div>
+        </div>
+        <div class="modal-footer" style="display: flex; justify-content: space-between;">
+            <button type="button" onclick="closeModalBiodata()" class="btn" style="background: #f1f5f9; color: #475569;">Tutup</button>
+            <button type="button" id="btnEditFromBio" class="btn btn-warning">
+                Edit Data Ini
+            </button>
+        </div>
+    </div>
+</div>
+
 <script>
+    let currentSelectedData = null;
+
+    function lihatBiodata(data) {
+        currentSelectedData = data;
+        document.getElementById('bio_nama').innerText = data.name || '-';
+        document.getElementById('bio_avatar').innerText = (data.name || 'K').charAt(0).toUpperCase();
+        document.getElementById('bio_nik').innerText = data.nik || '-';
+        document.getElementById('bio_email').innerText = data.email || '-';
+        document.getElementById('bio_nohp').innerText = data.no_hp || '-';
+        document.getElementById('bio_role_badge').innerText = (data.role || 'Karyawan').toUpperCase();
+        document.getElementById('bio_afdeling_badge').innerText = 'Afdeling: ' + (data.afdeling || '-');
+        document.getElementById('bio_jk').innerText = data.jenis_kelamin || '-';
+        document.getElementById('bio_alamat').innerText = data.alamat || 'Belum diisi';
+
+        document.getElementById('modalBiodata').classList.add('show');
+    }
+
+    function closeModalBiodata() {
+        document.getElementById('modalBiodata').classList.remove('show');
+    }
+
+    document.getElementById('btnEditFromBio').addEventListener('click', function() {
+        closeModalBiodata();
+        if (currentSelectedData) {
+            editData(currentSelectedData);
+        }
+    });
+
     // Inisialisasi Data Edit
     function editData(data) {
-        document.getElementById('modalTitle').innerText = 'Edit Personil';
+        document.getElementById('modalTitle').innerText = 'Edit Data Personil';
         document.getElementById('id_karyawan').value = data.id;
-        document.getElementById('nama').value = data.name;
-        document.getElementById('nik').value = data.nik;
+        document.getElementById('nama').value = data.name || '';
+        document.getElementById('nik').value = data.nik || '';
         document.getElementById('email').value = data.email || '';
         document.getElementById('no_hp').value = data.no_hp || '';
+        document.getElementById('alamat').value = data.alamat || '';
         document.getElementById('password').value = ''; // Selalu kosongkan password
 
         if (data.role) document.getElementById('role').value = data.role;
@@ -630,6 +741,8 @@ include 'templates/header.php';
             document.getElementById('nik').value = '';
             document.getElementById('email').value = '';
             document.getElementById('no_hp').value = '';
+            document.getElementById('alamat').value = '';
+            document.getElementById('password').value = '';
             document.getElementById('role').value = 'karyawan';
             document.getElementById('afdeling').value = '';
             document.getElementById('jenis_kelamin').value = '';

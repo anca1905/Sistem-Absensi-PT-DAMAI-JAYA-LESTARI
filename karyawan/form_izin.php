@@ -25,43 +25,49 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $insert_id = mysqli_insert_id($conn);
         
         // Ambil data pemohon
-        $q_pemohon = mysqli_query($conn, "SELECT name FROM users WHERE id=$user_id");
-        $pemohon = mysqli_fetch_assoc($q_pemohon)['name'];
+        $q_pemohon = mysqli_query($conn, "SELECT name, nik, afdeling, role FROM users WHERE id=$user_id");
+        $d_pemohon = mysqli_fetch_assoc($q_pemohon);
+        $pemohon = $d_pemohon['name'] ?? 'Karyawan';
+        $nik_pemohon = $d_pemohon['nik'] ?? '-';
+        $afdeling_pemohon = $d_pemohon['afdeling'] ?? '';
+        $role_pemohon = $d_pemohon['role'] ?? 'karyawan';
 
-        // Cari nomor HP kerani
-        $q_kerani = mysqli_query($conn, "SELECT no_hp FROM users WHERE role='kerani' LIMIT 1");
+        // Cari nomor HP kerani (prioritas kerani afdeling pemohon, fallback ke kerani mana saja)
+        $q_kerani = mysqli_query($conn, "SELECT no_hp FROM users WHERE role='kerani'" . 
+            (!empty($afdeling_pemohon) ? " AND afdeling='$afdeling_pemohon'" : "") . " LIMIT 1");
+        if (!$q_kerani || mysqli_num_rows($q_kerani) == 0) {
+            $q_kerani = mysqli_query($conn, "SELECT no_hp FROM users WHERE role='kerani' LIMIT 1");
+        }
+
         if ($row_kerani = mysqli_fetch_assoc($q_kerani)) {
             $no_kerani = $row_kerani['no_hp'];
             if (!empty($no_kerani)) {
-                $secret_key = "DJL_AMANDA_SECRET";
-                $token = md5($insert_id . $secret_key);
-                $base_url = BASE_URL . "kerani/wa_action.php";
-                
-                $link_setuju = "{$base_url}?id={$insert_id}&action=setuju&token={$token}";
-                $link_tolak  = "{$base_url}?id={$insert_id}&action=tolak&token={$token}";
+                $link_sistem = BASE_URL . "kerani/validasi_izin.php?role=" . urlencode($role_pemohon);
                 
                 $link_file = "";
                 if ($file_name != '') {
                     $link_file = "\n📂 *Bukti Dokumen*: " . BASE_URL . "uploads/izin/" . $file_name . "\n";
                 }
 
-                $pesan = "🔔 *PENGUMUMAN PENGAJUAN BARU* 🔔\n\n";
-                $pesan .= "Halo Kerani, ada pengajuan baru dari:\n";
+                $pesan = "🔔 *NOTIFIKASI PENGAJUAN PERIZINAN* 🔔\n\n";
+                $pesan .= "Halo Kerani, ada pengajuan perizinan baru:\n";
                 $pesan .= "👤 *Nama*: {$pemohon}\n";
-                $pesan .= "📅 *Tanggal*: {$tanggal}\n";
-                $pesan .= "📝 *Jenis*: {$jenis}\n";
+                $pesan .= "🆔 *NIK*: {$nik_pemohon}\n";
+                $pesan .= "💼 *Peran*: " . ucfirst($role_pemohon) . "\n";
+                $pesan .= "📅 *Tanggal Izin*: " . date('d-m-Y', strtotime($tanggal)) . "\n";
+                $pesan .= "📝 *Jenis*: " . ucfirst($jenis) . "\n";
                 $pesan .= "💬 *Keterangan*: {$keterangan}\n";
                 $pesan .= $link_file;
-                $pesan .= "\nSilakan klik salah satu link di bawah ini untuk memvalidasi (Tanpa Login):\n\n";
-                $pesan .= "✅ *SETUJU*:\n{$link_setuju}\n\n";
-                $pesan .= "❌ *TOLAK*:\n{$link_tolak}\n\n";
+                $pesan .= "\nℹ️ *Verifikasi Sistem*: Persetujuan atau penolakan diproses melalui sistem.\n";
+                $pesan .= "Silakan login ke sistem web AMANDA untuk memvalidasi:\n";
+                $pesan .= "👉 {$link_sistem}\n\n";
                 $pesan .= "_Sistem Informasi Karyawan PT DJL_";
 
                 sendWA($no_kerani, $pesan);
             }
         }
 
-        swalRedirect('Pengajuan berhasil dikirim!', 'index.php', 'success');
+        swalRedirect('Pengajuan berhasil dikirim! Menunggu verifikasi sistem oleh Kerani.', 'index.php', 'success');
     } else {
         swalAlert('Gagal mengirim pengajuan.', 'error');
     }

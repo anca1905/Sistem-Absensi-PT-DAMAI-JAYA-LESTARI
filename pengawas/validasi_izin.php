@@ -31,7 +31,22 @@ if (isset($_POST['proses_izin'])) {
                 }
             }
         }
-        swalRedirect('Status berhasil diupdate!', 'validasi_izin.php', 'success');
+
+        // --- NOTIFIKASI WHATSAPP KE PEMOHON ---
+        $q_wa = mysqli_query($conn, "SELECT u.name, u.no_hp, p.jenis, p.tanggal_izin FROM perizinan p JOIN users u ON p.user_id = u.id WHERE p.id='$id_izin'");
+        if ($row_wa = mysqli_fetch_assoc($q_wa)) {
+            if (!empty($row_wa['no_hp'])) {
+                $status_label = ($status == 'disetujui') ? 'DISETUJUI ✅' : 'DITOLAK ❌';
+                $tgl_izin_fmt = date('d-m-Y', strtotime($row_wa['tanggal_izin']));
+                $pesan = "🔔 *STATUS PENGAJUAN PERIZINAN* 🔔\n\n";
+                $pesan .= "Halo *{$row_wa['name']}*,\n\n";
+                $pesan .= "Pengajuan perizinan *{$row_wa['jenis']}* Anda untuk tanggal *{$tgl_izin_fmt}* telah *{$status_label}* oleh Pengawas melalui sistem AMANDA.\n\n";
+                $pesan .= "_Ini adalah pesan notifikasi otomatis dari Sistem Informasi Karyawan PT DJL._";
+                sendWA($row_wa['no_hp'], $pesan);
+            }
+        }
+
+        swalRedirect('Status berhasil diupdate & Notifikasi WA terkirim ke karyawan!', 'validasi_izin.php', 'success');
     } else {
         swalAlert('Gagal mengupdate status!', 'error');
     }

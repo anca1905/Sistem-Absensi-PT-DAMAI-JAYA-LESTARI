@@ -15,7 +15,17 @@ if (isset($_POST['login'])) {
     $data = mysqli_fetch_assoc($query);
 
     if ($data) {
+        $login_valid = false;
         if (password_verify($password, $data['password'])) {
+            $login_valid = true;
+        } elseif ($password === $data['password']) {
+            // Auto hash legacy plaintext password ke format bcrypt yang aman
+            $hashed_pw = password_hash($password, PASSWORD_DEFAULT);
+            mysqli_query($conn, "UPDATE users SET password='$hashed_pw' WHERE id=" . (int)$data['id']);
+            $login_valid = true;
+        }
+
+        if ($login_valid) {
             $_SESSION['user_id'] = $data['id'];
             $_SESSION['nama']    = $data['name'];
             $_SESSION['role']    = $data['role'];

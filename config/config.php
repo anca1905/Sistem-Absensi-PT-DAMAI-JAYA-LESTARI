@@ -1,7 +1,13 @@
 <?php
 $host = "localhost";
-$user = "root";
-$pass = "";
+// Deteksi otomatis environment: Live Server vs Localhost
+if ((isset($_SERVER['HTTP_HOST']) && strpos($_SERVER['HTTP_HOST'], 'skillance.cloud') !== false) || is_dir('/www/wwwroot/portal-djl.skillance.cloud')) {
+    $user = "amanda";
+    $pass = "root";
+} else {
+    $user = "root";
+    $pass = "";
+}
 $db   = "amanda";
 
 $conn = mysqli_connect($host, $user, $pass, $db);
@@ -17,6 +23,9 @@ date_default_timezone_set('Asia/Makassar'); // Set ke WITA (+08:00) sesuai zona 
 require_once __DIR__ . '/functions.php';
 require_once __DIR__ . '/wa_helper.php';
 require_once __DIR__ . '/alert_helper.php';
+
+// Pastikan kolom users (alamat, jenis_kelamin) selalu siap
+ensureUserColumns($conn);
 
 // Auto check & set Alpha otomatis (maksimal 1x per 5 menit per sesi agar tetap ringan & otomatis)
 if (!isset($_SESSION['last_alpha_check']) || (time() - $_SESSION['last_alpha_check'] > 300)) {

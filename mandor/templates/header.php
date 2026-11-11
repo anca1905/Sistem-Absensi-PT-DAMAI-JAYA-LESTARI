@@ -141,7 +141,7 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'mandor') {
 
         <!-- Header / Navbar -->
         <header class="mobile-header">
-            <a href="<?= BASE_URL ?>mandor/index.php" class="akun-btn">
+            <a href="<?= BASE_URL ?>mandor/profil.php" class="akun-btn" title="Biodata Diri & Ganti Password">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                     <circle cx="12" cy="7" r="4"></circle>

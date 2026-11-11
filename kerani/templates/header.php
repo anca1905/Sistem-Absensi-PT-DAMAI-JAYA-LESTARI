@@ -126,6 +126,16 @@ $current_page = basename($_SERVER['PHP_SELF']);
             height: 20px;
         }
 
+        .nav-badge-count {
+            margin-left: auto;
+            background: #ef4444;
+            color: white;
+            font-size: 11px;
+            font-weight: 800;
+            padding: 2px 7px;
+            border-radius: 10px;
+        }
+
         /* MAIN CONTENT AREA */
         .main-content {
             flex: 1;
@@ -292,7 +302,14 @@ $current_page = basename($_SERVER['PHP_SELF']);
                     <polyline points="14 2 14 8 20 8"></polyline>
                     <path d="M9 15l2 2 4-4"></path>
                 </svg>
-                Validasi Izin
+                <span>Validasi Izin</span>
+                <?php
+                $q_nav_p = mysqli_query($conn, "SELECT COUNT(*) as total FROM perizinan WHERE status='pending'");
+                $nav_total_p = ($q_nav_p) ? (int)mysqli_fetch_assoc($q_nav_p)['total'] : 0;
+                if ($nav_total_p > 0):
+                ?>
+                    <span class="nav-badge-count"><?= $nav_total_p ?></span>
+                <?php endif; ?>
             </a>
 
             <!-- DISABLED: Laporan Kinerja -->
