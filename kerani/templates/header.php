@@ -312,6 +312,22 @@ $current_page = basename($_SERVER['PHP_SELF']);
                 <?php endif; ?>
             </a>
 
+            <a href="kirim_laporan.php" class="nav-item <?= $current_page == 'kirim_laporan.php' ? 'active' : '' ?>">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 2L11 13"></path>
+                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                </svg>
+                <span>Kirim ke Keuangan</span>
+                <?php
+                $afd_nav_k = mysqli_real_escape_string($conn, $_SESSION['afdeling'] ?? '');
+                $q_nav_rev = mysqli_query($conn, "SELECT COUNT(*) as total FROM laporan_pengajuan WHERE afdeling='$afd_nav_k' AND status='ditolak'");
+                $nav_rev_total = ($q_nav_rev) ? (int)mysqli_fetch_assoc($q_nav_rev)['total'] : 0;
+                if ($nav_rev_total > 0):
+                ?>
+                    <span class="nav-badge-count" style="background:#ef4444;" title="Ada laporan perlu revisi"><?= $nav_rev_total ?></span>
+                <?php endif; ?>
+            </a>
+
             <!-- DISABLED: Laporan Kinerja -->
             <a href="#" class="nav-item" style="display: none;">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">

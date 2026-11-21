@@ -411,7 +411,7 @@ if ($q_counts) {
                         </td>
                         <td>
                             <?php if (!empty($row['bukti_file'])): ?>
-                                <a href="../uploads/izin/<?= htmlspecialchars($row['bukti_file']) ?>" target="_blank" class="btn-file">
+                                <a href="../uploads/izin/<?= htmlspecialchars(rawurlencode($row['bukti_file'])) ?>" target="_blank" class="btn-file">
                                     <i class="fa-regular fa-file-lines"></i>
                                     Lihat File
                                 </a>

@@ -435,6 +435,7 @@ $me = mysqli_fetch_assoc($query_me);
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                     </button>
                 </div>
+                <div class="readonly-hint">Masukkan password lama Anda. Jika password Anda baru saja direset oleh Admin, password defaultnya adalah <b>123456</b>.</div>
             </div>
 
             <div class="form-group">

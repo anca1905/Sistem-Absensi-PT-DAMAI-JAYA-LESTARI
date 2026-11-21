@@ -122,7 +122,7 @@ include 'templates/header.php';
                             <div style="font-size: 12px; margin-top: 4px; color: #475569;"><?= htmlspecialchars($row['keterangan']) ?></div>
                         </td>
                         <td style="padding: 16px; text-align: center;">
-                            <a href="../uploads/izin/<?= $row['bukti_file'] ?>" target="_blank" style="color: #3b82f6; text-decoration: underline; font-size: 12px; font-weight: 600;">Lihat File</a>
+                            <a href="../uploads/izin/<?= htmlspecialchars(rawurlencode($row['bukti_file'])) ?>" target="_blank" style="color: #3b82f6; text-decoration: underline; font-size: 12px; font-weight: 600;">Lihat File</a>
                         </td>
                         <td style="padding: 16px; text-align: center;">
                             <?php if ($row['status'] == 'pending'): ?>

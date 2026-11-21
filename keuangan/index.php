@@ -23,6 +23,10 @@ $izin_pending     = mysqli_fetch_assoc($q_izin_pending)['total'];
 // Total record logbook bulan ini
 $q_logbook_total  = mysqli_query($conn, "SELECT COUNT(*) as total FROM logbook_kinerja WHERE MONTH(tanggal)='$bulan' AND YEAR(tanggal)='$tahun'");
 $logbook_total    = mysqli_fetch_assoc($q_logbook_total)['total'];
+
+// Total laporan menunggu validasi dari Kerani
+$q_val_pend       = mysqli_query($conn, "SELECT COUNT(*) as total FROM laporan_pengajuan WHERE status='menunggu_validasi'");
+$val_pending      = ($q_val_pend) ? (int)mysqli_fetch_assoc($q_val_pend)['total'] : 0;
 ?>
 
 <style>
@@ -237,6 +241,15 @@ $logbook_total    = mysqli_fetch_assoc($q_logbook_total)['total'];
                 <div class="stat-label">Izin Menunggu</div>
             </div>
         </div>
+        <div class="stat-card" style="<?= $val_pending > 0 ? 'border: 2px solid #f59e0b; background: #fffdf5;' : '' ?>">
+            <div class="stat-icon" style="background: <?= $val_pending > 0 ? '#fef3c7' : '#f3f4f6' ?>; color: <?= $val_pending > 0 ? '#d97706' : '#6b7280' ?>;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><path d="M9 15l2 2 4-4"></path></svg>
+            </div>
+            <div>
+                <div class="stat-value" style="<?= $val_pending > 0 ? 'color: #b45309;' : '' ?>"><?= $val_pending ?></div>
+                <div class="stat-label">Laporan Perlu Validasi</div>
+            </div>
+        </div>
         <div class="stat-card">
             <div class="stat-icon purple">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
@@ -251,6 +264,17 @@ $logbook_total    = mysqli_fetch_assoc($q_logbook_total)['total'];
     <!-- Menu Quick Access -->
     <h2 class="section-title">Akses Cepat</h2>
     <div class="menu-grid">
+        <a href="validasi_laporan.php" class="menu-card" style="<?= $val_pending > 0 ? 'border-color: #fde68a;' : '' ?>">
+            <div class="menu-card-icon" style="background: #fef3c7; color: #d97706;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><path d="M9 15l2 2 4-4"></path></svg>
+            </div>
+            <div>
+                <div class="menu-card-title">Validasi Laporan Kerani</div>
+                <div class="menu-card-desc"><?= $val_pending > 0 ? "Ada $val_pending laporan menunggu verifikasi" : "Periksa & validasi laporan masuk" ?></div>
+            </div>
+            <svg class="menu-card-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </a>
+
         <a href="laporan_absensi.php" class="menu-card">
             <div class="menu-card-icon">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
@@ -273,6 +297,62 @@ $logbook_total    = mysqli_fetch_assoc($q_logbook_total)['total'];
             <svg class="menu-card-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
         </a>
     </div>
+
+    <?php if ($val_pending > 0): 
+        $q_pend_list = mysqli_query($conn, "
+            SELECT lp.*, u.name as nama_kerani 
+            FROM laporan_pengajuan lp 
+            LEFT JOIN users u ON lp.kerani_id = u.id 
+            WHERE lp.status='menunggu_validasi' 
+            ORDER BY lp.tanggal_kirim ASC 
+            LIMIT 5
+        ");
+    ?>
+    <!-- Laporan Menunggu Validasi Widget -->
+    <div style="margin-bottom: 28px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
+            <h2 class="section-title" style="margin-bottom: 0;">Laporan Menunggu Validasi</h2>
+            <a href="validasi_laporan.php" style="font-size: 13px; font-weight: 700; color: #047857; text-decoration: none;">Lihat Semua &rarr;</a>
+        </div>
+        <div class="card" style="padding: 0; overflow: hidden;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                <thead>
+                    <tr style="background: #f9fafb; border-bottom: 1px solid #e5e7eb; color: #4b5563;">
+                        <th style="padding: 12px 18px; text-align: left;">Periode & Afdeling</th>
+                        <th style="padding: 12px 18px; text-align: left;">Jenis Laporan</th>
+                        <th style="padding: 12px 18px; text-align: left;">Kerani Pengirim</th>
+                        <th style="padding: 12px 18px; text-align: right;">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php while ($pl = mysqli_fetch_assoc($q_pend_list)): 
+                        $jns_lbl = ($pl['jenis_laporan'] === 'absensi') ? 'Laporan Absensi' : 'Laporan Keseluruhan';
+                        $link_p = ($pl['jenis_laporan'] === 'absensi') 
+                            ? "laporan_absensi.php?bulan={$pl['bulan']}&tahun={$pl['tahun']}&afdeling=" . urlencode($pl['afdeling'])
+                            : "lap_keseluruhan.php?bulan={$pl['bulan']}&tahun={$pl['tahun']}&afdeling=" . urlencode($pl['afdeling']);
+                    ?>
+                    <tr style="border-bottom: 1px solid #f3f4f6;">
+                        <td style="padding: 14px 18px;">
+                            <strong><?= htmlspecialchars($pl['afdeling']) ?></strong>
+                            <div style="font-size: 11px; color: #6b7280;"><?= $pl['bulan'] ?> / <?= $pl['tahun'] ?></div>
+                        </td>
+                        <td style="padding: 14px 18px;">
+                            <span style="background: #ecfdf5; color: #065f46; padding: 4px 8px; border-radius: 6px; font-weight: 700; font-size: 12px;"><?= $jns_lbl ?></span>
+                        </td>
+                        <td style="padding: 14px 18px;">
+                            <div style="font-weight: 600;"><?= htmlspecialchars($pl['nama_kerani'] ?: 'Kerani') ?></div>
+                            <div style="font-size: 11px; color: #9ca3af;"><?= date('d/m/Y H:i', strtotime($pl['tanggal_kirim'])) ?></div>
+                        </td>
+                        <td style="padding: 14px 18px; text-align: right;">
+                            <a href="<?= $link_p ?>" class="btn-primary" style="padding: 6px 14px; font-size: 12px; border-radius: 6px;">Periksa & Validasi</a>
+                        </td>
+                    </tr>
+                    <?php endwhile; ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <?php endif; ?>
 
     <!-- Aktivitas Terkini -->
     <h2 class="section-title">Aktivitas Absensi Terkini (Hari Ini)</h2>

@@ -12,3 +12,8 @@ test_*.php
 
 # Dependensi Node.js (JANGAN PERNAH DIUPLOAD, BIKIN ERROR BEDA OS)
 wa-bot/node_modules/
+
+# Scratch scripts
+scratch_*.py
+scratch/
+test_*.py

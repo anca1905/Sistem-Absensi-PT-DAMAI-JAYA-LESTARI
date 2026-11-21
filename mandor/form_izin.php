@@ -15,7 +15,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         if (!file_exists($target_dir)) {
             mkdir($target_dir, 0777, true);
         }
-        $file_name = time() . '_' . basename($_FILES["bukti"]["name"]);
+        $raw_name = basename($_FILES["bukti"]["name"]);
+        $ext = pathinfo($raw_name, PATHINFO_EXTENSION);
+        $clean_base = pathinfo($raw_name, PATHINFO_FILENAME);
+        // Bersihkan nama file agar tidak ada spasi yang memotong link WhatsApp
+        $clean_base = preg_replace('/[^a-zA-Z0-9_-]/', '_', $clean_base);
+        $clean_base = preg_replace('/_+/', '_', $clean_base);
+        $clean_base = trim($clean_base, '_');
+        if (empty($clean_base)) {
+            $clean_base = 'bukti';
+        }
+        $file_name = time() . '_' . $clean_base . ($ext !== '' ? '.' . strtolower($ext) : '');
         move_uploaded_file($_FILES["bukti"]["tmp_name"], $target_dir . $file_name);
     }
 
@@ -46,7 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 
                 $link_file = "";
                 if ($file_name != '') {
-                    $link_file = "\n📂 *Bukti Dokumen*: " . BASE_URL . "uploads/izin/" . $file_name . "\n";
+                    $link_file = "\n📂 *Bukti Dokumen*: " . BASE_URL . "uploads/izin/" . rawurlencode($file_name) . "\n";
                 }
 
                 $pesan = "🔔 *NOTIFIKASI PENGAJUAN PERIZINAN* 🔔\n\n";

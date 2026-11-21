@@ -241,3 +241,57 @@ function ensureUserColumns($conn) {
         @mysqli_query($conn, "ALTER TABLE users ADD COLUMN jenis_kelamin VARCHAR(20) NULL AFTER afdeling");
     }
 }
+
+// Memastikan tabel laporan_pengajuan selalu ada
+function ensureLaporanPengajuanTable($conn) {
+    if (!$conn) return;
+    static $checked = false;
+    if ($checked) return;
+    $checked = true;
+
+    $sql = "CREATE TABLE IF NOT EXISTS laporan_pengajuan (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        afdeling VARCHAR(50) NOT NULL,
+        bulan VARCHAR(2) NOT NULL,
+        tahun INT NOT NULL,
+        jenis_laporan VARCHAR(50) NOT NULL DEFAULT 'absensi',
+        status ENUM('menunggu_validasi', 'disetujui', 'ditolak') NOT NULL DEFAULT 'menunggu_validasi',
+        kerani_id INT NOT NULL,
+        tanggal_kirim DATETIME NOT NULL,
+        catatan_kerani TEXT NULL,
+        keuangan_id INT NULL,
+        tanggal_validasi DATETIME NULL,
+        catatan_keuangan TEXT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        UNIQUE KEY uq_laporan (afdeling, bulan, tahun, jenis_laporan)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+    @mysqli_query($conn, $sql);
+}
+
+// Mendapatkan data status laporan pengajuan untuk afdeling, bulan, tahun, dan jenis tertentu
+function getLaporanPengajuan($conn, $afdeling, $bulan, $tahun, $jenis_laporan = 'absensi') {
+    if (!$conn || empty($afdeling)) return null;
+    $afd = mysqli_real_escape_string($conn, trim($afdeling));
+    $bln = str_pad((int)$bulan, 2, '0', STR_PAD_LEFT);
+    $thn = (int)$tahun;
+    $jns = mysqli_real_escape_string($conn, trim($jenis_laporan));
+
+    $q = mysqli_query($conn, "
+        SELECT lp.*, 
+               uk.name as nama_kerani, uk.no_hp as no_hp_kerani,
+               ug.name as nama_keuangan
+        FROM laporan_pengajuan lp
+        LEFT JOIN users uk ON lp.kerani_id = uk.id
+        LEFT JOIN users ug ON lp.keuangan_id = ug.id
+        WHERE lp.afdeling = '$afd' 
+          AND lp.bulan = '$bln' 
+          AND lp.tahun = $thn 
+          AND lp.jenis_laporan = '$jns'
+        LIMIT 1
+    ");
+    if ($q && mysqli_num_rows($q) > 0) {
+        return mysqli_fetch_assoc($q);
+    }
+    return null;
+}

@@ -225,6 +225,26 @@ $current_page = basename($_SERVER['PHP_SELF']);
                 Dashboard
             </a>
 
+            <a href="validasi_laporan.php" class="nav-item <?= $current_page == 'validasi_laporan.php' ? 'active' : '' ?>">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <path d="M9 15l2 2 4-4"></path>
+                </svg>
+                <span>Validasi Laporan</span>
+                <?php
+                if (isset($conn)) {
+                    $q_nav_val = mysqli_query($conn, "SELECT COUNT(*) as total FROM laporan_pengajuan WHERE status='menunggu_validasi'");
+                    $nav_val_total = ($q_nav_val) ? (int)mysqli_fetch_assoc($q_nav_val)['total'] : 0;
+                    if ($nav_val_total > 0):
+                    ?>
+                        <span style="margin-left: auto; background: #ef4444; color: white; font-size: 11px; font-weight: 800; padding: 2px 7px; border-radius: 10px;"><?= $nav_val_total ?></span>
+                    <?php 
+                    endif;
+                }
+                ?>
+            </a>
+
             <a href="laporan_absensi.php" class="nav-item <?= $current_page == 'laporan_absensi.php' ? 'active' : '' ?>">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
@@ -262,8 +282,9 @@ $current_page = basename($_SERVER['PHP_SELF']);
         <header class="topbar">
             <div class="page-title-top">
                 <?= $current_page == 'index.php' ? 'Dashboard' :
+                    ($current_page == 'validasi_laporan.php' ? 'Validasi Laporan Kerani' :
                     ($current_page == 'laporan_absensi.php' ? 'Laporan Absensi' :
-                    ($current_page == 'lap_keseluruhan.php' ? 'Laporan Keseluruhan' : 'Keuangan'))
+                    ($current_page == 'lap_keseluruhan.php' ? 'Laporan Keseluruhan' : 'Keuangan')))
                 ?>
             </div>
             <div class="account-btn">

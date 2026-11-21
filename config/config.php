@@ -26,6 +26,7 @@ require_once __DIR__ . '/alert_helper.php';
 
 // Pastikan kolom users (alamat, jenis_kelamin) selalu siap
 ensureUserColumns($conn);
+ensureLaporanPengajuanTable($conn);
 
 // Auto check & set Alpha otomatis (maksimal 1x per 5 menit per sesi agar tetap ringan & otomatis)
 if (!isset($_SESSION['last_alpha_check']) || (time() - $_SESSION['last_alpha_check'] > 300)) {

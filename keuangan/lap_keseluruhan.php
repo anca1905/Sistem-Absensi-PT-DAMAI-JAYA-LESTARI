@@ -69,6 +69,63 @@ $tipe = getTableType($objek);
 $objek_safe   = mysqli_real_escape_string($conn, $objek);
 $bulan_int    = (int)$bulan;
 
+// --- LOGIKA PENGAJUAN & VALIDASI OLEH KEUANGAN ---
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_keu_val'])) {
+    $act = $_POST['action_keu_val'];
+    $id_p = (int)$_POST['id_pengajuan'];
+    $cat_k = trim($_POST['catatan_keuangan'] ?? '');
+    $cat_safe = mysqli_real_escape_string($conn, $cat_k);
+    $uid_keu = (int)$_SESSION['user_id'];
+    $now_dt = date('Y-m-d H:i:s');
+
+    if ($id_p > 0) {
+        $st_target = ($act === 'setujui') ? 'disetujui' : 'ditolak';
+        mysqli_query($conn, "UPDATE laporan_pengajuan SET status='$st_target', keuangan_id=$uid_keu, tanggal_validasi='$now_dt', catatan_keuangan='$cat_safe' WHERE id=$id_p");
+        
+        // Notifikasi WA ke Kerani
+        $q_lp = mysqli_query($conn, "SELECT lp.*, u.no_hp, u.name as nama_kerani FROM laporan_pengajuan lp JOIN users u ON lp.kerani_id = u.id WHERE lp.id=$id_p");
+        if ($row_lp = mysqli_fetch_assoc($q_lp)) {
+            if (!empty($row_lp['no_hp'])) {
+                $status_msg = ($st_target === 'disetujui') ? 'DISETUJUI & DIVALIDASI ✅' : 'DIKEMBALIKAN UNTUK DIREVISI ⚠️';
+                $pesan_wa = "🔔 *STATUS LAPORAN KESELURUHAN* 🔔\n\nHalo *{$row_lp['nama_kerani']}*,\nLaporan Keseluruhan Objek Kerja untuk *{$row_lp['afdeling']}* periode *" . ($nama_bulan[$row_lp['bulan']] ?? $row_lp['bulan']) . " {$row_lp['tahun']}* telah *{$status_msg}* oleh Bagian Keuangan.\n";
+                if (!empty($cat_k)) $pesan_wa .= "💬 Catatan: _{$cat_k}_\n";
+                $pesan_wa .= "\n_Sistem Informasi Karyawan PT DJL_";
+                sendWA($row_lp['no_hp'], $pesan_wa);
+            }
+        }
+        swalRedirect("Status laporan berhasil diperbarui!", "lap_keseluruhan.php?bulan=$bulan&tahun=$tahun&afdeling=" . urlencode($afdeling) . "&objek=" . urlencode($objek) . "&jabatan=" . urlencode($jabatan), 'success');
+    }
+}
+
+$info_pengajuan = null;
+$status_per_afdeling = [];
+$afdeling_diajukan = [];
+$bisa_tampil = false;
+
+if (!empty($afdeling)) {
+    $info_pengajuan = getLaporanPengajuan($conn, $afdeling, $bulan, $tahun, 'keseluruhan');
+    if ($info_pengajuan && in_array($info_pengajuan['status'], ['menunggu_validasi', 'disetujui'])) {
+        $bisa_tampil = true;
+    } else {
+        $bisa_tampil = false;
+    }
+} else {
+    $q_all_st = mysqli_query($conn, "SELECT lp.*, u.name as nama_kerani FROM laporan_pengajuan lp LEFT JOIN users u ON lp.kerani_id = u.id WHERE lp.bulan='$bulan' AND lp.tahun=$tahun AND lp.jenis_laporan='keseluruhan'");
+    if ($q_all_st) {
+        while ($st_r = mysqli_fetch_assoc($q_all_st)) {
+            $status_per_afdeling[$st_r['afdeling']] = $st_r;
+            if (in_array($st_r['status'], ['menunggu_validasi', 'disetujui'])) {
+                $afdeling_diajukan[] = $st_r['afdeling'];
+            }
+        }
+    }
+    if (count($afdeling_diajukan) > 0) {
+        $bisa_tampil = true;
+    } else {
+        $bisa_tampil = false;
+    }
+}
+
 
 // --- LOGIKA TANDA TANGAN BERDASARKAN FILTER AFDELING ---
 if (!empty($afdeling)) {
@@ -90,20 +147,27 @@ $q_afd = mysqli_query($conn, "SELECT DISTINCT afdeling FROM users WHERE role IN 
 $list_afdeling = [];
 while ($a = mysqli_fetch_assoc($q_afd)) $list_afdeling[] = $a['afdeling'];
 
-// --- Ambil personel sesuai jabatan (keuangan bisa lihat semua afdeling) ---
-$jabatan_safe = mysqli_real_escape_string($conn, $jabatan);
-$where_karyawan = "(role='$jabatan_safe' OR jabatan='$jabatan_safe')";
-if (!empty($afdeling)) {
-    $afd_safe = mysqli_real_escape_string($conn, $afdeling);
-    $where_karyawan .= " AND afdeling='$afd_safe'";
-}
-if (!empty($cari)) {
-    $cari_safe = mysqli_real_escape_string($conn, $cari);
-    $where_karyawan .= " AND (name LIKE '%$cari_safe%' OR nik LIKE '%$cari_safe%')";
-}
-$q_users = mysqli_query($conn, "SELECT id, nik, name, afdeling, role, jabatan FROM users WHERE $where_karyawan ORDER BY afdeling ASC, name ASC");
+// --- Ambil personel sesuai jabatan (keuangan bisa lihat data HANYA jika laporan sudah diserahkan) ---
 $list_karyawan = [];
-while ($u = mysqli_fetch_assoc($q_users)) $list_karyawan[] = $u;
+if ($bisa_tampil) {
+    $jabatan_safe = mysqli_real_escape_string($conn, $jabatan);
+    $where_karyawan = "(role='$jabatan_safe' OR jabatan='$jabatan_safe')";
+    if (!empty($afdeling)) {
+        $afd_safe = mysqli_real_escape_string($conn, $afdeling);
+        $where_karyawan .= " AND afdeling='$afd_safe'";
+    } else {
+        $afd_in = array_map(function($a) use ($conn) { return "'" . mysqli_real_escape_string($conn, $a) . "'"; }, $afdeling_diajukan);
+        $where_karyawan .= " AND afdeling IN (" . implode(',', $afd_in) . ")";
+    }
+    if (!empty($cari)) {
+        $cari_safe = mysqli_real_escape_string($conn, $cari);
+        $where_karyawan .= " AND (name LIKE '%$cari_safe%' OR nik LIKE '%$cari_safe%')";
+    }
+    $q_users = mysqli_query($conn, "SELECT id, nik, name, afdeling, role, jabatan FROM users WHERE $where_karyawan ORDER BY afdeling ASC, name ASC");
+    if ($q_users) {
+        while ($u = mysqli_fetch_assoc($q_users)) $list_karyawan[] = $u;
+    }
+}
 
 $jumlah_hari = (int)date('t', mktime(0, 0, 0, $bulan_int, 1, $tahun));
 $periode_label = "01 - {$jumlah_hari} " . $nama_bulan[$bulan] . " {$tahun}";
@@ -564,11 +628,126 @@ $list_karyawan_page = array_slice($list_karyawan, $offset, $per_page);
         </div>
         <button type="submit" class="btn-filter-go" style="display: none;">Tampilkan</button>
     </form>
-    <button class="btn-print-lk" onclick="cetakLaporan()">
-        <i class="fa-solid fa-print"></i>
-        Cetak PDF
-    </button>
+    <?php if ($bisa_tampil): ?>
+        <button class="btn-print-lk" onclick="cetakLaporan()">
+            <i class="fa-solid fa-print"></i>
+            Cetak PDF
+        </button>
+    <?php else: ?>
+        <button class="btn-print-lk" type="button" onclick="alert('Laporan belum dikirim oleh Kerani untuk periode ini.');" style="opacity:0.5; cursor:not-allowed;" title="Laporan belum diserahkan oleh Kerani">
+            <i class="fa-solid fa-lock"></i>
+            Cetak PDF (Terkunci)
+        </button>
+    <?php endif; ?>
 </div>
+
+<?php if (empty($afdeling)): ?>
+    <!-- Status Rekap Seluruh Afdeling -->
+    <div class="no-print" style="background: white; border-radius: 14px; padding: 18px 22px; border: 1px solid #e5e7eb; margin-bottom: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.02);">
+        <div style="font-size: 13px; font-weight: 700; color: #374151; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;">
+            <span><i class="fa-solid fa-list-check" style="color: #10b981;"></i> Status Pengajuan Laporan Keseluruhan Seluruh Afdeling (<?= $nama_bulan[$bulan] ?> <?= $tahun ?>):</span>
+            <a href="validasi_laporan.php?bulan=<?= $bulan ?>&tahun=<?= $tahun ?>" style="font-size: 12px; color: #2563eb; text-decoration: none; font-weight: 600;">Buka Menu Validasi &rarr;</a>
+        </div>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <?php foreach ($list_afdeling as $afd_item): 
+                $st_item = $status_per_afdeling[$afd_item] ?? null;
+                $st_code = $st_item ? $st_item['status'] : 'draft';
+            ?>
+                <a href="lap_keseluruhan.php?bulan=<?= $bulan ?>&tahun=<?= $tahun ?>&afdeling=<?= urlencode($afd_item) ?>&objek=<?= urlencode($objek) ?>&jabatan=<?= urlencode($jabatan) ?>" style="text-decoration: none; display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 8px; font-size: 12px; font-weight: 700; transition: all 0.15s;
+                    <?php if ($st_code === 'disetujui'): ?>
+                        background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0;
+                    <?php elseif ($st_code === 'menunggu_validasi'): ?>
+                        background: #fef3c7; color: #b45309; border: 1px solid #fde68a;
+                    <?php elseif ($st_code === 'ditolak'): ?>
+                        background: #fee2e2; color: #991b1b; border: 1px solid #fecaca;
+                    <?php else: ?>
+                        background: #f3f4f6; color: #6b7280; border: 1px solid #e5e7eb;
+                    <?php endif; ?>
+                ">
+                    <span><?= htmlspecialchars($afd_item) ?>:</span>
+                    <?php if ($st_code === 'disetujui'): ?>
+                        <span>✅ Disetujui</span>
+                    <?php elseif ($st_code === 'menunggu_validasi'): ?>
+                        <span>⏳ Menunggu Validasi</span>
+                    <?php elseif ($st_code === 'ditolak'): ?>
+                        <span>❌ Perlu Revisi</span>
+                    <?php else: ?>
+                        <span>⚠️ Belum Dikirim</span>
+                    <?php endif; ?>
+                </a>
+            <?php endforeach; ?>
+        </div>
+    </div>
+<?php else: ?>
+    <!-- Status Pengajuan Spesifik Afdeling -->
+    <div class="no-print" style="margin-bottom: 24px; border-radius: 14px; padding: 18px 22px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+        <?php if (!$info_pengajuan): ?>
+            background: #fef2f2; border: 1.5px solid #fecaca; color: #991b1b;
+        <?php elseif ($info_pengajuan['status'] === 'menunggu_validasi'): ?>
+            background: #fffbeb; border: 1.5px solid #fde68a; color: #92400e;
+        <?php elseif ($info_pengajuan['status'] === 'disetujui'): ?>
+            background: #f0fdf4; border: 1.5px solid #bbf7d0; color: #166534;
+        <?php elseif ($info_pengajuan['status'] === 'ditolak'): ?>
+            background: #fee2e2; border: 1.5px solid #fca5a5; color: #991b1b;
+        <?php endif; ?>
+    ">
+        <div style="display: flex; align-items: center; gap: 16px; flex: 1;">
+            <div style="font-size: 28px;">
+                <?php if (!$info_pengajuan): ?>
+                    ⚠️
+                <?php elseif ($info_pengajuan['status'] === 'menunggu_validasi'): ?>
+                    ⏳
+                <?php elseif ($info_pengajuan['status'] === 'disetujui'): ?>
+                    ✅
+                <?php elseif ($info_pengajuan['status'] === 'ditolak'): ?>
+                    ❌
+                <?php endif; ?>
+            </div>
+            <div>
+                <div style="font-size: 15px; font-weight: 800;">
+                    <?php if (!$info_pengajuan): ?>
+                        Laporan Belum Dikirim oleh Kerani <?= htmlspecialchars($afdeling) ?>
+                    <?php elseif ($info_pengajuan['status'] === 'menunggu_validasi'): ?>
+                        Laporan Menunggu Validasi Keuangan (Dikirim oleh Kerani: <?= htmlspecialchars($info_pengajuan['nama_kerani'] ?: 'Kerani') ?>)
+                    <?php elseif ($info_pengajuan['status'] === 'disetujui'): ?>
+                        Laporan Resmi Telah Divalidasi oleh Keuangan (<?= htmlspecialchars($info_pengajuan['nama_keuangan'] ?: 'Keuangan') ?>)
+                    <?php elseif ($info_pengajuan['status'] === 'ditolak'): ?>
+                        Laporan Telah Dikembalikan ke Kerani untuk Direvisi
+                    <?php endif; ?>
+                </div>
+                <div style="font-size: 12px; margin-top: 4px; line-height: 1.5; opacity: 0.95;">
+                    <?php if (!$info_pengajuan): ?>
+                        Kerani Afdeling <?= htmlspecialchars($afdeling) ?> belum menyelesaikan proses cross-check hasil kerja dan belum mengirimkan laporan resmi periode <?= $nama_bulan[$bulan] ?> <?= $tahun ?>. Data di bawah masih berupa data berjalan dan <u>belum resmi</u> untuk diproses.
+                    <?php elseif ($info_pengajuan['status'] === 'menunggu_validasi'): ?>
+                        Dikirim pada: <strong><?= date('d/m/Y H:i', strtotime($info_pengajuan['tanggal_kirim'])) ?></strong>.
+                        <?php if (!empty($info_pengajuan['catatan_kerani'])): ?>
+                            | Catatan Kerani: <em>"<?= htmlspecialchars($info_pengajuan['catatan_kerani']) ?>"</em>
+                        <?php endif; ?>
+                        <br>Silakan periksa rekap kinerja di bawah ini, lalu pilih <strong>Setujui & Validasi</strong> atau <strong>Minta Revisi</strong>.
+                    <?php elseif ($info_pengajuan['status'] === 'disetujui'): ?>
+                        Divalidasi pada: <strong><?= date('d/m/Y H:i', strtotime($info_pengajuan['tanggal_validasi'])) ?></strong>. Laporan ini sah sebagai dasar pencatatan keuangan dan penggajian.
+                        <?php if (!empty($info_pengajuan['catatan_keuangan'])): ?>
+                            | Catatan: <em>"<?= htmlspecialchars($info_pengajuan['catatan_keuangan']) ?>"</em>
+                        <?php endif; ?>
+                    <?php elseif ($info_pengajuan['status'] === 'ditolak'): ?>
+                        Catatan Revisi Keuangan: <strong>"<?= htmlspecialchars($info_pengajuan['catatan_keuangan']) ?>"</strong> (<?= date('d/m/Y H:i', strtotime($info_pengajuan['tanggal_validasi'])) ?>). Menunggu Kerani melakukan koreksi dan mengirim ulang.
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+
+        <?php if ($info_pengajuan && $info_pengajuan['status'] === 'menunggu_validasi'): ?>
+            <div style="display: flex; gap: 8px; flex-shrink: 0;">
+                <button type="button" onclick="bukaModalAksiKeu(<?= $info_pengajuan['id'] ?>, 'setujui')" style="background: #10b981; color: white; border: none; padding: 10px 16px; border-radius: 8px; font-weight: 700; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 2px 8px rgba(16,185,129,0.3);">
+                    ✅ Setujui & Validasi
+                </button>
+                <button type="button" onclick="bukaModalAksiKeu(<?= $info_pengajuan['id'] ?>, 'tolak')" style="background: #ef4444; color: white; border: none; padding: 10px 16px; border-radius: 8px; font-weight: 700; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 2px 8px rgba(239,68,68,0.3);">
+                    ↩️ Minta Revisi
+                </button>
+            </div>
+        <?php endif; ?>
+    </div>
+<?php endif; ?>
 
 <!-- Card Laporan -->
 <div class="lk-card print-area">
@@ -582,7 +761,37 @@ $list_karyawan_page = array_slice($list_karyawan, $offset, $per_page);
         </p>
     </div>
 
-    <div class="lk-table-wrap">
+    <?php if (!$bisa_tampil): ?>
+        <div style="padding: 60px 24px; text-align: center; background: #ffffff;">
+            <div style="font-size: 52px; line-height: 1; margin-bottom: 16px;">📭</div>
+            <h3 style="font-size: 18px; font-weight: 800; color: #1e293b; margin-bottom: 8px;">
+                <?= !empty($afdeling) ? 'Laporan Belum Dikirim oleh Kerani ' . htmlspecialchars($afdeling) : 'Belum Ada Laporan yang Dikirim oleh Kerani' ?>
+            </h3>
+            <p style="font-size: 14px; color: #64748b; max-width: 540px; margin: 0 auto 18px; line-height: 1.6;">
+                <?php if (!empty($afdeling)): ?>
+                    <?php if ($info_pengajuan && $info_pengajuan['status'] === 'ditolak'): ?>
+                        Laporan kinerja dan hasil kerja Afdeling <strong><?= htmlspecialchars($afdeling) ?></strong> periode <strong><?= $nama_bulan[$bulan] ?> <?= $tahun ?></strong> sedang dalam proses revisi oleh Kerani.
+                    <?php else: ?>
+                        Data kinerja dan hasil kerja Afdeling <strong><?= htmlspecialchars($afdeling) ?></strong> periode <strong><?= $nama_bulan[$bulan] ?> <?= $tahun ?></strong> belum dapat ditampilkan karena Kerani belum menyerahkan laporan resmi untuk divalidasi.
+                    <?php endif; ?>
+                <?php else: ?>
+                    Belum ada Kerani afdeling yang mengirimkan laporan keseluruhan resmi untuk periode <strong><?= $nama_bulan[$bulan] ?> <?= $tahun ?></strong>. Rekapitulasi akan muncul secara otomatis setelah laporan diajukan oleh masing-masing Kerani.
+                <?php endif; ?>
+            </p>
+            <div style="display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 999px; font-size: 12px; font-weight: 600; color: #64748b;">
+                <i class="fa-solid fa-clock-rotate-left" style="color: #f59e0b;"></i>
+                Status: Menunggu pengiriman laporan resmi dari Kerani
+            </div>
+        </div>
+    <?php else: ?>
+        <?php if (empty($afdeling) && count($afdeling_diajukan) < count($list_afdeling)): ?>
+            <div class="no-print" style="margin: 14px 20px 0; padding: 10px 16px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; font-size: 12px; color: #1e40af; display: flex; align-items: center; gap: 8px;">
+                <i class="fa-solid fa-circle-info"></i>
+                <span>Menampilkan data dari Afdeling yang sudah menyerahkan laporan: <strong><?= implode(', ', $afdeling_diajukan) ?></strong>. Afdeling lain belum menyerahkan laporan periode ini.</span>
+            </div>
+        <?php endif; ?>
+
+        <div class="lk-table-wrap">
         <table class="lk-table">
             <thead>
                 <tr>
@@ -763,6 +972,7 @@ $list_karyawan_page = array_slice($list_karyawan, $offset, $per_page);
             <a class="pg-btn <?= $page >= $total_pages ? 'disabled' : '' ?>" href="<?= $base_url . min($total_pages, $page + 1) ?>"><i class="fa-solid fa-chevron-right" style="font-size:11px;"></i></a>
         </div>
     </div>
+    <?php endif; ?>
 </div>
 
 <script>
@@ -830,6 +1040,62 @@ $list_karyawan_page = array_slice($list_karyawan, $offset, $per_page);
             win.print();
         }, 500);
     }
+</script>
+
+<!-- Modal Aksi Validasi Cepat Keuangan -->
+<div id="modalAksiKeuWrap" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); backdrop-filter:blur(3px); z-index:1000; align-items:center; justify-content:center;">
+    <div style="background:white; border-radius:16px; width:90%; max-width:480px; padding:26px; box-shadow:0 20px 40px rgba(0,0,0,0.2);">
+        <h3 id="modalAksiKeuTitle" style="font-size:18px; font-weight:800; margin-bottom:8px;">Validasi Laporan</h3>
+        <p id="modalAksiKeuDesc" style="font-size:13px; color:#6b7280; line-height:1.5; margin-bottom:16px;"></p>
+        <form method="POST">
+            <input type="hidden" name="action_keu_val" id="inputAksiKeu">
+            <input type="hidden" name="id_pengajuan" id="inputIdPengajuan">
+            <div style="margin-bottom:16px;">
+                <label id="labelCatatanKeu" style="display:block; font-size:12px; font-weight:700; color:#374151; margin-bottom:6px;">Catatan:</label>
+                <textarea name="catatan_keuangan" id="txtCatatanKeu" style="width:100%; height:80px; border:1px solid #d1d5db; border-radius:8px; padding:10px; font-size:13px; outline:none; resize:vertical;" placeholder="Tuliskan catatan..."></textarea>
+            </div>
+            <div style="display:flex; justify-content:flex-end; gap:10px;">
+                <button type="button" onclick="tutupModalAksiKeu()" style="padding:9px 16px; background:#f3f4f6; color:#4b5563; border:none; border-radius:8px; font-weight:700; cursor:pointer;">Batal</button>
+                <button type="submit" id="btnSubmitAksiKeu" style="padding:9px 18px; color:white; border:none; border-radius:8px; font-weight:700; cursor:pointer;"></button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function bukaModalAksiKeu(id, act) {
+    document.getElementById('inputIdPengajuan').value = id;
+    document.getElementById('inputAksiKeu').value = act;
+    const title = document.getElementById('modalAksiKeuTitle');
+    const desc = document.getElementById('modalAksiKeuDesc');
+    const label = document.getElementById('labelCatatanKeu');
+    const txt = document.getElementById('txtCatatanKeu');
+    const btn = document.getElementById('btnSubmitAksiKeu');
+
+    if (act === 'setujui') {
+        title.innerText = 'Validasi & Setujui Laporan Keseluruhan';
+        title.style.color = '#059669';
+        desc.innerText = 'Apakah Anda yakin ingin menyetujui dan memvalidasi laporan keseluruhan objek kerja ini untuk dasar proses penggajian?';
+        label.innerText = 'Catatan Keuangan (Opsional):';
+        txt.required = false;
+        btn.style.background = '#10b981';
+        btn.innerHTML = '✅ Setujui Laporan';
+    } else {
+        title.innerText = 'Kembalikan Laporan untuk Revisi';
+        title.style.color = '#dc2626';
+        desc.innerText = 'Kembalikan laporan ini ke Kerani untuk diperbaiki/dikoreksi.';
+        label.innerHTML = 'Alasan / Catatan Revisi <span style="color:#ef4444;">*</span>:';
+        txt.required = true;
+        btn.style.background = '#ef4444';
+        btn.innerHTML = '↩️ Kembalikan ke Kerani';
+    }
+
+    document.getElementById('modalAksiKeuWrap').style.display = 'flex';
+}
+
+function tutupModalAksiKeu() {
+    document.getElementById('modalAksiKeuWrap').style.display = 'none';
+}
 </script>
 
 <?php include 'templates/footer.php'; ?>

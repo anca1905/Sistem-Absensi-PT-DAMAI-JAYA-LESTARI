@@ -103,6 +103,64 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     exit;
 }
 
+// ==========================================
+// HANDLER: KIRIM LAPORAN KE KEUANGAN OLEH KERANI
+// ==========================================
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'kirim_laporan_keuangan') {
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+    if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'kerani') {
+        swalAlert('Akses ditolak: Hanya Kerani yang dapat mengirim laporan.', 'error');
+    } else {
+        $afd = trim($_SESSION['afdeling'] ?? '');
+        $bln = str_pad((int)$_POST['bulan'], 2, '0', STR_PAD_LEFT);
+        $thn = (int)$_POST['tahun'];
+        $catatan = trim($_POST['catatan_kerani'] ?? '');
+        $kerani_id = (int)$_SESSION['user_id'];
+        $now = date('Y-m-d H:i:s');
+
+        if (empty($afd)) {
+            swalAlert('Gagal: Akun Kerani Anda tidak terhubung ke afdeling manapun.', 'error');
+        } else {
+            $catatan_safe = mysqli_real_escape_string($conn, $catatan);
+            $afd_safe = mysqli_real_escape_string($conn, $afd);
+
+            $sql = "INSERT INTO laporan_pengajuan 
+                    (afdeling, bulan, tahun, jenis_laporan, status, kerani_id, tanggal_kirim, catatan_kerani)
+                    VALUES 
+                    ('$afd_safe', '$bln', $thn, 'absensi', 'menunggu_validasi', $kerani_id, '$now', '$catatan_safe')
+                    ON DUPLICATE KEY UPDATE 
+                    status = 'menunggu_validasi',
+                    kerani_id = $kerani_id,
+                    tanggal_kirim = '$now',
+                    catatan_kerani = '$catatan_safe',
+                    keuangan_id = NULL,
+                    tanggal_validasi = NULL";
+
+            if (mysqli_query($conn, $sql)) {
+                $q_keu = mysqli_query($conn, "SELECT no_hp, name FROM users WHERE role='keuangan' AND no_hp IS NOT NULL AND no_hp != ''");
+                while ($k_row = mysqli_fetch_assoc($q_keu)) {
+                    $nama_k = $_SESSION['nama'] ?? 'Kerani';
+                    $pesan_wa = "🔔 *LAPORAN MASUK DARI KERANI* 🔔\n\n";
+                    $pesan_wa .= "Halo Bagian Keuangan,\n";
+                    $pesan_wa .= "Laporan Absensi untuk *{$afd}* periode *" . ($nama_bulan[$bln] ?? $bln) . " {$thn}* telah selesai di-crosscheck dan dikirim oleh *{$nama_k}*.\n";
+                    if (!empty($catatan)) {
+                        $pesan_wa .= "💬 Catatan: _{$catatan}_\n";
+                    }
+                    $pesan_wa .= "\nSilakan login ke portal AMANDA untuk memvalidasi laporan:\n";
+                    $pesan_wa .= BASE_URL . "keuangan/validasi_laporan.php\n\n";
+                    $pesan_wa .= "_Sistem Informasi Karyawan PT DJL_";
+                    sendWA($k_row['no_hp'], $pesan_wa);
+                }
+                swalRedirect("Laporan Absensi periode $bln-$thn berhasil dikirim ke Bagian Keuangan!", "laporan_absensi.php?bulan=$bln&tahun=$thn&role=" . urlencode($_GET['role'] ?? 'karyawan'), 'success', 'Terkirim ke Keuangan!');
+            } else {
+                swalAlert('Gagal mengirim laporan: ' . mysqli_error($conn), 'error');
+            }
+        }
+    }
+}
+
 include __DIR__ . '/templates/header.php';
 ?>
 <style type="text/css" media="print">
@@ -158,6 +216,9 @@ if (!empty($afdeling_kerani)) {
         $nama_mandor_tampil = implode(', ', $arr_mandor);
     }
 }
+
+// Data Pengajuan Laporan ke Keuangan
+$info_pengajuan = getLaporanPengajuan($conn, $afdeling_kerani, $bulan, $tahun, 'absensi');
 ?>
 
 <style>
@@ -710,6 +771,77 @@ if (!empty($afdeling_kerani)) {
         <strong>Pengelolaan & Koreksi Absensi Kerani:</strong> Klik langsung pada sel tanggal karyawan di tabel untuk mengoreksi kehadiran (misal mesin error, lupa scan QR, dll), atau gunakan tombol <strong>Koreksi Absensi</strong> di atas.
     </div>
 </div>
+
+<?php if (!empty($afdeling_kerani)): ?>
+    <div class="status-keuangan-banner" style="margin-bottom: 20px; border-radius: 12px; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; 
+        <?php if (!$info_pengajuan): ?>
+            background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af;
+        <?php elseif ($info_pengajuan['status'] === 'menunggu_validasi'): ?>
+            background: #fffbeb; border: 1px solid #fde68a; color: #92400e;
+        <?php elseif ($info_pengajuan['status'] === 'disetujui'): ?>
+            background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534;
+        <?php elseif ($info_pengajuan['status'] === 'ditolak'): ?>
+            background: #fef2f2; border: 1px solid #fecaca; color: #991b1b;
+        <?php endif; ?>
+    ">
+        <div style="display: flex; align-items: center; gap: 14px;">
+            <div style="font-size: 24px;">
+                <?php if (!$info_pengajuan): ?>
+                    <i class="fa-solid fa-circle-info" style="color: #3b82f6;"></i>
+                <?php elseif ($info_pengajuan['status'] === 'menunggu_validasi'): ?>
+                    <i class="fa-solid fa-hourglass-half" style="color: #d97706;"></i>
+                <?php elseif ($info_pengajuan['status'] === 'disetujui'): ?>
+                    <i class="fa-solid fa-circle-check" style="color: #16a34a;"></i>
+                <?php elseif ($info_pengajuan['status'] === 'ditolak'): ?>
+                    <i class="fa-solid fa-triangle-exclamation" style="color: #dc2626;"></i>
+                <?php endif; ?>
+            </div>
+            <div>
+                <div style="font-size: 14px; font-weight: 800;">
+                    <?php if (!$info_pengajuan): ?>
+                        Status Laporan: Belum Dikirim ke Keuangan
+                    <?php elseif ($info_pengajuan['status'] === 'menunggu_validasi'): ?>
+                        Status Laporan: Menunggu Validasi Bagian Keuangan
+                    <?php elseif ($info_pengajuan['status'] === 'disetujui'): ?>
+                        Status Laporan: Disetujui & Divalidasi oleh Keuangan
+                    <?php elseif ($info_pengajuan['status'] === 'ditolak'): ?>
+                        Status Laporan: Perlu Revisi (Laporan Dikembalikan)
+                    <?php endif; ?>
+                </div>
+                <div style="font-size: 12px; margin-top: 3px; opacity: 0.9;">
+                    <?php if (!$info_pengajuan): ?>
+                        Silakan periksa dan koreksi data absensi di bawah ini. Setelah selesai di-crosscheck, klik tombol <strong>Kirim ke Keuangan</strong> agar dapat divalidasi.
+                    <?php elseif ($info_pengajuan['status'] === 'menunggu_validasi'): ?>
+                        Laporan telah dikirim pada <?= date('d/m/Y H:i', strtotime($info_pengajuan['tanggal_kirim'])) ?> oleh <?= htmlspecialchars($info_pengajuan['nama_kerani'] ?: 'Kerani') ?>. Menunggu persetujuan Bagian Keuangan.
+                        <?php if (!empty($info_pengajuan['catatan_kerani'])): ?>
+                            <br><em>Catatan Kerani: "<?= htmlspecialchars($info_pengajuan['catatan_kerani']) ?>"</em>
+                        <?php endif; ?>
+                    <?php elseif ($info_pengajuan['status'] === 'disetujui'): ?>
+                        Telah disetujui oleh <strong><?= htmlspecialchars($info_pengajuan['nama_keuangan'] ?: 'Keuangan') ?></strong> pada <?= date('d/m/Y H:i', strtotime($info_pengajuan['tanggal_validasi'])) ?>. Laporan ini resmi untuk pencatatan dan penggajian.
+                    <?php elseif ($info_pengajuan['status'] === 'ditolak'): ?>
+                        <strong>Catatan Keuangan:</strong> "<?= htmlspecialchars($info_pengajuan['catatan_keuangan']) ?>" (<?= date('d/m/Y', strtotime($info_pengajuan['tanggal_validasi'])) ?>). Silakan perbaiki absensi di bawah lalu kirim ulang.
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+
+        <div>
+            <?php if (!$info_pengajuan): ?>
+                <button type="button" onclick="bukaModalKirimKeu(false)" style="background: #2563eb; color: white; border: none; padding: 10px 18px; border-radius: 8px; font-weight: 700; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 2px 8px rgba(37,99,235,0.3);">
+                    <i class="fa-solid fa-paper-plane"></i> Kirim ke Keuangan
+                </button>
+            <?php elseif ($info_pengajuan['status'] === 'ditolak'): ?>
+                <button type="button" onclick="bukaModalKirimKeu(true)" style="background: #dc2626; color: white; border: none; padding: 10px 18px; border-radius: 8px; font-weight: 700; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 2px 8px rgba(220,38,38,0.3);">
+                    <i class="fa-solid fa-arrows-rotate"></i> Kirim Ulang setelah Revisi
+                </button>
+            <?php elseif ($info_pengajuan['status'] === 'menunggu_validasi'): ?>
+                <a href="kirim_laporan.php?tahun=<?= $tahun ?>" style="background: white; color: #b45309; border: 1px solid #fde68a; padding: 8px 14px; border-radius: 8px; font-weight: 700; font-size: 12px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+                    <i class="fa-solid fa-clock-rotate-left"></i> Kelola di Menu Kirim
+                </a>
+            <?php endif; ?>
+        </div>
+    </div>
+<?php endif; ?>
 
 <div class="header-actions">
     <form method="GET" id="filterForm" class="filter-group">
@@ -1325,6 +1457,54 @@ async function simpanKoreksi(event) {
         });
         btn.disabled = false;
         btn.innerHTML = originalText;
+    }
+}
+</script>
+
+<!-- MODAL KIRIM LAPORAN KE KEUANGAN -->
+<div class="modal-koreksi" id="modalKirimKeuangan" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); z-index: 1000; align-items: center; justify-content: center;">
+    <div style="background: white; border-radius: 16px; width: 90%; max-width: 500px; padding: 28px; box-shadow: 0 20px 40px rgba(0,0,0,0.2);">
+        <h3 id="modalKirimKeuTitle" style="font-size: 18px; font-weight: 800; color: #1e293b; margin-bottom: 8px;">Kirim Laporan ke Bagian Keuangan</h3>
+        <p style="font-size: 13px; color: #64748b; line-height: 1.5; margin-bottom: 18px;">
+            Pastikan Anda telah memeriksa/mengoreksi seluruh data absensi <strong>Afdeling <?= htmlspecialchars($afdeling_kerani) ?></strong> periode <strong><?= $nama_bulan[$bulan] ?> <?= $tahun ?></strong>. Laporan ini akan diproses oleh Bagian Keuangan.
+        </p>
+
+        <form method="POST">
+            <input type="hidden" name="action" value="kirim_laporan_keuangan">
+            <input type="hidden" name="bulan" value="<?= $bulan ?>">
+            <input type="hidden" name="tahun" value="<?= $tahun ?>">
+
+            <div style="margin-bottom: 16px;">
+                <label style="display: block; font-size: 12px; font-weight: 700; color: #334155; margin-bottom: 6px;">Catatan Kerani untuk Keuangan (Opsional):</label>
+                <textarea name="catatan_kerani" style="width: 100%; height: 85px; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px; outline: none; resize: vertical;" placeholder="Contoh: Seluruh kehadiran personil telah disinkronkan dengan SPK lapangan."></textarea>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                <button type="button" onclick="tutupModalKirimKeu()" style="padding: 10px 16px; background: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1; border-radius: 8px; font-weight: 700; font-size: 13px; cursor: pointer;">Batal</button>
+                <button type="submit" style="padding: 10px 20px; background: #2563eb; color: white; border: none; border-radius: 8px; font-weight: 700; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                    <i class="fa-solid fa-paper-plane"></i> Kirim Sekarang
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function bukaModalKirimKeu(isResend = false) {
+    const title = document.getElementById('modalKirimKeuTitle');
+    if (title) {
+        title.innerText = isResend ? 'Kirim Ulang Laporan Absensi setelah Revisi' : 'Kirim Laporan Absensi ke Bagian Keuangan';
+    }
+    const modal = document.getElementById('modalKirimKeuangan');
+    if (modal) {
+        modal.style.display = 'flex';
+    }
+}
+
+function tutupModalKirimKeu() {
+    const modal = document.getElementById('modalKirimKeuangan');
+    if (modal) {
+        modal.style.display = 'none';
     }
 }
 </script>
