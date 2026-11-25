@@ -10,6 +10,24 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'kerani') {
 }
 
 $current_page = basename($_SERVER['PHP_SELF']);
+
+// Ambil data lengkap kerani untuk biodata dropdown & header
+$header_uid = (int)($_SESSION['user_id'] ?? 0);
+$header_user = null;
+if (isset($conn) && $header_uid > 0) {
+    $q_hu = mysqli_query($conn, "SELECT nik, name, email, no_hp, role, jabatan, afdeling, jenis_kelamin, alamat FROM users WHERE id=$header_uid");
+    if ($q_hu && mysqli_num_rows($q_hu) > 0) {
+        $header_user = mysqli_fetch_assoc($q_hu);
+    }
+}
+$header_name     = $header_user['name'] ?? $_SESSION['nama'] ?? 'Kerani';
+$header_initial  = strtoupper(substr($header_name, 0, 1));
+$header_afdeling = $header_user['afdeling'] ?? $_SESSION['afdeling'] ?? '';
+$header_nik      = $header_user['nik'] ?? '-';
+$header_jabatan  = $header_user['jabatan'] ?: 'Kerani';
+$header_email    = $header_user['email'] ?? '-';
+$header_nohp     = $header_user['no_hp'] ?? '-';
+$header_gender   = $header_user['jenis_kelamin'] ?? '-';
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -165,26 +183,35 @@ $current_page = basename($_SERVER['PHP_SELF']);
             color: var(--text-main);
         }
 
+        /* PROFILE DROPDOWN WRAPPER */
+        .profile-dropdown-wrap {
+            position: relative;
+        }
+
         .account-btn {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
             background: #f8fafc;
-            padding: 8px 16px;
+            padding: 7px 16px;
             border-radius: 30px;
-            border: 1px solid #e2e8f0;
+            border: 1.5px solid #e2e8f0;
             cursor: pointer;
             transition: all 0.2s;
+            outline: none;
+            user-select: none;
         }
 
-        .account-btn:hover {
-            background: #f1f5f9;
+        .account-btn:hover, .account-btn.active {
+            background: #ffffff;
+            border-color: #3b82f6;
+            box-shadow: 0 4px 14px rgba(59, 130, 246, 0.15);
         }
 
         .avatar {
             width: 32px;
             height: 32px;
-            background: var(--accent);
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
             color: white;
             border-radius: 50%;
             display: flex;
@@ -192,6 +219,190 @@ $current_page = basename($_SERVER['PHP_SELF']);
             justify-content: center;
             font-weight: 700;
             font-size: 14px;
+            flex-shrink: 0;
+            box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
+        }
+
+        .profile-dropdown-menu {
+            display: none;
+            position: absolute;
+            top: calc(100% + 10px);
+            right: 0;
+            width: 330px;
+            background: #ffffff;
+            border-radius: 18px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 14px 40px rgba(15, 23, 42, 0.16);
+            z-index: 1000;
+            overflow: hidden;
+            animation: dropdownFadeIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .profile-dropdown-menu.show {
+            display: block;
+        }
+
+        @keyframes dropdownFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-8px) scale(0.98);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .dropdown-header-card {
+            padding: 18px 20px;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .dropdown-avatar-circle {
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: 800;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+            flex-shrink: 0;
+        }
+
+        .dropdown-user-name {
+            font-size: 15px;
+            font-weight: 800;
+            color: white;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 220px;
+        }
+
+        .dropdown-user-badges {
+            display: flex;
+            gap: 6px;
+            margin-top: 5px;
+            flex-wrap: wrap;
+        }
+
+        .badge-pill-role {
+            background: #3b82f6;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .badge-pill-afd {
+            background: #10b981;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 700;
+        }
+
+        .dropdown-biodata-list {
+            padding: 14px 18px;
+            background: #ffffff;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .bio-item-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 12.5px;
+            gap: 10px;
+        }
+
+        .bio-item-label {
+            color: #64748b;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            width: 95px;
+            flex-shrink: 0;
+        }
+
+        .bio-item-label i {
+            width: 14px;
+            color: #3b82f6;
+            font-size: 12px;
+            text-align: center;
+        }
+
+        .bio-item-value {
+            color: #0f172a;
+            font-weight: 700;
+            text-align: right;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 190px;
+        }
+
+        .dropdown-divider-line {
+            height: 1px;
+            background: #f1f5f9;
+        }
+
+        .dropdown-actions-box {
+            padding: 12px 14px;
+            background: #f8fafc;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .dropdown-act-link {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 9px 14px;
+            border-radius: 9px;
+            font-size: 12.5px;
+            font-weight: 700;
+            text-decoration: none;
+            transition: all 0.15s;
+        }
+
+        .btn-open-profile {
+            background: #eff6ff;
+            color: #1d4ed8;
+            border: 1px solid #bfdbfe;
+        }
+
+        .btn-open-profile:hover {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .btn-logout-kerani {
+            background: #ffffff;
+            color: #ef4444;
+            border: 1px solid #fecaca;
+        }
+
+        .btn-logout-kerani:hover {
+            background: #fee2e2;
+            color: #dc2626;
         }
 
         /* CONTENT CONTAINER */
@@ -347,6 +558,14 @@ $current_page = basename($_SERVER['PHP_SELF']);
 
             <div style="flex: 1;"></div>
 
+            <a href="profil.php" class="nav-item <?= $current_page == 'profil.php' ? 'active' : '' ?>">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+                <span>Profil &amp; Biodata</span>
+            </a>
+
             <a href="../logout.php" class="nav-item" style="color: #ef4444;">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
@@ -364,17 +583,118 @@ $current_page = basename($_SERVER['PHP_SELF']);
         <header class="topbar">
             <div class="page-title-top">
                 <?=
-                $current_page == 'index.php' ? 'Dashboard' : ($current_page == 'data_personil.php' ? 'Data Personil' : ($current_page == 'objek_kerja.php' ? 'Laporan Objek Kerja' : ($current_page == 'laporan_keseluruhan.php' ? 'Laporan Keseluruhan' : ($current_page == 'scanner.php' ? 'Sistem Absensi Scanner' : ($current_page == 'laporan_absensi.php' ? 'Laporan Absensi' : ($current_page == 'validasi_izin.php' ? 'Validasi Izin / Sakit / Cuti' : ($current_page == 'laporan_kinerja.php' ? 'Laporan Kinerja' : ($current_page == 'slip_gaji.php' ? 'Slip Gaji' : 'Kerani'))))))))
+                $current_page == 'index.php' ? 'Dashboard' : ($current_page == 'data_personil.php' ? 'Data Personil' : ($current_page == 'objek_kerja.php' ? 'Laporan Objek Kerja' : ($current_page == 'laporan_keseluruhan.php' ? 'Laporan Keseluruhan' : ($current_page == 'scanner.php' ? 'Sistem Absensi Scanner' : ($current_page == 'laporan_absensi.php' ? 'Laporan Absensi' : ($current_page == 'validasi_izin.php' ? 'Validasi Izin / Sakit / Cuti' : ($current_page == 'kirim_laporan.php' ? 'Kirim Laporan ke Keuangan' : ($current_page == 'profil.php' ? 'Profil &amp; Biodata Kerani' : 'Kerani'))))))))
                 ?>
             </div>
 
-            <div class="account-btn">
-                <div class="avatar">K</div>
-                <div style="font-size: 13px; font-weight: 600; color: #334155;">
-                    <?= htmlspecialchars($_SESSION['nama'] ?? 'Kerani') ?>
+            <!-- Profile Dropdown Container -->
+            <div class="profile-dropdown-wrap">
+                <button type="button" class="account-btn" id="profileDropdownBtn" onclick="toggleProfileDropdown(event)" aria-expanded="false" title="Klik untuk melihat Biodata &amp; Akun">
+                    <div class="avatar"><?= $header_initial ?></div>
+                    <div style="font-size: 13px; font-weight: 600; color: #334155; display: flex; align-items: center; gap: 7px;">
+                        <span><?= htmlspecialchars($header_name) ?></span>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" id="profileChevron" style="transition: transform 0.2s;">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </div>
+                </button>
+
+                <!-- Dropdown Menu / Biodata Card -->
+                <div class="profile-dropdown-menu" id="profileDropdownMenu">
+                    <div class="dropdown-header-card">
+                        <div class="dropdown-avatar-circle">
+                            <?= $header_initial ?>
+                        </div>
+                        <div style="flex: 1; overflow: hidden;">
+                            <div class="dropdown-user-name" title="<?= htmlspecialchars($header_name) ?>"><?= htmlspecialchars($header_name) ?></div>
+                            <div class="dropdown-user-badges">
+                                <span class="badge-pill-role">Kerani</span>
+                                <?php if (!empty($header_afdeling)): ?>
+                                    <span class="badge-pill-afd"><?= htmlspecialchars($header_afdeling) ?></span>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="dropdown-biodata-list">
+                        <div class="bio-item-row">
+                            <span class="bio-item-label"><i class="fa-solid fa-id-card"></i> NIK</span>
+                            <span class="bio-item-value"><?= htmlspecialchars($header_nik) ?></span>
+                        </div>
+                        <div class="bio-item-row">
+                            <span class="bio-item-label"><i class="fa-solid fa-briefcase"></i> Jabatan</span>
+                            <span class="bio-item-value"><?= htmlspecialchars($header_jabatan) ?></span>
+                        </div>
+                        <div class="bio-item-row">
+                            <span class="bio-item-label"><i class="fa-solid fa-map-pin"></i> Afdeling</span>
+                            <span class="bio-item-value"><?= htmlspecialchars($header_afdeling ?: '-') ?></span>
+                        </div>
+                        <div class="bio-item-row">
+                            <span class="bio-item-label"><i class="fa-brands fa-whatsapp"></i> No. WA</span>
+                            <span class="bio-item-value"><?= htmlspecialchars($header_nohp) ?></span>
+                        </div>
+                        <div class="bio-item-row">
+                            <span class="bio-item-label"><i class="fa-solid fa-envelope"></i> Email</span>
+                            <span class="bio-item-value" title="<?= htmlspecialchars($header_email) ?>"><?= htmlspecialchars($header_email) ?></span>
+                        </div>
+                        <div class="bio-item-row">
+                            <span class="bio-item-label"><i class="fa-solid fa-venus-mars"></i> Gender</span>
+                            <span class="bio-item-value"><?= htmlspecialchars($header_gender) ?></span>
+                        </div>
+                    </div>
+
+                    <div class="dropdown-divider-line"></div>
+
+                    <div class="dropdown-actions-box">
+                        <a href="profil.php" class="dropdown-act-link btn-open-profile">
+                            <i class="fa-solid fa-user-pen"></i>
+                            Buka &amp; Edit Profil Lengkap
+                        </a>
+                        <a href="../logout.php" class="dropdown-act-link btn-logout-kerani">
+                            <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                            Keluar dari Sistem
+                        </a>
+                    </div>
                 </div>
             </div>
         </header>
+
+        <script>
+        function toggleProfileDropdown(e) {
+            e.stopPropagation();
+            const menu = document.getElementById('profileDropdownMenu');
+            const btn = document.getElementById('profileDropdownBtn');
+            const chevron = document.getElementById('profileChevron');
+            const isShown = menu.classList.contains('show');
+
+            if (isShown) {
+                menu.classList.remove('show');
+                btn.classList.remove('active');
+                if (chevron) chevron.style.transform = 'rotate(0deg)';
+                btn.setAttribute('aria-expanded', 'false');
+            } else {
+                menu.classList.add('show');
+                btn.classList.add('active');
+                if (chevron) chevron.style.transform = 'rotate(180deg)';
+                btn.setAttribute('aria-expanded', 'true');
+            }
+        }
+
+        document.addEventListener('click', function(e) {
+            const wrap = document.querySelector('.profile-dropdown-wrap');
+            if (wrap && !wrap.contains(e.target)) {
+                const menu = document.getElementById('profileDropdownMenu');
+                const btn = document.getElementById('profileDropdownBtn');
+                const chevron = document.getElementById('profileChevron');
+                if (menu && menu.classList.contains('show')) {
+                    menu.classList.remove('show');
+                    if (btn) btn.classList.remove('active');
+                    if (chevron) chevron.style.transform = 'rotate(0deg)';
+                    if (btn) btn.setAttribute('aria-expanded', 'false');
+                }
+            }
+        });
+        </script>
 
         <!-- Dynamic Content injected here -->
         <div class="content-container animate-in">
